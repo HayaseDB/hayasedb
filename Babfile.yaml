@@ -3,22 +3,22 @@ includes:
     babfile: ./api/babfiles/babfile.api.yaml
 
 tasks:
-  up:
+  docker:up:
     desc: Start all services
     run:
       - cmd: docker compose up -d
 
-  up:build:
+  docker:up:build:
     desc: Build and start all services
     run:
       - cmd: docker compose up -d --build
 
-  down:
+  docker:down:
     desc: Stop all services
     run:
       - cmd: docker compose down
 
-  down:clean:
+  docker:down:clean:
     desc: Stop all services and remove volumes
     run:
       - prompt: confirm
@@ -27,32 +27,32 @@ tasks:
         default: false
       - cmd: docker compose down -v
 
-  logs:
+  docker:logs:
     desc: Show logs from all services
     run:
       - cmd: docker compose logs -f
 
-  logs:api:
+  docker:logs:api:
     desc: Show logs from API service
     run:
       - cmd: docker compose logs -f api
 
-  logs:db:
+  docker:logs:db:
     desc: Show logs from PostgreSQL service
     run:
       - cmd: docker compose logs -f postgres
 
-  ps:
+  docker:ps:
     desc: Show running services
     run:
       - cmd: docker compose ps
 
-  restart:
+  docker:restart:
     desc: Restart all services
     run:
       - cmd: docker compose restart
 
-  rebuild:
+  docker:rebuild:
     desc: Rebuild and restart API service
     run:
       - cmd: docker compose up -d --build api
