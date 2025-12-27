@@ -1,3 +1,58 @@
 includes:
   api:
     babfile: ./api/babfiles/babfile.api.yaml
+
+tasks:
+  up:
+    desc: Start all services
+    run:
+      - cmd: docker compose up -d
+
+  up:build:
+    desc: Build and start all services
+    run:
+      - cmd: docker compose up -d --build
+
+  down:
+    desc: Stop all services
+    run:
+      - cmd: docker compose down
+
+  down:clean:
+    desc: Stop all services and remove volumes
+    run:
+      - prompt: confirm
+        type: confirm
+        message: "This will remove all data. Continue?"
+        default: false
+      - cmd: docker compose down -v
+
+  logs:
+    desc: Show logs from all services
+    run:
+      - cmd: docker compose logs -f
+
+  logs:api:
+    desc: Show logs from API service
+    run:
+      - cmd: docker compose logs -f api
+
+  logs:db:
+    desc: Show logs from PostgreSQL service
+    run:
+      - cmd: docker compose logs -f postgres
+
+  ps:
+    desc: Show running services
+    run:
+      - cmd: docker compose ps
+
+  restart:
+    desc: Restart all services
+    run:
+      - cmd: docker compose restart
+
+  rebuild:
+    desc: Rebuild and restart API service
+    run:
+      - cmd: docker compose up -d --build api
