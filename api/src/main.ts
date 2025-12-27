@@ -80,6 +80,7 @@ async function bootstrap() {
         persistAuth: true,
         isEditable: true,
         isLoading: true,
+        showDeveloperTools: 'never',
         hideModels: true,
         documentDownloadType: 'both',
         hideTestRequestButton: false,
