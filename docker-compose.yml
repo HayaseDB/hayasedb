@@ -31,8 +31,6 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
-    ports:
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -41,6 +39,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio-console.rule=Host(`${MINIO_CONSOLE_DOMAIN:?MINIO_CONSOLE_DOMAIN is required}`)"
+      - "traefik.http.routers.minio-console.entrypoints=http"
+      - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
     deploy:
       replicas: 1
       restart_policy:
@@ -68,8 +74,6 @@ services:
       API_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       API_DATABASE_SYNCHRONIZE: "false"
       API_DATABASE_LOGGING: ${API_DATABASE_LOGGING:-false}
-    ports:
-      - "${API_PORT:-3000}:3000"
     depends_on:
       - postgres
       - minio
@@ -79,6 +83,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:?API_DOMAIN is required}`)"
+      - "traefik.http.routers.api.entrypoints=http"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
     deploy:
       replicas: 1
       restart_policy:
@@ -94,3 +106,7 @@ services:
 volumes:
   postgres_data:
   minio_data:
+
+networks:
+  traefik:
+    external: true

@@ -6,17 +6,29 @@ services:
   minio:
     ports:
       - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    labels:
+      - "traefik.enable=false"
 
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
+    ports:
+      - "${API_PORT:-3000}:3000"
     environment:
       API_ENV: development
       API_SWAGGER_ENABLED: "true"
       API_DATABASE_LOGGING: "true"
+    labels:
+      - "traefik.enable=false"
     depends_on:
       postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
+
+networks:
+  traefik:
+    external: false
+    name: traefik-dev
