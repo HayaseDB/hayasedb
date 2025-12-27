@@ -7,8 +7,6 @@ services:
     ports:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
-    labels:
-      traefik.enable: "false"
 
   api:
     build:
@@ -20,8 +18,6 @@ services:
       API_ENV: development
       API_SWAGGER_ENABLED: "true"
       API_DATABASE_LOGGING: "true"
-    labels:
-      traefik.enable: "false"
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,8 +25,6 @@ services:
         condition: service_healthy
 
 networks:
-  default:
-    driver: bridge
   public:
     external: false
     name: public-dev
