@@ -6,13 +6,15 @@ WORKDIR /app
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV CI=true
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm build && pnpm prune --prod
+RUN pnpm build
+RUN pnpm prune --prod
 
 FROM node:22-alpine AS production
 
@@ -37,4 +39,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
-CMD ["node", "--enable-source-maps", "dist/main.js"]
+CMD ["node", "--enable-source-maps", "dist/src/main.js"]
