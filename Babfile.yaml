@@ -3,6 +3,11 @@ includes:
     babfile: ./api/babfiles/babfile.api.yaml
 
 tasks:
+  docker:infra:
+    desc: Start infrastructure only (postgres + minio)
+    run:
+      - cmd: docker compose up -d postgres minio
+
   docker:up:
     desc: Start all services
     run:
