@@ -30,8 +30,13 @@ tasks:
     run:
       - cmd: pnpm build
 
-  lint:
+  lint:fix:
     desc: Lint and fix code
+    run:
+      - cmd: pnpm lint:fix
+
+  lint:
+    desc: Lint code
     run:
       - cmd: pnpm lint
 
