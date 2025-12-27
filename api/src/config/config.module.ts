@@ -95,7 +95,7 @@ function checkAllValidationErrors(): void {
       isGlobal: true,
       cache: true,
       expandVariables: true,
-      envFilePath: `${__dirname}/../../../.env`,
+      envFilePath: `${__dirname}/../../../../.env`,
       load: [
         createConfigLoader(AppConfig, 'app'),
         createConfigLoader(DatabaseConfig, 'database'),

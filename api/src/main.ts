@@ -7,7 +7,8 @@ import { apiReference } from '@scalar/nestjs-api-reference';
 import { useContainer } from 'class-validator';
 
 import { AppModule } from './app.module';
-import type { AppConfig, SwaggerConfig } from './config';
+import type { AppConfig } from './config/app.config';
+import type { SwaggerConfig } from './config/swagger.config';
 
 import * as packageJson from '../package.json';
 

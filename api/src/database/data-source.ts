@@ -1,13 +1,8 @@
-import { resolve } from 'path';
-
-import { config } from 'dotenv';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { DataSource } from 'typeorm';
 
 import { DatabaseConfig } from '../config/database.config';
-
-config({ path: resolve(__dirname, '../../../.env') });
 
 function validateDatabaseConfig(): DatabaseConfig {
   const databaseConfig = plainToInstance(DatabaseConfig, process.env, {
@@ -25,16 +20,9 @@ function validateDatabaseConfig(): DatabaseConfig {
         ? Object.values(error.constraints)
         : ['Invalid value'];
 
-      const value: unknown =
-        error.value === undefined ? 'undefined' : error.value;
-      let valueDisplay: string;
-      if (typeof value === 'string') {
-        valueDisplay = `"${value}"`;
-      } else if (typeof value === 'number' || typeof value === 'boolean') {
-        valueDisplay = String(value);
-      } else {
-        valueDisplay = JSON.stringify(value);
-      }
+      const value = error.value === undefined ? 'undefined' : error.value;
+      const valueDisplay =
+        typeof value === 'string' ? `"${value}"` : String(value);
 
       console.error(`  ${error.property} = ${valueDisplay}`);
 

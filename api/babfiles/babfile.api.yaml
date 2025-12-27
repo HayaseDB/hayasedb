@@ -1,6 +1,6 @@
 includes:
   db:
-    babfile: ./babfiles/babfile.typeorm.yaml
+    babfile: ./babfile.typeorm.yaml
 
 tasks:
   dev:
