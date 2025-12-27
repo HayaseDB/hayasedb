@@ -3,6 +3,10 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
 
+  minio:
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+
   api:
     build:
       context: ./api
