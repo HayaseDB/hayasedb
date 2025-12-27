@@ -10,13 +10,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-build-test:
-    name: Lint, Build & Test
+  install:
+    name: Install Dependencies
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./api
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,27 +31,101 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        working-directory: ./api
 
-      - name: Lint
-        run: pnpm lint
+      - name: Cache node_modules
+        uses: actions/cache/save@v4
+        with:
+          path: api/node_modules
+          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
 
-      - name: Type check
-        run: pnpm exec tsc --noEmit
+  lint:
+    name: Lint
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: api/node_modules
+          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+      - run: pnpm lint
+        working-directory: ./api
 
-      - name: Build
-        run: pnpm build
+  typecheck:
+    name: Type Check
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: api/node_modules
+          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+      - run: pnpm exec tsc --noEmit
+        working-directory: ./api
 
-      - name: Unit tests
-        run: pnpm test
+  test:
+    name: Unit Tests
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: api/node_modules
+          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+      - run: pnpm test
+        working-directory: ./api
+
+  build:
+    name: Build
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: api/node_modules
+          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+      - run: pnpm build
+        working-directory: ./api
 
   docker:
     name: Docker Build
-    needs: lint-build-test
+    needs: [lint, typecheck, test, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
