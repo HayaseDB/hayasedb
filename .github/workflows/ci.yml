@@ -72,8 +72,13 @@ jobs:
           cache-from: type=gha,scope=api
           cache-to: type=gha,mode=max,scope=api
 
-      - name: Deploy
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  deploy:
+    name: Deploy
+    needs: api
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Portainer Webhook
         run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.PORTAINER_STAGING_WEBHOOK_URL }}")
           if [ "$response" -eq 200 ] || [ "$response" -eq 204 ]; then
