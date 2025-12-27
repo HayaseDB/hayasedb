@@ -1,3 +1,8 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { DataSource } from 'typeorm';
