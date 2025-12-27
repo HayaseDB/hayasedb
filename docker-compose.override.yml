@@ -29,6 +29,6 @@ services:
         condition: service_healthy
 
 networks:
-  traefik:
+  public:
     external: false
-    name: traefik-dev
+    name: public-dev
