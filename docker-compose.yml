@@ -85,7 +85,7 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.hayasedb-${API_ENV:-default}-minio-console.rule=Host(`${API_MINIO_CONSOLE_DOMAIN:?API_MINIO_CONSOLE_DOMAIN is required}`)"
+        - "traefik.http.routers.hayasedb-${API_ENV:-default}-minio-console.rule=Host(`${API_MINIO_CONSOLE_DOMAIN:-localhost}`)"
         - "traefik.http.routers.hayasedb-${API_ENV:-default}-minio-console.entrypoints=web"
         - "traefik.http.services.hayasedb-${API_ENV:-default}-minio-console.loadbalancer.server.port=9001"
 
@@ -144,6 +144,6 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.hayasedb-${API_ENV:-default}-api.rule=Host(`${API_DOMAIN:?API_DOMAIN is required}`)"
+        - "traefik.http.routers.hayasedb-${API_ENV:-default}-api.rule=Host(`${API_DOMAIN:-localhost}`)"
         - "traefik.http.routers.hayasedb-${API_ENV:-default}-api.entrypoints=web"
         - "traefik.http.services.hayasedb-${API_ENV:-default}-api.loadbalancer.server.port=3000"
