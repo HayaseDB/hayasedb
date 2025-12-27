@@ -8,7 +8,7 @@ services:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     labels:
-      - "traefik.enable=false"
+      traefik.enable: "false"
 
   api:
     build:
@@ -21,7 +21,7 @@ services:
       API_SWAGGER_ENABLED: "true"
       API_DATABASE_LOGGING: "true"
     labels:
-      - "traefik.enable=false"
+      traefik.enable: "false"
     depends_on:
       postgres:
         condition: service_healthy
