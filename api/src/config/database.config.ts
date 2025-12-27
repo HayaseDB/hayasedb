@@ -38,7 +38,7 @@ export class DatabaseConfig {
     () =>
       process.env.API_ENV === 'production' || process.env.API_ENV === 'staging',
   )
-  @MinLength(32)
+  @MinLength(8)
   API_DATABASE_PASSWORD: string;
 
   @IsBoolean()
