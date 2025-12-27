@@ -85,9 +85,9 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.${STACK_NAME:-default}-minio-console.rule=Host(`${MINIO_CONSOLE_DOMAIN:?MINIO_CONSOLE_DOMAIN is required}`)"
-        - "traefik.http.routers.${STACK_NAME:-default}-minio-console.entrypoints=web"
-        - "traefik.http.services.${STACK_NAME:-default}-minio-console.loadbalancer.server.port=9001"
+        - "traefik.http.routers.hayasedb-${API_ENV:-default}-minio-console.rule=Host(`${MINIO_CONSOLE_DOMAIN:?MINIO_CONSOLE_DOMAIN is required}`)"
+        - "traefik.http.routers.hayasedb-${API_ENV:-default}-minio-console.entrypoints=web"
+        - "traefik.http.services.hayasedb-${API_ENV:-default}-minio-console.loadbalancer.server.port=9001"
 
   api:
     image: ghcr.io/hayasedb/hayasedb-api:${API_IMAGE_TAG:-latest}
@@ -144,6 +144,6 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.${STACK_NAME:-default}-api.rule=Host(`${API_DOMAIN:?API_DOMAIN is required}`)"
-        - "traefik.http.routers.${STACK_NAME:-default}-api.entrypoints=web"
-        - "traefik.http.services.${STACK_NAME:-default}-api.loadbalancer.server.port=3000"
+        - "traefik.http.routers.hayasedb-${API_ENV:-default}-api.rule=Host(`${API_DOMAIN:?API_DOMAIN is required}`)"
+        - "traefik.http.routers.hayasedb-${API_ENV:-default}-api.entrypoints=web"
+        - "traefik.http.services.hayasedb-${API_ENV:-default}-api.loadbalancer.server.port=3000"
