@@ -12,8 +12,3 @@ services:
       API_ENV: development
       API_SWAGGER_ENABLED: "true"
       API_DATABASE_LOGGING: "true"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_started
