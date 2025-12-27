@@ -1,12 +1,12 @@
 services:
   postgres:
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${API_DATABASE_PORT:-5432}:5432"
 
   minio:
     ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "${API_MINIO_PORT:-9000}:9000"
+      - "${API_MINIO_CONSOLE_PORT:-9001}:9001"
 
   api:
     build:
