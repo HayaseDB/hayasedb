@@ -110,5 +110,8 @@ volumes:
   minio_data:
 
 networks:
+  default:
+    driver: overlay
+    attachable: true
   public:
     external: true
