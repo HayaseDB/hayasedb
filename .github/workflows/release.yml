@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  validate-version:
+    name: Validate Version (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - package: api
+            path: api/package.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate ${{ matrix.package }} version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION=$(jq -r '.version' ${{ matrix.path }})
+
+          echo "Release tag: v$TAG_VERSION"
+          echo "${{ matrix.package }}: $PACKAGE_VERSION"
+
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Version mismatch in ${{ matrix.package }}! Expected $TAG_VERSION, got $PACKAGE_VERSION"
+            exit 1
+          fi
+
+  docker:
+    name: Build & Push (${{ matrix.package }})
+    needs: validate-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: api
+            context: ./api
+            image: ghcr.io/hayasedb/hayasedb-api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          tags: |
+            type=semver,pattern=v{{version}}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.package }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.package }}
+
+  deploy:
+    name: Deploy
+    needs: docker
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Trigger Portainer Redeploy
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}")
+          if [ "$response" -eq 200 ] || [ "$response" -eq 204 ]; then
+            echo "Deployment triggered (HTTP $response)"
+          else
+            echo "::error::Webhook failed (HTTP $response)"
+            exit 1
+          fi

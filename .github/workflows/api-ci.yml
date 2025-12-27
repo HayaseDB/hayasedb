@@ -1,17 +1,23 @@
-name: CI
+name: API CI
 
 on:
   push:
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: api-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   install:
-    name: Install Dependencies
+    name: Install
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,7 +43,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: api/node_modules
-          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+          key: api-node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
 
   lint:
     name: Lint
@@ -55,7 +61,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: api/node_modules
-          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+          key: api-node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
       - run: pnpm lint
         working-directory: ./api
 
@@ -75,7 +81,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: api/node_modules
-          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+          key: api-node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
       - run: pnpm exec tsc --noEmit
         working-directory: ./api
 
@@ -95,7 +101,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: api/node_modules
-          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+          key: api-node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
       - run: pnpm test
         working-directory: ./api
 
@@ -115,7 +121,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: api/node_modules
-          key: node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
+          key: api-node-modules-${{ hashFiles('api/pnpm-lock.yaml') }}
       - run: pnpm build
         working-directory: ./api
 
@@ -150,5 +156,5 @@ jobs:
           context: ./api
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: ghcr.io/hayasedb/hayasedb-api:dev
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
