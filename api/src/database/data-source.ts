@@ -25,7 +25,8 @@ function validateDatabaseConfig(): DatabaseConfig {
         ? Object.values(error.constraints)
         : ['Invalid value'];
 
-      const value = error.value === undefined ? 'undefined' : error.value;
+      const value: unknown =
+        error.value === undefined ? 'undefined' : error.value;
       const valueDisplay =
         typeof value === 'string' ? `"${value}"` : String(value);
 

@@ -50,6 +50,7 @@ jobs:
 
   docker:
     name: Docker Build
+    needs: lint-build-test
     runs-on: ubuntu-latest
     permissions:
       contents: read
