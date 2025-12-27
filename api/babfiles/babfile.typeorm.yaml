@@ -1,3 +1,5 @@
+dir: ..
+
 tasks:
   generate:
     desc: Generate a new migration
@@ -6,22 +8,22 @@ tasks:
         type: input
         message: "Migration name:"
         placeholder: "CreateUsersTable"
-      - cmd: pnpm -C api typeorm migration:generate src/database/migrations/${{ name }} -d src/database/data-source.ts
+      - cmd: pnpm typeorm migration:generate src/database/migrations/${{ name }} -d src/database/data-source.ts
 
   run:
     desc: Run pending migrations
     run:
-      - cmd: pnpm -C api typeorm migration:run -d src/database/data-source.ts
+      - cmd: pnpm typeorm migration:run -d src/database/data-source.ts
 
   revert:
     desc: Revert last migration
     run:
-      - cmd: pnpm -C api typeorm migration:revert -d src/database/data-source.ts
+      - cmd: pnpm typeorm migration:revert -d src/database/data-source.ts
 
   show:
     desc: Show all migrations and their status
     run:
-      - cmd: pnpm -C api typeorm migration:show -d src/database/data-source.ts
+      - cmd: pnpm typeorm migration:show -d src/database/data-source.ts
 
   sync:
     desc: Synchronize database schema (dev only)
@@ -30,7 +32,7 @@ tasks:
         type: confirm
         message: "This will sync schema without migrations. Continue?"
         default: false
-      - cmd: pnpm -C api typeorm schema:sync -d src/database/data-source.ts
+      - cmd: pnpm typeorm schema:sync -d src/database/data-source.ts
 
   drop:
     desc: Drop all tables (dangerous)
@@ -39,4 +41,4 @@ tasks:
         type: confirm
         message: "This will DROP ALL TABLES. Are you sure?"
         default: false
-      - cmd: pnpm -C api typeorm schema:drop -d src/database/data-source.ts
+      - cmd: pnpm typeorm schema:drop -d src/database/data-source.ts
