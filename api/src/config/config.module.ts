@@ -4,6 +4,7 @@ import { plainToInstance } from "class-transformer";
 import { validateSync, ValidationError } from "class-validator";
 
 import { AppConfig } from "./app.config";
+import { DatabaseConfig } from "./database.config";
 import { SwaggerConfig } from "./swagger.config";
 
 interface ConfigValidationError {
@@ -96,6 +97,7 @@ function checkAllValidationErrors(): void {
       expandVariables: true,
       load: [
         createConfigLoader(AppConfig, "app"),
+        createConfigLoader(DatabaseConfig, "database"),
         createConfigLoader(SwaggerConfig, "swagger"),
         () => {
           checkAllValidationErrors();
