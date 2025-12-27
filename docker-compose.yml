@@ -72,10 +72,8 @@ services:
     ports:
       - "${API_PORT:-3000}:3000"
     depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+      - postgres
+      - minio
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
