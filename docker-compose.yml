@@ -21,12 +21,20 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-hayasedb}"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
-      start_period: 10s
+      start_period: 5s
+    stop_grace_period: 10s
     deploy:
+      mode: replicated
       replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      update_config:
+        parallelism: 1
+        failure_action: rollback
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -51,12 +59,21 @@ services:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
-      start_period: 10s
+      start_period: 5s
+    stop_grace_period: 10s
     deploy:
+      mode: replicated
       replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      update_config:
+        parallelism: 1
+        delay: 5s
+        failure_action: rollback
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -95,12 +112,27 @@ services:
       - minio
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 3s
       retries: 3
-      start_period: 30s
+      start_period: 60s
+    stop_grace_period: 30s
     deploy:
+      mode: replicated
       replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        monitor: 45s
+        failure_action: rollback
+        order: start-first
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        monitor: 10s
+        failure_action: pause
+        order: stop-first
       restart_policy:
         condition: on-failure
         delay: 5s
