@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: api/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+        working-directory: ./api
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: ./api
+
+      - name: Type Check
+        run: pnpm exec tsc --noEmit
+        working-directory: ./api
+
+      - name: Test
+        run: pnpm test
+        working-directory: ./api
+
+      - name: Build
+        run: pnpm build
+        working-directory: ./api
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: ghcr.io/hayasedb/hayasedb-api:dev
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Deploy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.PORTAINER_STAGING_WEBHOOK_URL }}")
+          if [ "$response" -eq 200 ] || [ "$response" -eq 204 ]; then
+            echo "Deployment triggered (HTTP $response)"
+          else
+            echo "::error::Webhook failed (HTTP $response)"
+            exit 1
+          fi
