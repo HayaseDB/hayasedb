@@ -13,6 +13,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - default
     deploy:
       replicas: 1
       restart_policy:
