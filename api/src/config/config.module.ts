@@ -1,11 +1,11 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule as NestConfigModule } from "@nestjs/config";
-import { plainToInstance } from "class-transformer";
-import { validateSync, ValidationError } from "class-validator";
+import { Module } from '@nestjs/common';
+import { ConfigModule as NestConfigModule } from '@nestjs/config';
+import { plainToInstance } from 'class-transformer';
+import { validateSync, ValidationError } from 'class-validator';
 
-import { AppConfig } from "./app.config";
-import { DatabaseConfig } from "./database.config";
-import { SwaggerConfig } from "./swagger.config";
+import { AppConfig } from './app.config';
+import { DatabaseConfig } from './database.config';
+import { SwaggerConfig } from './swagger.config';
 
 interface ConfigValidationError {
   configName: string;
@@ -19,30 +19,30 @@ function formatValidationErrors(errors: ValidationError[]): string {
     .map((error) => {
       const messages = error.constraints
         ? Object.values(error.constraints)
-        : ["Invalid value"];
+        : ['Invalid value'];
 
       const value: unknown =
-        error.value === undefined ? "undefined" : error.value;
+        error.value === undefined ? 'undefined' : error.value;
 
       let valueDisplay: string;
-      if (typeof value === "string") {
+      if (typeof value === 'string') {
         valueDisplay = `"${value}"`;
       } else if (value === null) {
-        valueDisplay = "null";
-      } else if (typeof value === "object") {
-        valueDisplay = JSON.stringify(value);
-      } else {
+        valueDisplay = 'null';
+      } else if (typeof value === 'number' || typeof value === 'boolean') {
         valueDisplay = String(value);
+      } else {
+        valueDisplay = JSON.stringify(value);
       }
 
       const header = `  ${error.property} = ${valueDisplay}`;
       const messageList = messages
         .map((message) => `   - ${message}`)
-        .join("\n");
+        .join('\n');
 
       return `${header}\n${messageList}`;
     })
-    .join("\n\n");
+    .join('\n\n');
 }
 
 function createConfigLoader<T extends object>(
@@ -75,7 +75,7 @@ function checkAllValidationErrors(): void {
     0,
   );
 
-  console.error("Configuration Validation Failed");
+  console.error('Configuration Validation Failed');
   console.error(
     `Found ${totalErrors} validation error(s) across ${validationErrors.length} configuration section(s):\n`,
   );
@@ -83,10 +83,10 @@ function checkAllValidationErrors(): void {
   for (const { configName, errors } of validationErrors) {
     console.error(`[${configName}] - ${errors.length} error(s)`);
     console.error(formatValidationErrors(errors));
-    console.error("");
+    console.error('');
   }
 
-  throw new Error("Configuration Validation Failed");
+  throw new Error('Configuration Validation Failed');
 }
 
 @Module({
@@ -95,10 +95,11 @@ function checkAllValidationErrors(): void {
       isGlobal: true,
       cache: true,
       expandVariables: true,
+      envFilePath: `${__dirname}/../../../.env`,
       load: [
-        createConfigLoader(AppConfig, "app"),
-        createConfigLoader(DatabaseConfig, "database"),
-        createConfigLoader(SwaggerConfig, "swagger"),
+        createConfigLoader(AppConfig, 'app'),
+        createConfigLoader(DatabaseConfig, 'database'),
+        createConfigLoader(SwaggerConfig, 'swagger'),
         () => {
           checkAllValidationErrors();
           return {};

@@ -1,4 +1,4 @@
-import { Transform } from "class-transformer";
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsInt,
@@ -9,9 +9,9 @@ import {
   Min,
   MinLength,
   ValidateIf,
-} from "class-validator";
+} from 'class-validator';
 
-import { toBoolean, toInt } from "./transforms";
+import { toBoolean, toInt } from './transforms';
 
 export class DatabaseConfig {
   @IsString()
@@ -36,8 +36,7 @@ export class DatabaseConfig {
   @IsNotEmpty()
   @ValidateIf(
     () =>
-      process.env.API_ENV === "production" ||
-      process.env.API_ENV === "staging",
+      process.env.API_ENV === 'production' || process.env.API_ENV === 'staging',
   )
   @MinLength(32)
   API_DATABASE_PASSWORD: string;

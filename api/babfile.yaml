@@ -1,0 +1,65 @@
+includes:
+  db:
+    babfile: ./babfiles/babfile.typeorm.yaml
+
+tasks:
+  dev:
+    desc: Start development server with watch mode
+    run:
+      - cmd: pnpm -C api start:dev
+
+  start:
+    desc: Start the server
+    run:
+      - cmd: pnpm -C api start
+
+  start:debug:
+    desc: Start with debug mode
+    run:
+      - cmd: pnpm -C api start:debug
+
+  start:prod:
+    desc: Start production server
+    run:
+      - cmd: pnpm -C api start:prod
+
+  build:
+    desc: Build the project
+    run:
+      - cmd: pnpm -C api build
+
+  lint:
+    desc: Lint and fix code
+    run:
+      - cmd: pnpm -C api lint
+
+  format:
+    desc: Format code with Prettier
+    run:
+      - cmd: pnpm -C api format
+
+  test:
+    desc: Run tests
+    run:
+      - cmd: pnpm -C api test
+
+  test:watch:
+    desc: Run tests in watch mode
+    run:
+      - cmd: pnpm -C api test:watch
+
+  test:cov:
+    desc: Run tests with coverage
+    run:
+      - cmd: pnpm -C api test:cov
+
+  test:e2e:
+    desc: Run e2e tests
+    run:
+      - cmd: pnpm -C api test:e2e
+
+  check:
+    desc: Run lint and tests
+    run:
+      - task: lint
+      - task: test

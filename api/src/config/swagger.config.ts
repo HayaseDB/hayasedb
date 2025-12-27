@@ -1,7 +1,7 @@
-import { Transform } from "class-transformer";
-import { IsBoolean, IsOptional, IsString } from "class-validator";
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
-import { toBoolean } from "./transforms";
+import { toBoolean } from './transforms';
 
 export class SwaggerConfig {
   @IsBoolean()
@@ -11,5 +11,5 @@ export class SwaggerConfig {
 
   @IsString()
   @IsOptional()
-  API_SWAGGER_PATH = "docs";
+  API_SWAGGER_PATH = 'docs';
 }

@@ -1,13 +1,13 @@
-import { Transform } from "class-transformer";
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { Transform } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-import { toEnum, toInt } from "./transforms";
+import { toEnum, toInt } from './transforms';
 
 export enum Environment {
-  Development = "development",
-  Production = "production",
-  Test = "test",
-  Staging = "staging",
+  Development = 'development',
+  Production = 'production',
+  Test = 'test',
+  Staging = 'staging',
 }
 
 export class AppConfig {

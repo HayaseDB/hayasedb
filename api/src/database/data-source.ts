@@ -1,8 +1,13 @@
-import { plainToInstance } from "class-transformer";
-import { validateSync } from "class-validator";
-import { DataSource } from "typeorm";
+import { resolve } from 'path';
 
-import { DatabaseConfig } from "../config/database.config";
+import { config } from 'dotenv';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
+import { DataSource } from 'typeorm';
+
+import { DatabaseConfig } from '../config/database.config';
+
+config({ path: resolve(__dirname, '../../../.env') });
 
 function validateDatabaseConfig(): DatabaseConfig {
   const databaseConfig = plainToInstance(DatabaseConfig, process.env, {
@@ -13,16 +18,23 @@ function validateDatabaseConfig(): DatabaseConfig {
   const errors = validateSync(databaseConfig, { skipMissingProperties: false });
 
   if (errors.length > 0) {
-    console.error("TypeORM CLI Configuration Validation Failed");
+    console.error('TypeORM CLI Configuration Validation Failed');
 
     for (const error of errors) {
       const messages = error.constraints
         ? Object.values(error.constraints)
-        : ["Invalid value"];
+        : ['Invalid value'];
 
-      const value = error.value === undefined ? "undefined" : error.value;
-      const valueDisplay =
-        typeof value === "string" ? `"${value}"` : String(value);
+      const value: unknown =
+        error.value === undefined ? 'undefined' : error.value;
+      let valueDisplay: string;
+      if (typeof value === 'string') {
+        valueDisplay = `"${value}"`;
+      } else if (typeof value === 'number' || typeof value === 'boolean') {
+        valueDisplay = String(value);
+      } else {
+        valueDisplay = JSON.stringify(value);
+      }
 
       console.error(`  ${error.property} = ${valueDisplay}`);
 
@@ -30,10 +42,10 @@ function validateDatabaseConfig(): DatabaseConfig {
         console.error(` - ${message}`);
       }
 
-      console.error("");
+      console.error('');
     }
 
-    throw new Error("Database Configuration Validation Failed");
+    throw new Error('Database Configuration Validation Failed');
   }
 
   return databaseConfig;
@@ -41,12 +53,12 @@ function validateDatabaseConfig(): DatabaseConfig {
 
 const databaseConfig = validateDatabaseConfig();
 
-const isCompiled = __filename.endsWith(".js");
-const baseDirection = isCompiled ? "dist" : "src";
-const extension = isCompiled ? ".js" : ".ts";
+const isCompiled = __filename.endsWith('.js');
+const baseDirection = isCompiled ? 'dist' : 'src';
+const extension = isCompiled ? '.js' : '.ts';
 
 export const AppDataSource = new DataSource({
-  type: "postgres",
+  type: 'postgres',
   host: databaseConfig.API_DATABASE_HOST,
   port: databaseConfig.API_DATABASE_PORT,
   username: databaseConfig.API_DATABASE_USERNAME,
