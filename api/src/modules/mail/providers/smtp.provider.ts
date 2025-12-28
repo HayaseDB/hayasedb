@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import nodemailer from 'nodemailer';
-import type SMTPTransport from 'nodemailer/lib/smtp-transport';
+import type SMTPPool from 'nodemailer/lib/smtp-pool';
 
 import type { MailProvider, SendMailOptions } from './mail-provider.interface';
 
@@ -20,7 +20,7 @@ export interface SmtpConfig {
 
 export class SmtpMailProvider implements MailProvider {
   private readonly logger = new Logger(SmtpMailProvider.name);
-  private transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
+  private transporter: nodemailer.Transporter<SMTPPool.SentMessageInfo>;
 
   constructor(private readonly config: SmtpConfig) {
     this.transporter = nodemailer.createTransport({
@@ -56,7 +56,7 @@ export class SmtpMailProvider implements MailProvider {
       replyTo: options.replyTo,
     });
 
-    this.logger.log(`Email sent successfully: ${info.messageId ?? 'unknown'}`);
+    this.logger.log(`Email sent successfully: ${info.messageId}`);
   }
 
   async verify(): Promise<boolean> {
