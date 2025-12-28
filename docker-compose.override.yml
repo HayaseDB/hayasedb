@@ -10,6 +10,8 @@ services:
 
   mailpit:
     image: axllent/mailpit:latest
+    networks:
+      - internal
     ports:
       - "${API_SMTP_PORT:-1025}:1025"
       - "8025:8025"
@@ -31,7 +33,7 @@ services:
       API_JWT_REFRESH_SECRET: dev-refresh-secret-not-for-production
       API_SMTP_HOST: mailpit
       API_SMTP_PORT: 1025
-      API_MAIL_FROM_ADDRESS: noreply@localhost
+      API_MAIL_FROM_ADDRESS: noreply@localhost.dev
     depends_on:
       postgres:
         condition: service_healthy
