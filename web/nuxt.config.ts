@@ -62,6 +62,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     apiUrl: process.env.WEB_API_URL || 'http://localhost:3000',
+    public: {
+      version: process.env.WEB_VERSION || 'dev',
+    },
   },
 
   css: ['~/assets/css/main.css'],

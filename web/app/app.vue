@@ -20,4 +20,5 @@
     </ClientOnly>
   </NuxtLayout>
   <LoadingOverlay :is-loading="isLoading" />
+  <VersionBadge />
 </template>

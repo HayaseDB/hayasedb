@@ -20,6 +20,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+ARG WEB_VERSION=dev
+ENV WEB_VERSION=$WEB_VERSION
+
 RUN pnpm build
 
 FROM node:${NODE_VERSION}-alpine AS production

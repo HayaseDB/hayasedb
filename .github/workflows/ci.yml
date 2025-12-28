@@ -143,6 +143,8 @@ jobs:
           context: ./web
           push: true
           tags: ghcr.io/hayasedb/hayasedb-web:dev
+          build-args: |
+            WEB_VERSION=${{ github.sha }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
 
