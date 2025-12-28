@@ -49,6 +49,11 @@ tasks:
         message: "MinIO console domain (e.g., minio.hayasedb.com):"
         default: "localhost"
         when: ${{ deploy_mode }} == 'docker'
+      - prompt: image_tag
+        type: select
+        message: "Docker image tag:"
+        options: [latest, dev]
+        when: ${{ deploy_mode }} == 'docker'
 
       - prompt: api_port
         type: input
@@ -262,6 +267,8 @@ tasks:
           cat >> .env << 'ENVFILE'
 
           # DEPLOYMENT
+          API_IMAGE_TAG=${{ image_tag }}
+          WEB_IMAGE_TAG=${{ image_tag }}
           API_DOMAIN=${{ api_domain }}
           WEB_DOMAIN=${{ web_domain }}
           API_MINIO_CONSOLE_DOMAIN=${{ minio_domain }}
