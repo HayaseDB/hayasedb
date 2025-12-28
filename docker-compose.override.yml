@@ -29,8 +29,8 @@ services:
       API_DATABASE_LOGGING: "true"
       API_JWT_SECRET: dev-jwt-secret-not-for-production
       API_JWT_REFRESH_SECRET: dev-refresh-secret-not-for-production
-      API_MAIL_HOST: mailpit
-      API_MAIL_PORT: 1025
+      API_SMTP_HOST: mailpit
+      API_SMTP_PORT: 1025
       API_MAIL_FROM_ADDRESS: noreply@localhost
     depends_on:
       postgres:
