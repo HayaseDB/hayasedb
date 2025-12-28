@@ -122,7 +122,7 @@ export class MailService {
   ): Promise<void> {
     const userName = this.getUserName(user);
     const baseUrl = this.appConfig.API_WEB_URL || 'http://localhost:5173';
-    const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${baseUrl}/auth/verify-email?token=${verificationToken}`;
 
     const { html, text } = await this.renderTemplate(
       createElement(VerificationEmail, {

@@ -1,0 +1,6 @@
+export { default as AuthFormHeader } from './AuthFormHeader.vue'
+export { default as AuthFormFooter } from './AuthFormFooter.vue'
+export { default as LoginForm } from './LoginForm.vue'
+export { default as RegisterForm } from './RegisterForm.vue'
+export { default as AnimeCard } from './AnimeCard.vue'
+export { default as AnimeScrollWall } from './AnimeScrollWall.vue'

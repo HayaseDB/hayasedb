@@ -1,9 +1,17 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { config } from 'dotenv'
+import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
+
+config({ path: resolve(__dirname, '../.env') })
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+
+  devServer: {
+    port: parseInt(process.env.WEB_PORT || '8080'),
+  },
 
   nitro: {
     compressPublicAssets: true,
@@ -18,7 +26,44 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/image',
     'shadcn-nuxt',
+    '@sidebase/nuxt-auth',
   ],
+
+  auth: {
+    baseURL: '/api/auth',
+    provider: {
+      type: 'local',
+      endpoints: {
+        signIn: { path: '/login', method: 'post' },
+        signUp: { path: '/register', method: 'post' },
+        signOut: { path: '/logout', method: 'post' },
+        getSession: { path: '/session', method: 'get' },
+      },
+      token: {
+        signInResponseTokenPointer: '/token',
+        maxAgeInSeconds: 3600,
+      },
+      refresh: {
+        isEnabled: true,
+        endpoint: { path: '/refresh', method: 'post' },
+        token: {
+          signInResponseRefreshTokenPointer: '/refreshToken',
+          refreshRequestTokenPointer: '/refreshToken',
+          maxAgeInSeconds: 604800,
+        },
+      },
+      pages: {
+        login: '/auth/login',
+      },
+    },
+    globalAppMiddleware: {
+      isEnabled: false,
+    },
+  },
+
+  runtimeConfig: {
+    apiUrl: process.env.WEB_API_URL || 'http://localhost:3000',
+  },
 
   css: ['~/assets/css/main.css'],
   vite: {
