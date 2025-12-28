@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { toast } from 'vue-sonner'
   import { RegisterForm } from '@/components/auth'
-  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
   definePageMeta({
     layout: 'auth',
@@ -13,9 +12,7 @@
     description: 'Create your HayaseDB account',
   })
 
-  const { signUp } = useAuth()
   const isLoading = ref(false)
-  const success = ref(false)
 
   interface RegisterData {
     email: string
@@ -28,11 +25,14 @@
   async function handleRegister(data: RegisterData) {
     isLoading.value = true
     try {
-      await signUp(data)
+      await $fetch('/api/auth/register', {
+        method: 'POST',
+        body: data,
+      })
       toast.success('Account created!', {
         description: 'Check your email to verify your account.',
       })
-      success.value = true
+      await navigateTo('/auth/login')
     } catch (e) {
       const err = e as { data?: { message?: string; data?: { message?: string } } }
       toast.error(err.data?.data?.message || err.data?.message || 'Unable to create account')
@@ -40,24 +40,8 @@
       isLoading.value = false
     }
   }
-
-  onMounted(() => {
-    success.value = false
-  })
 </script>
 
 <template>
-  <div v-if="success" class="flex flex-col gap-4">
-    <Alert>
-      <AlertTitle>Check your email</AlertTitle>
-      <AlertDescription>
-        We've sent a verification link to your email address. Please click the link to verify your
-        account.
-      </AlertDescription>
-    </Alert>
-    <NuxtLink to="/auth/login" class="text-muted-foreground text-center text-sm hover:underline">
-      Back to sign in
-    </NuxtLink>
-  </div>
-  <RegisterForm v-else :is-loading="isLoading" @submit="handleRegister" />
+  <RegisterForm :is-loading="isLoading" @submit="handleRegister" />
 </template>
