@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiForbiddenResponse,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -23,6 +24,8 @@ import {
 import { ActiveSession } from '../../common/decorators/active-session.decorator';
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Permission } from '../rbac/decorators/permission.decorator';
+import { RbacGuard } from '../rbac/guards/rbac.guard';
 import { User } from '../users/entities/user.entity';
 import { SessionResponseDto } from './dto/session-response.dto';
 import { Session } from './entities/session.entity';
@@ -31,12 +34,13 @@ import { SessionsService } from './sessions.service';
 @ApiTags('Sessions')
 @Controller('sessions')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RbacGuard)
 @ApiBearerAuth('access_token')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Get()
+  @Permission(['sessions@read:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'List user sessions',
@@ -47,6 +51,7 @@ export class SessionsController {
     description: 'Sessions retrieved successfully',
     type: [SessionResponseDto],
   })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async findAll(
     @ActiveUser() user: User,
     @ActiveSession() currentSession: Session,
@@ -62,6 +67,7 @@ export class SessionsController {
   }
 
   @Get(':id')
+  @Permission(['sessions@read:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get session by ID',
@@ -82,6 +88,7 @@ export class SessionsController {
     status: 404,
     description: 'Session not found',
   })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @ActiveUser() user: User,
@@ -102,6 +109,7 @@ export class SessionsController {
   }
 
   @Delete(':id')
+  @Permission(['sessions@delete:own'])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Revoke session',
@@ -120,7 +128,7 @@ export class SessionsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Cannot revoke current session',
+    description: 'Cannot revoke current session or insufficient permissions',
   })
   @ApiResponse({
     status: 404,

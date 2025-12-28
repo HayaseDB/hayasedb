@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { Role } from '../../rbac/enums/role.enum';
+
 export class UserResponseDto {
   @ApiProperty({
     description: 'User ID',
@@ -18,6 +20,13 @@ export class UserResponseDto {
 
   @ApiProperty({ description: 'Last name', example: 'Doe' })
   lastName: string;
+
+  @ApiProperty({
+    description: 'User role',
+    enum: Role,
+    example: Role.USER,
+  })
+  role: Role;
 
   @ApiProperty({ description: 'Account creation date' })
   createdAt: Date;
