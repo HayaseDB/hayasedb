@@ -12,21 +12,19 @@
     description: 'Sign in to your HayaseDB account',
   })
 
-  const { signIn } = useAuth()
+  const { signIn, token } = useAuth()
   const isLoading = ref(false)
 
   async function handleLogin(credentials: { email: string; password: string }) {
     isLoading.value = true
-    try {
-      await signIn(credentials)
+    await signIn(credentials).catch(() => {})
+    isLoading.value = false
+
+    if (token.value) {
       toast.success('Welcome back!')
-      await navigateTo('/')
-    } catch (e) {
-      const err = e as { data?: { message?: string; data?: { message?: string } } }
-      toast.error(err.data?.data?.message || err.data?.message || 'Unable to sign in')
-    } finally {
-      isLoading.value = false
+      return navigateTo('/')
     }
+    toast.error('Unable to sign in')
   }
 </script>
 

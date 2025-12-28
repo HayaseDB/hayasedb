@@ -45,11 +45,24 @@ export default defineNuxtConfig({
       refresh: {
         isEnabled: true,
         endpoint: { path: '/refresh', method: 'post' },
+        refreshOnlyToken: false,
         token: {
           signInResponseRefreshTokenPointer: '/refreshToken',
+          refreshResponseTokenPointer: '/token',
           refreshRequestTokenPointer: '/refreshToken',
           maxAgeInSeconds: 604800,
         },
+      },
+      session: {
+        dataType: {
+          id: 'string',
+          username: 'string',
+          email: 'string',
+          firstName: 'string',
+          lastName: 'string',
+          role: 'string',
+        },
+        dataResponsePointer: '/',
       },
       pages: {
         login: '/auth/login',

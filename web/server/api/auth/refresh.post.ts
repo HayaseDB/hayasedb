@@ -7,8 +7,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Refresh token required' })
   }
 
+  const token = body.refreshToken as string
+  const authHeader = token.startsWith('Bearer ') ? token : `Bearer ${token}`
+
   return await fetchApi<RefreshResponse>('/auth/refresh', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${body.refreshToken}` },
+    headers: { Authorization: authHeader },
   })
 })
