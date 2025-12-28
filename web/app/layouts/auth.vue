@@ -7,11 +7,11 @@
     <div class="flex flex-col gap-4 p-6 md:p-10">
       <div class="flex justify-center md:justify-start">
         <NuxtLink to="/" class="flex items-center gap-2 text-lg font-semibold md:gap-3 md:text-xl">
-          <div
-            class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg md:size-10"
-          >
-            <Icon name="lucide:gallery-vertical-end" class="size-5 md:size-6" />
-          </div>
+          <img
+            src="~/assets/svg/icon-rounded.svg"
+            alt="HayaseDB"
+            class="size-8 rounded-lg md:size-10"
+          />
           HayaseDB
         </NuxtLink>
       </div>
