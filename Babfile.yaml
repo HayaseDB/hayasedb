@@ -115,14 +115,9 @@ tasks:
 
       - prompt: smtp_host
         type: input
-        message: "SMTP host:"
+        message: "SMTP host (use 'mailpit' for docker):"
         default: "localhost"
-        when: ${{ mail_provider }} == 'smtp' && ${{ deploy_mode }} == 'local'
-      - prompt: smtp_host
-        type: input
-        message: "SMTP host:"
-        default: "mailpit"
-        when: ${{ mail_provider }} == 'smtp' && ${{ deploy_mode }} == 'docker'
+        when: ${{ mail_provider }} == 'smtp'
       - prompt: smtp_port
         type: input
         message: "SMTP port:"
