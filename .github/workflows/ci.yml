@@ -72,9 +72,67 @@ jobs:
           cache-from: type=gha,scope=api
           cache-to: type=gha,mode=max,scope=api
 
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+        working-directory: ./web
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: ./web
+
+      - name: Type Check
+        run: pnpm typecheck
+        working-directory: ./web
+
+      - name: Build
+        run: pnpm build
+        working-directory: ./web
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: ghcr.io/hayasedb/hayasedb-web:dev
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
   deploy:
     name: Deploy
-    needs: api
+    needs: [api, web]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:

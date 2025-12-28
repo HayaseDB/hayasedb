@@ -18,6 +18,8 @@ jobs:
         include:
           - package: api
             path: api/package.json
+          - package: web
+            path: web/package.json
 
     steps:
       - name: Checkout
@@ -50,6 +52,9 @@ jobs:
           - package: api
             context: ./api
             image: ghcr.io/hayasedb/hayasedb-api
+          - package: web
+            context: ./web
+            image: ghcr.io/hayasedb/hayasedb-web
     steps:
       - name: Checkout
         uses: actions/checkout@v4
