@@ -53,7 +53,7 @@ export class UsersController {
   @Put('me/password')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access_token')
-  @ApiOperation({ summary: 'Change current user password' })
+  @ApiOperation({ summary: 'Change user password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   async changePassword(
     @ActiveUser() user: User,
