@@ -1,18 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { render } from '@react-email/render';
-import * as nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
 import type { ReactElement } from 'react';
 import { createElement } from 'react';
 
 import { AppConfig } from '../../config/app.config';
 import { MailConfig } from '../../config/mail.config';
+import { MAIL_PROVIDER_TOKEN } from './constants/mail.constants';
 import {
   EmailUser,
   LoginMetadata,
   SendEmailOptions,
 } from './interfaces/mail.interface';
+import type { MailProvider } from './providers/mail-provider.interface';
 import { LoginNotificationEmail } from './templates/LoginNotificationEmail';
 import { VerificationEmail } from './templates/VerificationEmail';
 import { WelcomeEmail } from './templates/WelcomeEmail';
@@ -20,32 +20,16 @@ import { WelcomeEmail } from './templates/WelcomeEmail';
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: Transporter;
   private readonly mailConfig: MailConfig;
   private readonly appConfig: AppConfig;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    @Inject(MAIL_PROVIDER_TOKEN) private readonly mailProvider: MailProvider,
+    private readonly configService: ConfigService,
+  ) {
     this.mailConfig = this.configService.getOrThrow<MailConfig>('mail');
     this.appConfig = this.configService.getOrThrow<AppConfig>('app');
-
-    this.transporter = nodemailer.createTransport({
-      host: this.mailConfig.API_MAIL_HOST,
-      port: this.mailConfig.API_MAIL_PORT,
-      secure: this.mailConfig.API_MAIL_SECURE,
-      auth:
-        this.mailConfig.API_MAIL_USER && this.mailConfig.API_MAIL_PASSWORD
-          ? {
-              user: this.mailConfig.API_MAIL_USER,
-              pass: this.mailConfig.API_MAIL_PASSWORD,
-            }
-          : undefined,
-    });
-
     this.logger.log('Mail service initialized');
-  }
-
-  private getFromAddress(): string {
-    return `"${this.mailConfig.API_MAIL_FROM_NAME}" <${this.mailConfig.API_MAIL_FROM_ADDRESS}>`;
   }
 
   private getUserName(user: EmailUser): string {
@@ -59,28 +43,19 @@ export class MailService {
   }
 
   async sendEmail(options: SendEmailOptions): Promise<void> {
-    const from = options.from
-      ? `"${options.from.name ?? this.mailConfig.API_MAIL_FROM_NAME}" <${options.from.email}>`
-      : this.getFromAddress();
-
-    await this.transporter.sendMail({
-      from,
-      to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-      replyTo: options.replyTo,
-    });
-
+    await this.mailProvider.sendEmail(options);
     const recipients = Array.isArray(options.to)
       ? options.to.join(', ')
       : options.to;
     this.logger.log(`Email sent successfully to ${recipients}`);
   }
 
-  async verifyConnection(): Promise<void> {
-    await this.transporter.verify();
-    this.logger.log('Mail connection verified successfully');
+  async verifyConnection(): Promise<boolean> {
+    if (!this.mailProvider.verify) {
+      this.logger.warn('Provider does not support verification');
+      return true;
+    }
+    return this.mailProvider.verify();
   }
 
   private async renderTemplate(
