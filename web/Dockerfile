@@ -50,7 +50,7 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "server/index.mjs"]
+CMD ["sh", "-c", "export NUXT_API_URL=${WEB_API_URL:-http://localhost:3000} && node server/index.mjs"]
 
 LABEL org.opencontainers.image.source="https://github.com/hayasedb/hayasedb"
 LABEL org.opencontainers.image.description="HayaseDB Web Frontend"
