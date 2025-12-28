@@ -34,6 +34,22 @@ tasks:
         message: "Deployment mode:"
         options: [local, docker]
 
+      - prompt: api_domain
+        type: input
+        message: "API domain (e.g., api.hayasedb.com):"
+        default: "localhost"
+        when: ${{ deploy_mode }} == 'docker'
+      - prompt: web_domain
+        type: input
+        message: "Web domain (e.g., hayasedb.com):"
+        default: "localhost"
+        when: ${{ deploy_mode }} == 'docker'
+      - prompt: minio_domain
+        type: input
+        message: "MinIO console domain (e.g., minio.hayasedb.com):"
+        default: "localhost"
+        when: ${{ deploy_mode }} == 'docker'
+
       - prompt: api_port
         type: input
         message: "API port:"
@@ -136,7 +152,7 @@ tasks:
 
       - cmd: echo "API_WEB_URL=http://localhost:${{ web_port }}" >> .env
         when: ${{ deploy_mode }} == 'local'
-      - cmd: echo "API_WEB_URL=http://web:${{ web_port }}" >> .env
+      - cmd: echo "API_WEB_URL=https://${{ web_domain }}" >> .env
         when: ${{ deploy_mode }} == 'docker'
 
       - cmd: |
@@ -237,10 +253,20 @@ tasks:
 
       - cmd: echo "WEB_API_URL=http://localhost:${{ api_port }}" >> .env
         when: ${{ deploy_mode }} == 'local'
-      - cmd: echo "WEB_API_URL=http://api:${{ api_port }}" >> .env
+      - cmd: echo "WEB_API_URL=https://${{ api_domain }}" >> .env
         when: ${{ deploy_mode }} == 'docker'
 
       - cmd: echo "WEB_SESSION_PASSWORD=${{ web_session_password }}" >> .env
+
+      - cmd: |
+          cat >> .env << 'ENVFILE'
+
+          # DEPLOYMENT
+          API_DOMAIN=${{ api_domain }}
+          WEB_DOMAIN=${{ web_domain }}
+          API_MINIO_CONSOLE_DOMAIN=${{ minio_domain }}
+          ENVFILE
+        when: ${{ deploy_mode }} == 'docker'
 
       - log: ".env file generated successfully!"
         level: info
