@@ -25,7 +25,7 @@
     "migration:generate": "pnpm typeorm migration:generate -d src/database/data-source.ts",
     "migration:run": "pnpm typeorm migration:run -d src/database/data-source.ts",
     "migration:revert": "pnpm typeorm migration:revert -d src/database/data-source.ts",
-    "email:dev": "email dev --dir src/modules/mail/templates --port 3001"
+    "email:dev": "email dev --dir src/modules/mail/templates --port 3030"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

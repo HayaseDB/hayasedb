@@ -11,7 +11,7 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - "${API_MAIL_PORT:-1025}:1025"
+      - "${API_SMTP_PORT:-1025}:1025"
       - "8025:8025"
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
@@ -45,10 +45,9 @@ services:
       context: ./web
       dockerfile: Dockerfile
     ports:
-      - "${WEB_PORT:-3001}:3000"
+      - "${WEB_PORT:-8080}:3000"
     environment:
-      NUXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3000}
-      NUXT_API_URL: http://api:3000
+      WEB_API_URL: http://api:3000
 
 networks:
   public:
