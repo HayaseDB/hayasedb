@@ -1,8 +1,8 @@
-import { z, type ZodIssue } from 'zod'
+import { z } from 'zod'
 import type { AuthResponse } from '../../types/auth'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
+  email: z.email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Validation Error',
         data: {
           message: 'Invalid login credentials format',
-          errors: error.issues.map((issue: ZodIssue) => ({
+          errors: error.issues.map((issue: z.core.$ZodIssue) => ({
             field: issue.path.join('.'),
             message: issue.message,
           })),

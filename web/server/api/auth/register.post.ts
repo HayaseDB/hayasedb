@@ -1,7 +1,7 @@
-import { z, type ZodIssue } from 'zod'
+import { z } from 'zod'
 
 const registerSchema = z.object({
-  email: z.string().email('Invalid email format'),
+  email: z.email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   username: z
     .string()
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Validation Error',
         data: {
           message: 'Invalid registration data',
-          errors: error.issues.map((issue: ZodIssue) => ({
+          errors: error.issues.map((issue: z.core.$ZodIssue) => ({
             field: issue.path.join('.'),
             message: issue.message,
           })),

@@ -1,4 +1,4 @@
-import { z, type ZodIssue } from 'zod'
+import { z } from 'zod'
 import type { AuthResponse } from '../../types/auth'
 
 const verifySchema = z.object({
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Validation Error',
         data: {
           message: 'Invalid verification token',
-          errors: error.issues.map((issue: ZodIssue) => ({
+          errors: error.issues.map((issue: z.core.$ZodIssue) => ({
             field: issue.path.join('.'),
             message: issue.message,
           })),
