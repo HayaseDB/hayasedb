@@ -59,7 +59,7 @@ export const AppDataSource = new DataSource({
   password: databaseConfig.API_DATABASE_PASSWORD,
   database: databaseConfig.API_DATABASE_NAME,
   entities: [`${baseDirection}/**/entities/*.entity${extension}`],
-  migrations: [`${baseDirection}/database/migrations/*${extension}`],
+  migrations: [`${baseDirection}/**/database/migrations/*${extension}`],
   synchronize: false,
   logging: databaseConfig.API_DATABASE_LOGGING,
 });
