@@ -85,9 +85,56 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.hayasedb-${API_ENV:-default}-minio-console.rule=Host(`${API_MINIO_CONSOLE_DOMAIN:-localhost}`)"
-        - "traefik.http.routers.hayasedb-${API_ENV:-default}-minio-console.entrypoints=web"
-        - "traefik.http.services.hayasedb-${API_ENV:-default}-minio-console.loadbalancer.server.port=9001"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.rule=Host(`${API_MINIO_CONSOLE_DOMAIN:-localhost}`)"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.entrypoints=web"
+        - "traefik.http.services.hayasedb-${APP_ENV:-default}-minio-console.loadbalancer.server.port=9001"
+
+  web:
+    image: ghcr.io/hayasedb/hayasedb-web:${WEB_IMAGE_TAG:-latest}
+    networks:
+      public:
+      internal:
+    environment:
+      NODE_ENV: production
+      NUXT_PUBLIC_API_URL: ${WEB_PUBLIC_API_URL:-}
+      NUXT_API_URL: ${WEB_INTERNAL_API_URL:-http://api:3000}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    stop_grace_period: 10s
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        monitor: 30s
+        failure_action: rollback
+        order: start-first
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        monitor: 10s
+        failure_action: pause
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-web.rule=Host(`${WEB_DOMAIN:-localhost}`)"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-web.entrypoints=web"
+        - "traefik.http.services.hayasedb-${APP_ENV:-default}-web.loadbalancer.server.port=3000"
 
   api:
     image: ghcr.io/hayasedb/hayasedb-api:${API_IMAGE_TAG:-latest}
@@ -96,7 +143,7 @@ services:
       internal:
     environment:
       API_PORT: 3000
-      API_ENV: ${API_ENV:-production}
+      API_ENV: ${APP_ENV:-production}
       API_CORS_ORIGIN: ${API_CORS_ORIGIN:-}
       API_SWAGGER_ENABLED: ${API_SWAGGER_ENABLED:-false}
       API_SWAGGER_PATH: ${API_SWAGGER_PATH:-docs}
@@ -163,6 +210,6 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.hayasedb-${API_ENV:-default}-api.rule=Host(`${API_DOMAIN:-localhost}`)"
-        - "traefik.http.routers.hayasedb-${API_ENV:-default}-api.entrypoints=web"
-        - "traefik.http.services.hayasedb-${API_ENV:-default}-api.loadbalancer.server.port=3000"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-api.rule=Host(`${API_DOMAIN:-localhost}`)"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-api.entrypoints=web"
+        - "traefik.http.services.hayasedb-${APP_ENV:-default}-api.loadbalancer.server.port=3000"

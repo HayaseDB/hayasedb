@@ -40,6 +40,16 @@ services:
       mailpit:
         condition: service_started
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "${WEB_PORT:-3001}:3000"
+    environment:
+      NUXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3000}
+      NUXT_API_URL: http://api:3000
+
 networks:
   public:
     external: false
