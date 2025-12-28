@@ -5,12 +5,12 @@
 <template>
   <div class="bg-background text-foreground grid min-h-svh lg:grid-cols-2">
     <div class="flex flex-col gap-4 p-6 md:p-10">
-      <div class="flex justify-center gap-2 md:justify-start">
-        <NuxtLink to="/" class="flex items-center gap-2 font-medium">
+      <div class="flex justify-center md:justify-start">
+        <NuxtLink to="/" class="flex items-center gap-2 text-lg font-semibold md:gap-3 md:text-xl">
           <div
-            class="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md"
+            class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg md:size-10"
           >
-            <Icon name="lucide:gallery-vertical-end" class="size-4" />
+            <Icon name="lucide:gallery-vertical-end" class="size-5 md:size-6" />
           </div>
           HayaseDB
         </NuxtLink>

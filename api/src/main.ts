@@ -30,12 +30,12 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const appConfig = configService.getOrThrow<AppConfig>('app');
 
-  if (appConfig.API_CORS_ORIGIN) {
-    app.enableCors({
-      origin: appConfig.API_CORS_ORIGIN,
-      credentials: true,
-    });
-  }
+  app.enableCors({
+    origin: true,
+    methods: '*',
+    allowedHeaders: '*',
+    credentials: true,
+  });
 
   const swaggerConfig = configService.getOrThrow<SwaggerConfig>('swagger');
 

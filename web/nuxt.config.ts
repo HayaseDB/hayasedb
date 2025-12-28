@@ -1,4 +1,3 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 import { config } from 'dotenv'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'

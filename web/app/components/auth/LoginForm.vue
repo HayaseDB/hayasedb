@@ -2,6 +2,7 @@
   import { toTypedSchema } from '@vee-validate/zod'
   import { useForm, Field as VeeField } from 'vee-validate'
   import { z } from 'zod'
+  import { Loader2 } from 'lucide-vue-next'
   import { Button } from '@/components/ui/button'
   import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { Input } from '@/components/ui/input'
@@ -52,6 +53,7 @@
             v-bind="field"
             type="email"
             placeholder="hayase.nagatoro@gmail.com"
+            :disabled="props.isLoading"
             :aria-invalid="!!errors.length"
           />
           <FieldError v-if="errors.length" :errors="errors" />
@@ -61,12 +63,19 @@
       <VeeField v-slot="{ field, errors }" name="password">
         <Field :data-invalid="!!errors.length">
           <FieldLabel for="password">Password</FieldLabel>
-          <Input id="password" v-bind="field" type="password" :aria-invalid="!!errors.length" />
+          <Input
+            id="password"
+            v-bind="field"
+            type="password"
+            :disabled="props.isLoading"
+            :aria-invalid="!!errors.length"
+          />
           <FieldError v-if="errors.length" :errors="errors" />
         </Field>
       </VeeField>
 
       <Button type="submit" class="w-full" :disabled="props.isLoading">
+        <Loader2 v-if="props.isLoading" class="animate-spin" />
         {{ props.isLoading ? 'Signing in...' : 'Sign in' }}
       </Button>
 

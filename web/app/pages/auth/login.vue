@@ -12,17 +12,20 @@
     description: 'Sign in to your HayaseDB account',
   })
 
-  const { signIn, status } = useAuth()
-  const isLoading = computed(() => status.value === 'loading')
+  const { signIn } = useAuth()
+  const isLoading = ref(false)
 
   async function handleLogin(credentials: { email: string; password: string }) {
+    isLoading.value = true
     try {
       await signIn(credentials)
       toast.success('Welcome back!')
       await navigateTo('/')
-    } catch (error: unknown) {
-      const fetchError = error as { data?: { message?: string } }
-      toast.error(fetchError?.data?.message || 'Login failed')
+    } catch (e) {
+      const err = e as { data?: { message?: string; data?: { message?: string } } }
+      toast.error(err.data?.data?.message || err.data?.message || 'Unable to sign in')
+    } finally {
+      isLoading.value = false
     }
   }
 </script>

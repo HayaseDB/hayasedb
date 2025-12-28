@@ -2,6 +2,7 @@
   import { toTypedSchema } from '@vee-validate/zod'
   import { useForm, Field as VeeField } from 'vee-validate'
   import { z } from 'zod'
+  import { Loader2 } from 'lucide-vue-next'
   import { Button } from '@/components/ui/button'
   import {
     Field,
@@ -79,6 +80,7 @@
               v-bind="field"
               type="text"
               placeholder="Hayase"
+              :disabled="props.isLoading"
               :aria-invalid="!!errors.length"
             />
             <FieldError v-if="errors.length" :errors="errors" />
@@ -93,6 +95,7 @@
               v-bind="field"
               type="text"
               placeholder="Nagatoro"
+              :disabled="props.isLoading"
               :aria-invalid="!!errors.length"
             />
             <FieldError v-if="errors.length" :errors="errors" />
@@ -108,6 +111,7 @@
             v-bind="field"
             type="text"
             placeholder="hayase"
+            :disabled="props.isLoading"
             :aria-invalid="!!errors.length"
           />
           <FieldDescription
@@ -125,6 +129,7 @@
             v-bind="field"
             type="email"
             placeholder="hayase.nagatoro@gmail.com"
+            :disabled="props.isLoading"
             :aria-invalid="!!errors.length"
           />
           <FieldDescription>We'll send a verification email to this address.</FieldDescription>
@@ -135,7 +140,13 @@
       <VeeField v-slot="{ field, errors }" name="password">
         <Field :data-invalid="!!errors.length">
           <FieldLabel for="password">Password</FieldLabel>
-          <Input id="password" v-bind="field" type="password" :aria-invalid="!!errors.length" />
+          <Input
+            id="password"
+            v-bind="field"
+            type="password"
+            :disabled="props.isLoading"
+            :aria-invalid="!!errors.length"
+          />
           <FieldDescription>Must be at least 8 characters.</FieldDescription>
           <FieldError v-if="errors.length" :errors="errors" />
         </Field>
@@ -148,6 +159,7 @@
             id="confirmPassword"
             v-bind="field"
             type="password"
+            :disabled="props.isLoading"
             :aria-invalid="!!errors.length"
           />
           <FieldError v-if="errors.length" :errors="errors" />
@@ -155,6 +167,7 @@
       </VeeField>
 
       <Button type="submit" class="w-full" :disabled="props.isLoading">
+        <Loader2 v-if="props.isLoading" class="animate-spin" />
         {{ props.isLoading ? 'Creating account...' : 'Create Account' }}
       </Button>
 

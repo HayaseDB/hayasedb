@@ -32,10 +32,9 @@
         description: 'You can now sign in to your account',
       })
       await navigateTo('/auth/login')
-    } catch (e: unknown) {
-      const fetchError = e as { data?: { message?: string } }
-      const message =
-        fetchError?.data?.message || 'Verification failed. The link may be invalid or expired.'
+    } catch (e) {
+      const err = e as { data?: { message?: string; data?: { message?: string } } }
+      const message = err.data?.data?.message || err.data?.message || 'Verification failed'
       error.value = message
       toast.error(message)
     } finally {

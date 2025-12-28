@@ -1,13 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUrl,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsUrl, Max, Min } from 'class-validator';
 
 import { toEnum, toInt } from './transforms';
 
@@ -29,10 +21,6 @@ export class AppConfig {
   @Max(65_535)
   @Transform(({ value }) => toInt(value, 3000))
   API_PORT: number = 3000;
-
-  @IsString()
-  @IsOptional()
-  API_CORS_ORIGIN?: string;
 
   @IsUrl({ require_tld: false })
   @IsOptional()

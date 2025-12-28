@@ -143,7 +143,6 @@ services:
     environment:
       API_PORT: 3000
       API_ENV: ${APP_ENV:-production}
-      API_CORS_ORIGIN: ${API_CORS_ORIGIN:-}
       API_SWAGGER_ENABLED: ${API_SWAGGER_ENABLED:-false}
       API_SWAGGER_PATH: ${API_SWAGGER_PATH:-docs}
       API_DATABASE_HOST: postgres

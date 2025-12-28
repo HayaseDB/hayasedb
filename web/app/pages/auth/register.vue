@@ -13,8 +13,8 @@
     description: 'Create your HayaseDB account',
   })
 
-  const { signUp, status } = useAuth()
-  const isLoading = computed(() => status.value === 'loading')
+  const { signUp } = useAuth()
+  const isLoading = ref(false)
   const success = ref(false)
 
   interface RegisterData {
@@ -26,15 +26,18 @@
   }
 
   async function handleRegister(data: RegisterData) {
+    isLoading.value = true
     try {
       await signUp(data)
       toast.success('Account created!', {
-        description: 'Check your email to verify your account',
+        description: 'Check your email to verify your account.',
       })
       success.value = true
-    } catch (error: unknown) {
-      const fetchError = error as { data?: { message?: string } }
-      toast.error(fetchError?.data?.message || 'Registration failed')
+    } catch (e) {
+      const err = e as { data?: { message?: string; data?: { message?: string } } }
+      toast.error(err.data?.data?.message || err.data?.message || 'Unable to create account')
+    } finally {
+      isLoading.value = false
     }
   }
 
