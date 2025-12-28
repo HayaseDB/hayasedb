@@ -11,8 +11,6 @@ coverage
 test
 **/*.spec.ts
 **/*.test.ts
-tsconfig*.json
-nest-cli.json
 .prettierrc
 .eslintrc*
 eslint.config.*
