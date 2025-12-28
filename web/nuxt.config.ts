@@ -69,7 +69,7 @@ export default defineNuxtConfig({
       },
     },
     globalAppMiddleware: {
-      isEnabled: false,
+      isEnabled: true,
     },
   },
 

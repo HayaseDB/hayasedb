@@ -17,14 +17,22 @@
 
   async function handleLogin(credentials: { email: string; password: string }) {
     isLoading.value = true
-    await signIn(credentials).catch(() => {})
-    isLoading.value = false
+    try {
+      await signIn(credentials)
+      isLoading.value = false
 
-    if (token.value) {
-      toast.success('Welcome back!')
-      return navigateTo('/')
+      if (token.value) {
+        toast.success('Welcome back!')
+        return navigateTo('/')
+      }
+      toast.error('Unable to sign in')
+    } catch (error: unknown) {
+      isLoading.value = false
+      const message =
+        (error as { data?: { data?: { message?: string } } })?.data?.data?.message ||
+        'Unable to sign in'
+      toast.error(message)
     }
-    toast.error('Unable to sign in')
   }
 </script>
 
