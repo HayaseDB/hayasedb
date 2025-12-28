@@ -29,6 +29,11 @@ tasks:
         level: warn
         when: ${{ app_env }} != 'development'
 
+      - prompt: deploy_mode
+        type: select
+        message: "Deployment mode:"
+        options: [local, docker]
+
       - prompt: api_port
         type: input
         message: "API port:"
@@ -91,7 +96,12 @@ tasks:
         type: input
         message: "SMTP host:"
         default: "localhost"
-        when: ${{ mail_provider }} == 'smtp'
+        when: ${{ mail_provider }} == 'smtp' && ${{ deploy_mode }} == 'local'
+      - prompt: smtp_host
+        type: input
+        message: "SMTP host:"
+        default: "mailpit"
+        when: ${{ mail_provider }} == 'smtp' && ${{ deploy_mode }} == 'docker'
       - prompt: smtp_port
         type: input
         message: "SMTP port:"
@@ -122,10 +132,26 @@ tasks:
           # API - Core
           API_ENV=${{ app_env }}
           API_PORT=${{ api_port }}
-          API_WEB_URL=http://localhost:${{ web_port }}
+          ENVFILE
+
+      - cmd: echo "API_WEB_URL=http://localhost:${{ web_port }}" >> .env
+        when: ${{ deploy_mode }} == 'local'
+      - cmd: echo "API_WEB_URL=http://web:${{ web_port }}" >> .env
+        when: ${{ deploy_mode }} == 'docker'
+
+      - cmd: |
+          cat >> .env << 'ENVFILE'
 
           # API - Database
-          API_DATABASE_HOST=localhost
+          ENVFILE
+
+      - cmd: echo "API_DATABASE_HOST=localhost" >> .env
+        when: ${{ deploy_mode }} == 'local'
+      - cmd: echo "API_DATABASE_HOST=postgres" >> .env
+        when: ${{ deploy_mode }} == 'docker'
+
+      - cmd: |
+          cat >> .env << 'ENVFILE'
           API_DATABASE_PORT=5432
           API_DATABASE_NAME=${{ db_name }}
           API_DATABASE_USERNAME=${{ db_user }}
@@ -148,7 +174,15 @@ tasks:
           API_JWT_REFRESH_EXPIRES_IN=7d
 
           # API - MinIO Storage
-          API_MINIO_HOST=localhost
+          ENVFILE
+
+      - cmd: echo "API_MINIO_HOST=localhost" >> .env
+        when: ${{ deploy_mode }} == 'local'
+      - cmd: echo "API_MINIO_HOST=minio" >> .env
+        when: ${{ deploy_mode }} == 'docker'
+
+      - cmd: |
+          cat >> .env << 'ENVFILE'
           API_MINIO_PORT=9000
           API_MINIO_ACCESS_KEY=${{ minio_access }}
           API_MINIO_SECRET_KEY=${{ minio_secret }}
@@ -199,9 +233,14 @@ tasks:
 
           # WEB
           WEB_PORT=${{ web_port }}
-          WEB_API_URL=http://localhost:${{ api_port }}
-          WEB_SESSION_PASSWORD=${{ web_session_password }}
           ENVFILE
+
+      - cmd: echo "WEB_API_URL=http://localhost:${{ api_port }}" >> .env
+        when: ${{ deploy_mode }} == 'local'
+      - cmd: echo "WEB_API_URL=http://api:${{ api_port }}" >> .env
+        when: ${{ deploy_mode }} == 'docker'
+
+      - cmd: echo "WEB_SESSION_PASSWORD=${{ web_session_password }}" >> .env
 
       - log: ".env file generated successfully!"
         level: info
