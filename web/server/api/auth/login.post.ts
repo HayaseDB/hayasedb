@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { AuthResponse } from '../../types/auth'
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(8),
 })
 
