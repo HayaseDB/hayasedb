@@ -10,12 +10,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  api:
-    name: API
+  test-api:
+    name: Test API
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,32 +49,9 @@ jobs:
         run: pnpm build
         working-directory: ./api
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GHCR
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Push Docker
-        uses: docker/build-push-action@v6
-        with:
-          context: ./api
-          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-          tags: ghcr.io/hayasedb/hayasedb-api:dev
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,mode=max,scope=api
-
-  web:
-    name: Web
+  test-web:
+    name: Test Web
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -110,29 +84,71 @@ jobs:
         run: pnpm build
         working-directory: ./web
 
+  docker-api:
+    name: Docker API
+    needs: [test-api, test-web]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: true
+          tags: ghcr.io/hayasedb/hayasedb-api:dev
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+  docker-web:
+    name: Docker Web
+    needs: [test-api, test-web]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
         uses: docker/build-push-action@v6
         with:
           context: ./web
-          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          push: true
           tags: ghcr.io/hayasedb/hayasedb-web:dev
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
 
   deploy:
     name: Deploy
-    needs: [api, web]
+    needs: [docker-api, docker-web]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
