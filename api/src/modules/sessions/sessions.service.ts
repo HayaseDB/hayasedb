@@ -48,4 +48,11 @@ export class SessionsService {
 
     await this.sessionRepository.softRemove(session);
   }
+
+  async findByUserId(userId: string): Promise<Session[]> {
+    return await this.sessionRepository.find({
+      where: { user: { id: userId } },
+      order: { createdAt: 'DESC' },
+    });
+  }
 }
