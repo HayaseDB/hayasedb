@@ -1,5 +1,11 @@
 import type { FetchError } from 'ofetch'
 
+interface ApiErrorData {
+  message: string
+  statusCode: number
+  error?: string
+}
+
 export async function fetchApi<T>(
   path: string,
   options: {
@@ -10,11 +16,10 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const config = useRuntimeConfig()
   const url = `${config.apiUrl}${path}`
-  const method = options.method || 'GET'
 
   try {
-    const response = await $fetch<T>(url, {
-      method,
+    const response = await $fetch(url, {
+      method: options.method || 'GET',
       body: options.body,
       headers: {
         'Content-Type': 'application/json',
@@ -24,32 +29,13 @@ export async function fetchApi<T>(
 
     return response as T
   } catch (error) {
-    const fetchError = error as FetchError
-
-    if (!fetchError.response) {
-      throw createError({
-        statusCode: 503,
-        statusMessage: 'Service Unavailable',
-        data: {
-          message: 'Unable to connect to the API server',
-          code: 'NETWORK_ERROR',
-          path,
-        },
-      })
-    }
-
-    const data = fetchError.data as Record<string, unknown> | undefined
-    const statusCode = fetchError.statusCode || 500
-    const message = (data?.message as string) || fetchError.message || 'An error occurred'
+    const fetchError = error as FetchError<ApiErrorData>
 
     throw createError({
-      statusCode,
-      statusMessage: fetchError.statusMessage || 'API Error',
+      statusCode: fetchError.statusCode || 503,
+      statusMessage: fetchError.statusMessage || 'Service Unavailable',
       data: {
-        message,
-        error: data?.error,
-        code: data?.code,
-        path,
+        message: fetchError.data?.message || 'Unable to connect to API',
       },
     })
   }

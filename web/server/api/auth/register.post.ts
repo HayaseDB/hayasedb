@@ -1,42 +1,19 @@
 import { z } from 'zod'
+import type { MessageResponse } from '../../types/auth'
 
-const registerSchema = z.object({
-  email: z.email('Invalid email format'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  username: z
-    .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(50, 'Username must be at most 50 characters'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  username: z.string().min(3).max(50),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
 })
 
 export default defineEventHandler(async (event) => {
-  let body: z.infer<typeof registerSchema>
+  const body = await readValidatedBody(event, schema.parse)
 
-  try {
-    body = await readValidatedBody(event, registerSchema.parse)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Validation Error',
-        data: {
-          message: 'Invalid registration data',
-          errors: error.issues.map((issue: z.core.$ZodIssue) => ({
-            field: issue.path.join('.'),
-            message: issue.message,
-          })),
-        },
-      })
-    }
-    throw error
-  }
-
-  await fetchApi<{ message: string }>('/auth/register', {
+  return await fetchApi<MessageResponse>('/auth/register', {
     method: 'POST',
     body,
   })
-
-  return { success: true }
 })

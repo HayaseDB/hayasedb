@@ -8,16 +8,29 @@ export interface User {
   isEmailVerified: boolean
 }
 
-export interface AuthTokenResponse {
+export interface AuthResponse {
+  token: string
+  refreshToken: string
+  tokenExpires: number
+  user: User
+}
+
+export interface RefreshResponse {
   token: string
   refreshToken: string
   tokenExpires: number
 }
 
-export interface AuthResponse extends AuthTokenResponse {
-  user: User
+export interface MessageResponse {
+  message: string
 }
 
-export interface MeResponse {
+export interface SessionResponse {
   user: User
+  session: {
+    id: string
+    createdAt: string
+    updatedAt: string
+    isCurrent: boolean
+  }
 }

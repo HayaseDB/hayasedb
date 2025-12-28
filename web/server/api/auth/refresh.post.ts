@@ -1,27 +1,14 @@
-import type { AuthTokenResponse } from '../../types/auth'
+import type { RefreshResponse } from '../../types/auth'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const refreshToken = body?.refreshToken
 
-  if (!refreshToken || typeof refreshToken !== 'string') {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
-      data: {
-        message: 'No refresh token provided',
-        code: 'NO_REFRESH_TOKEN',
-      },
-    })
+  if (!body?.refreshToken) {
+    throw createError({ statusCode: 401, message: 'Refresh token required' })
   }
 
-  const response = await fetchApi<AuthTokenResponse>('/auth/refresh', {
+  return await fetchApi<RefreshResponse>('/auth/refresh', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${refreshToken}` },
+    headers: { Authorization: `Bearer ${body.refreshToken}` },
   })
-
-  return {
-    token: response.token,
-    refreshToken: response.refreshToken,
-  }
 })

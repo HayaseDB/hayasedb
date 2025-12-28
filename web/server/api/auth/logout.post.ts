@@ -1,12 +1,14 @@
 export default defineEventHandler(async (event) => {
   const authHeader = getHeader(event, 'Authorization')
 
-  if (authHeader) {
-    await fetchApi('/auth/logout', {
-      method: 'POST',
-      headers: { Authorization: authHeader },
-    }).catch(() => undefined)
+  if (!authHeader) {
+    throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
 
-  return { success: true }
+  await fetchApi('/auth/logout', {
+    method: 'POST',
+    headers: { Authorization: authHeader },
+  })
+
+  return null
 })
