@@ -28,7 +28,7 @@ COPY --from=build --chown=nuxt:nodejs /app/.output ./
 USER nuxt
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://localhost:3000/').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
 CMD ["node", "server/index.mjs"]
