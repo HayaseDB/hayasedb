@@ -1,7 +1,7 @@
 dir: ..
 
 tasks:
-  generate:
+  migration:generate:
     desc: Generate a new migration
     run:
       - prompt: name
@@ -10,22 +10,22 @@ tasks:
         placeholder: "CreateUsersTable"
       - cmd: pnpm typeorm migration:generate src/database/migrations/${{ name }} -d src/database/data-source.ts
 
-  run:
+  migration:run:
     desc: Run pending migrations
     run:
       - cmd: pnpm typeorm migration:run -d src/database/data-source.ts
 
-  revert:
+  migration:revert:
     desc: Revert last migration
     run:
       - cmd: pnpm typeorm migration:revert -d src/database/data-source.ts
 
-  show:
+  migration:status:
     desc: Show all migrations and their status
     run:
       - cmd: pnpm typeorm migration:show -d src/database/data-source.ts
 
-  sync:
+  schema:sync:
     desc: Synchronize database schema (dev only)
     run:
       - prompt: confirm
@@ -34,7 +34,7 @@ tasks:
         default: false
       - cmd: pnpm typeorm schema:sync -d src/database/data-source.ts
 
-  drop:
+  schema:drop:
     desc: Drop all tables (dangerous)
     run:
       - prompt: confirm

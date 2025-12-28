@@ -57,7 +57,7 @@ tasks:
     run:
       - cmd: pnpm test:watch
 
-  test:cov:
+  test:coverage:
     desc: Run tests with coverage
     run:
       - cmd: pnpm test:cov

@@ -13,7 +13,7 @@ tasks:
     run:
       - cmd: docker compose up -d
 
-  docker:up:build:
+  docker:build:
     desc: Build and start all services
     run:
       - cmd: docker compose up -d --build
@@ -23,7 +23,7 @@ tasks:
     run:
       - cmd: docker compose down
 
-  docker:down:clean:
+  docker:destroy:
     desc: Stop all services and remove volumes
     run:
       - prompt: confirm
@@ -57,7 +57,7 @@ tasks:
     run:
       - cmd: docker compose logs -f minio
 
-  docker:ps:
+  docker:status:
     desc: Show running services
     run:
       - cmd: docker compose ps
@@ -67,7 +67,7 @@ tasks:
     run:
       - cmd: docker compose restart
 
-  docker:rebuild:
+  docker:rebuild:api:
     desc: Rebuild and restart API service
     run:
       - cmd: docker compose up -d --build api
