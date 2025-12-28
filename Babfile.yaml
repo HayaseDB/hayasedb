@@ -1,6 +1,8 @@
 includes:
   api:
     babfile: ./api/babfiles/babfile.api.yaml
+  web:
+    babfile: ./web/babfiles/babfile.web.yaml
 
 tasks:
   docker:infra:
