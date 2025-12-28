@@ -4,10 +4,14 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const refreshToken = body?.refreshToken
 
-  if (!refreshToken) {
+  if (!refreshToken || typeof refreshToken !== 'string') {
     throw createError({
       statusCode: 401,
-      message: 'No refresh token',
+      statusMessage: 'Unauthorized',
+      data: {
+        message: 'No refresh token provided',
+        code: 'NO_REFRESH_TOKEN',
+      },
     })
   }
 

@@ -10,10 +10,11 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const config = useRuntimeConfig()
   const url = `${config.apiUrl}${path}`
+  const method = options.method || 'GET'
 
   try {
-    const response = await $fetch(url, {
-      method: options.method || 'GET',
+    const response = await $fetch<T>(url, {
+      method,
       body: options.body,
       headers: {
         'Content-Type': 'application/json',
@@ -24,15 +25,31 @@ export async function fetchApi<T>(
     return response as T
   } catch (error) {
     const fetchError = error as FetchError
+
+    if (!fetchError.response) {
+      throw createError({
+        statusCode: 503,
+        statusMessage: 'Service Unavailable',
+        data: {
+          message: 'Unable to connect to the API server',
+          code: 'NETWORK_ERROR',
+          path,
+        },
+      })
+    }
+
     const data = fetchError.data as Record<string, unknown> | undefined
+    const statusCode = fetchError.statusCode || 500
+    const message = (data?.message as string) || fetchError.message || 'An error occurred'
 
     throw createError({
-      statusCode: fetchError.statusCode || 500,
-      statusMessage: fetchError.statusMessage || 'Internal Server Error',
+      statusCode,
+      statusMessage: fetchError.statusMessage || 'API Error',
       data: {
-        message: data?.message || fetchError.message,
+        message,
         error: data?.error,
-        statusCode: fetchError.statusCode,
+        code: data?.code,
+        path,
       },
     })
   }

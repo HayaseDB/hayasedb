@@ -6,7 +6,11 @@ export default defineEventHandler(async (event) => {
   if (!authHeader) {
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      statusMessage: 'Unauthorized',
+      data: {
+        message: 'No authorization token provided',
+        code: 'NO_AUTH_TOKEN',
+      },
     })
   }
 

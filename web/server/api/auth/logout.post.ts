@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
     await fetchApi('/auth/logout', {
       method: 'POST',
       headers: { Authorization: authHeader },
-    }).catch(() => {})
+    }).catch(() => undefined)
   }
 
   return { success: true }
