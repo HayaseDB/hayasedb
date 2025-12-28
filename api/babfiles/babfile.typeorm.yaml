@@ -2,8 +2,14 @@ dir: ..
 
 tasks:
   migration:generate:
-    desc: Generate a new migration
+    desc: Generate a new migration (resets database first)
     run:
+      - prompt: confirm
+        type: confirm
+        message: "This will DROP ALL TABLES and run migrations before generating. Continue?"
+        default: false
+      - cmd: pnpm typeorm schema:drop -d src/database/data-source.ts
+      - cmd: pnpm typeorm migration:run -d src/database/data-source.ts
       - prompt: name
         type: input
         message: "Migration name:"

@@ -1,0 +1,41 @@
+output:
+  - summary
+  - success
+  - failure
+
+pre-commit:
+  parallel: true
+  commands:
+    api-format:
+      root: api/
+      run: pnpm format --log-level error
+      stage_fixed: true
+    api-lint:
+      root: api/
+      run: pnpm lint:fix --quiet
+      stage_fixed: true
+    api-typecheck:
+      root: api/
+      run: pnpm typecheck
+    web-format:
+      root: web/
+      run: pnpm format --log-level error
+      stage_fixed: true
+    web-lint:
+      root: web/
+      run: pnpm lint:fix --quiet
+      stage_fixed: true
+    web-typecheck:
+      root: web/
+      run: pnpm typecheck
+
+commit-msg:
+  commands:
+    commitlint:
+      run: |
+        MSG=$(cat {1})
+        if ! npx --no -- commitlint --edit {1} 2>/dev/null; then
+          echo "Invalid: \"$MSG\""
+          echo "Expected: <type>: <description>  (e.g. feat: add login)"
+          exit 1
+        fi

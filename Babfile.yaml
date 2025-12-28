@@ -5,6 +5,13 @@ includes:
     babfile: ./web/babfiles/babfile.web.yaml
 
 tasks:
+
+  check:
+    desc: useful for pre commit checks
+    run:
+      - task: api:check
+      - task: web:check
+
   docker:infra:
     desc: Start infrastructure only (postgres + minio + mailpit)
     run:

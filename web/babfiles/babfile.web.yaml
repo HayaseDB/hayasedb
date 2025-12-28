@@ -41,8 +41,16 @@ tasks:
     run:
       - cmd: pnpm format:check
 
-  check:
-    desc: Run lint and format check
+  typecheck:
+    desc: Type check code
     run:
-      - task: lint
-      - task: format:check
+      - cmd: pnpm typecheck
+
+  check:
+    desc: Pre-commit check (fix and verify)
+    run:
+      - cmd: pnpm format
+      - cmd: pnpm eslint . --fix --max-warnings 0
+      - cmd: pnpm typecheck
+      - log: All checks passed
+        level: info

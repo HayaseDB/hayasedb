@@ -47,6 +47,16 @@ tasks:
     run:
       - cmd: pnpm format
 
+  format:check:
+    desc: Check code formatting
+    run:
+      - cmd: pnpm format:check
+
+  typecheck:
+    desc: Type check code
+    run:
+      - cmd: pnpm typecheck
+
   test:
     desc: Run tests
     run:
@@ -68,7 +78,10 @@ tasks:
       - cmd: pnpm test:e2e
 
   check:
-    desc: Run lint and tests
+    desc: Pre-commit check (fix and verify)
     run:
-      - task: lint
-      - task: test
+      - cmd: pnpm format
+      - cmd: pnpm eslint "{src,apps,libs,test}/**/*.ts" --fix --max-warnings 0
+      - cmd: pnpm typecheck
+      - log: All checks passed
+        level: info
