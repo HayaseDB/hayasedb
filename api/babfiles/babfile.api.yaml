@@ -1,6 +1,8 @@
 includes:
   db:
     babfile: ./babfile.typeorm.yaml
+  email:
+    babfile: ./babfile.email.yaml
 
 dir: ..
 

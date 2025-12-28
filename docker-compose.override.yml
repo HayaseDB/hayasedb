@@ -6,7 +6,16 @@ services:
   minio:
     ports:
       - "${API_MINIO_PORT:-9000}:9000"
-      - "${API_MINIO_CONSOLE_PORT:-9001}:9001"
+      - "9001:9001"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "${API_MAIL_PORT:-1025}:1025"
+      - "8025:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
   api:
     build:
@@ -18,11 +27,18 @@ services:
       API_ENV: development
       API_SWAGGER_ENABLED: "true"
       API_DATABASE_LOGGING: "true"
+      API_JWT_SECRET: dev-jwt-secret-not-for-production
+      API_JWT_REFRESH_SECRET: dev-refresh-secret-not-for-production
+      API_MAIL_HOST: mailpit
+      API_MAIL_PORT: 1025
+      API_MAIL_FROM_ADDRESS: noreply@localhost
     depends_on:
       postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
 networks:
   public:

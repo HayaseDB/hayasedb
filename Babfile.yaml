@@ -4,9 +4,9 @@ includes:
 
 tasks:
   docker:infra:
-    desc: Start infrastructure only (postgres + minio)
+    desc: Start infrastructure only (postgres + minio + mailpit)
     run:
-      - cmd: docker compose up -d postgres minio
+      - cmd: docker compose up -d postgres minio mailpit
 
   docker:up:
     desc: Start all services
@@ -46,6 +46,16 @@ tasks:
     desc: Show logs from PostgreSQL service
     run:
       - cmd: docker compose logs -f postgres
+
+  docker:logs:mail:
+    desc: Show logs from Mailpit service
+    run:
+      - cmd: docker compose logs -f mailpit
+
+  docker:logs:minio:
+    desc: Show logs from MinIO service
+    run:
+      - cmd: docker compose logs -f minio
 
   docker:ps:
     desc: Show running services
