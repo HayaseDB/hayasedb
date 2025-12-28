@@ -4,7 +4,10 @@ import { plainToInstance } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
 
 import { AppConfig } from './app.config';
+import { AuthConfig } from './auth.config';
 import { DatabaseConfig } from './database.config';
+import { MailConfig } from './mail.config';
+import { MinioConfig } from './minio.config';
 import { SwaggerConfig } from './swagger.config';
 
 interface ConfigValidationError {
@@ -98,7 +101,10 @@ function checkAllValidationErrors(): void {
       envFilePath: `${__dirname}/../../../../.env`,
       load: [
         createConfigLoader(AppConfig, 'app'),
+        createConfigLoader(AuthConfig, 'auth'),
         createConfigLoader(DatabaseConfig, 'database'),
+        createConfigLoader(MailConfig, 'mail'),
+        createConfigLoader(MinioConfig, 'minio'),
         createConfigLoader(SwaggerConfig, 'swagger'),
         () => {
           checkAllValidationErrors();

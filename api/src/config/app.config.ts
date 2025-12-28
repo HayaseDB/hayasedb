@@ -1,5 +1,13 @@
 import { Transform } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Max,
+  Min,
+} from 'class-validator';
 
 import { toEnum, toInt } from './transforms';
 
@@ -25,4 +33,8 @@ export class AppConfig {
   @IsString()
   @IsOptional()
   API_CORS_ORIGIN?: string;
+
+  @IsUrl({ require_tld: false })
+  @IsOptional()
+  API_WEB_URL?: string;
 }
