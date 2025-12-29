@@ -4,7 +4,11 @@
 
   definePageMeta({
     layout: 'auth',
-    auth: { unauthenticatedOnly: true, navigateAuthenticatedTo: '/' },
+    middleware: 'sidebase-auth',
+    auth: {
+      unauthenticatedOnly: true,
+      navigateAuthenticatedTo: '/',
+    },
   })
 
   useSeoMeta({

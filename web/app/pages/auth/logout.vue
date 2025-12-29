@@ -1,7 +1,11 @@
 <script setup lang="ts">
   definePageMeta({
     layout: 'auth',
-    auth: { authenticatedOnly: true, navigateUnauthenticatedTo: '/auth/login' },
+    middleware: 'sidebase-auth',
+    auth: {
+      unauthenticatedOnly: false,
+      navigateUnauthenticatedTo: '/auth/login',
+    },
   })
 
   const { signOut, token } = useAuth()

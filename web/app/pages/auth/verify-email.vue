@@ -5,6 +5,7 @@
 
   definePageMeta({
     layout: 'auth',
+    auth: false,
   })
 
   useSeoMeta({

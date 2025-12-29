@@ -4,7 +4,11 @@
 
   definePageMeta({
     layout: 'auth',
-    auth: { unauthenticatedOnly: true, navigateAuthenticatedTo: '/' },
+    middleware: 'sidebase-auth',
+    auth: {
+      unauthenticatedOnly: true,
+      navigateAuthenticatedTo: '/',
+    },
   })
 
   useSeoMeta({
@@ -12,26 +16,22 @@
     description: 'Sign in to your HayaseDB account',
   })
 
-  const { signIn, token } = useAuth()
+  const { signIn } = useAuth()
   const isLoading = ref(false)
 
   async function handleLogin(credentials: { email: string; password: string }) {
     isLoading.value = true
     try {
-      await signIn(credentials)
-      isLoading.value = false
-
-      if (token.value) {
-        toast.success('Welcome back!')
-        return navigateTo('/')
-      }
-      toast.error('Unable to sign in')
+      await signIn(credentials, { redirect: false })
+      toast.success('Welcome back!')
+      await navigateTo('/')
     } catch (error: unknown) {
-      isLoading.value = false
       const message =
         (error as { data?: { data?: { message?: string } } })?.data?.data?.message ||
         'Unable to sign in'
       toast.error(message)
+    } finally {
+      isLoading.value = false
     }
   }
 </script>
