@@ -96,34 +96,13 @@ export class AuthService {
     };
   }
 
-  async verifyEmail(token: string, metadata?: RequestMetadata) {
+  async verifyEmail(token: string) {
     const user = await this.usersService.verifyEmail(token);
-
-    const hash = this.generateSessionHash();
-
-    const session = await this.sessionsService.create({
-      userId: user.id,
-      hash,
-      metadata,
-    });
-
-    const {
-      token: accessToken,
-      refreshToken,
-      tokenExpires,
-    } = await this.getTokensData({
-      userId: user.id,
-      sessionId: session.id,
-      hash,
-    });
 
     void this.mailService.sendWelcomeEmail(user);
 
     return {
-      token: accessToken,
-      refreshToken,
-      tokenExpires,
-      user,
+      message: 'Email verified successfully. You can now log in.',
     };
   }
 

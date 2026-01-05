@@ -32,6 +32,7 @@ import { RegisterDto } from './dto/register.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { VerifyEmailResponseDto } from './dto/verify-email-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 
@@ -72,7 +73,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Verify email address',
     description:
-      'Verify the email address using the token sent to the user email. Returns authentication tokens on success.',
+      'Verify the email address using the token sent to the user email. User must log in separately after verification.',
   })
   @ApiBody({
     type: VerifyEmailDto,
@@ -81,7 +82,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Email verified successfully',
-    type: AuthResponseDto,
+    type: VerifyEmailResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -89,9 +90,8 @@ export class AuthController {
   })
   async verifyEmail(
     @Body() dto: VerifyEmailDto,
-    @RequestMetadataDecorator() metadata: RequestMetadata,
-  ): Promise<AuthResponseDto> {
-    return await this.authService.verifyEmail(dto.token, metadata);
+  ): Promise<VerifyEmailResponseDto> {
+    return await this.authService.verifyEmail(dto.token);
   }
 
   @Post('resend-verification')
