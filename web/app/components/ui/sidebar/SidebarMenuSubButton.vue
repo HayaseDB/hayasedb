@@ -15,6 +15,7 @@
     {
       as: 'a',
       size: 'md',
+      class: undefined,
     },
   )
 </script>

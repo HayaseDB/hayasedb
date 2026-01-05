@@ -17,6 +17,7 @@
     as: 'button',
     variant: 'default',
     size: 'default',
+    class: undefined,
   })
 </script>
 

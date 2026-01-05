@@ -15,6 +15,7 @@
     >(),
     {
       variant: 'default',
+      class: undefined,
     },
   )
 

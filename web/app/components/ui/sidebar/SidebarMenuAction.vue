@@ -13,6 +13,7 @@
     >(),
     {
       as: 'button',
+      class: undefined,
     },
   )
 </script>

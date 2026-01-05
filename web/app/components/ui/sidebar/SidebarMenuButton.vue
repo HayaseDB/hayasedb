@@ -20,6 +20,7 @@
       as: 'button',
       variant: 'default',
       size: 'default',
+      tooltip: undefined,
     },
   )
 

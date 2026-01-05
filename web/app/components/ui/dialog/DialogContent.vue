@@ -17,6 +17,7 @@
     >(),
     {
       showCloseButton: true,
+      class: undefined,
     },
   )
   const emits = defineEmits<DialogContentEmits>()
