@@ -52,7 +52,6 @@
     resetForm()
   })
 
-  const showError = computed(() => hasAttemptedSubmit.value && error.value)
   const canSubmit = computed(() => password.value.trim().length > 0)
 </script>
 
@@ -93,9 +92,9 @@
               type="password"
               placeholder="Your password"
               :disabled="props.isLoading"
-              :class="{ 'border-destructive': showError }"
+              :class="{ 'border-destructive': hasAttemptedSubmit && error }"
             />
-            <p v-if="showError" class="text-destructive text-sm">
+            <p v-if="hasAttemptedSubmit && error" class="text-destructive text-sm">
               {{ error }}
             </p>
           </div>
