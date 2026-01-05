@@ -83,5 +83,6 @@ tasks:
       - cmd: pnpm format
       - cmd: pnpm eslint "{src,apps,libs,test}/**/*.ts" --fix --max-warnings 0
       - cmd: pnpm typecheck
+      - cmd: pnpm test
       - log: All checks passed
         level: info

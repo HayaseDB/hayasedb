@@ -1,8 +1,7 @@
 import { Global, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { AppConfig, Environment } from '../../config/app.config';
-import { MailConfig } from '../../config/mail.config';
+import { MailConfig } from '../config/mail.config';
 import {
   MAIL_PROVIDER_TOKEN,
   MailProviderType,
@@ -81,12 +80,10 @@ export class MailModule implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const appConfig = this.configService.get<AppConfig>('app');
     const mailConfig = this.configService.get<MailConfig>('mail');
-    const isDevelopment = appConfig?.API_ENV === Environment.Development;
 
-    if (isDevelopment || !mailConfig?.API_MAIL_VERIFY_CONNECTION) {
-      this.logger.warn('Mail connection verification skipped');
+    if (!mailConfig?.API_MAIL_VERIFY_CONNECTION) {
+      this.logger.log('Mail connection verification skipped');
       return;
     }
 

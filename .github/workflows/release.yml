@@ -38,9 +38,85 @@ jobs:
             exit 1
           fi
 
+  test-api:
+    name: Test API
+    needs: validate-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: api/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+        working-directory: ./api
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: ./api
+
+      - name: Type Check
+        run: pnpm typecheck
+        working-directory: ./api
+
+      - name: Test
+        run: pnpm test
+        working-directory: ./api
+
+      - name: Build
+        run: pnpm build
+        working-directory: ./api
+
+  test-web:
+    name: Test Web
+    needs: validate-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+        working-directory: ./web
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: ./web
+
+      - name: Type Check
+        run: pnpm typecheck
+        working-directory: ./web
+
+      - name: Build
+        run: pnpm build
+        working-directory: ./web
+
   docker:
     name: Build & Push (${{ matrix.package }})
-    needs: validate-version
+    needs: [test-api, test-web]
     runs-on: ubuntu-latest
     permissions:
       contents: read

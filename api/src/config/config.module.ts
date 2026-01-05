@@ -8,6 +8,7 @@ import { AuthConfig } from './auth.config';
 import { DatabaseConfig } from './database.config';
 import { MailConfig } from './mail.config';
 import { MinioConfig } from './minio.config';
+import { StorageConfig } from './storage.config';
 import { SwaggerConfig } from './swagger.config';
 
 interface ConfigValidationError {
@@ -104,6 +105,7 @@ function checkAllValidationErrors(): void {
         createConfigLoader(AuthConfig, 'auth'),
         createConfigLoader(DatabaseConfig, 'database'),
         createConfigLoader(MailConfig, 'mail'),
+        createConfigLoader(StorageConfig, 'storage'),
         createConfigLoader(MinioConfig, 'minio'),
         createConfigLoader(SwaggerConfig, 'swagger'),
         () => {

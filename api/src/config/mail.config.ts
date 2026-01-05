@@ -11,7 +11,7 @@ import {
   Min,
 } from 'class-validator';
 
-import { MailProviderType } from '../modules/mail/constants/mail.constants';
+import { MailProviderType } from '../mail/constants/mail.constants';
 import { toBoolean, toInt } from './transforms';
 
 export class MailConfig {

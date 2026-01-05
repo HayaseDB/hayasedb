@@ -12,7 +12,7 @@ import ms, { type StringValue } from 'ms';
 
 import type { RequestMetadata } from '../../common/types/request-metadata.interface';
 import type { AuthConfig } from '../../config/auth.config';
-import { MailService } from '../mail/mail.service';
+import { MailService } from '../../mail/mail.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';

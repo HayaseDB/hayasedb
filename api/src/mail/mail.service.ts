@@ -4,8 +4,8 @@ import { render } from '@react-email/render';
 import type { ReactElement } from 'react';
 import { createElement } from 'react';
 
-import { AppConfig } from '../../config/app.config';
-import { MailConfig } from '../../config/mail.config';
+import { AppConfig } from '../config/app.config';
+import { MailConfig } from '../config/mail.config';
 import { MAIL_PROVIDER_TOKEN } from './constants/mail.constants';
 import {
   EmailUser,

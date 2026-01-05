@@ -1,3 +1,5 @@
+process.env.DOTENV_CONFIG_QUIET = 'true';
+
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
