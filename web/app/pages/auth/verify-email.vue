@@ -2,6 +2,7 @@
   import { toast } from 'vue-sonner'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
+  import { getErrorMessage } from '@/types/api'
 
   definePageMeta({
     layout: 'auth',
@@ -33,9 +34,8 @@
         description: 'You can now sign in to your account',
       })
       await navigateTo('/auth/login')
-    } catch (e) {
-      const err = e as { data?: { message?: string; data?: { message?: string } } }
-      const message = err.data?.data?.message || err.data?.message || 'Verification failed'
+    } catch (e: unknown) {
+      const message = getErrorMessage(e, 'Verification failed')
       error.value = message
       toast.error(message)
     } finally {

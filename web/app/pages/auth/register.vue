@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { toast } from 'vue-sonner'
   import { RegisterForm } from '@/components/auth'
+  import { getErrorMessage } from '@/types/api'
 
   definePageMeta({
     layout: 'auth',
@@ -37,9 +38,8 @@
         description: 'Check your email to verify your account.',
       })
       await navigateTo('/auth/login')
-    } catch (e) {
-      const err = e as { data?: { message?: string; data?: { message?: string } } }
-      toast.error(err.data?.data?.message || err.data?.message || 'Unable to create account')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Unable to create account'))
     } finally {
       isLoading.value = false
     }

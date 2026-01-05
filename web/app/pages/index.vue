@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { Button } from '@/components/ui/button'
+
   definePageMeta({
     layout: 'default',
   })
@@ -15,18 +17,12 @@
       <h1 class="text-4xl font-bold">HayaseDB</h1>
       <p class="text-muted-foreground mt-2">Database for anime/manga</p>
       <div class="mt-6 flex justify-center gap-4">
-        <NuxtLink
-          to="/auth/login"
-          class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium"
-        >
-          Sign In
-        </NuxtLink>
-        <NuxtLink
-          to="/auth/register"
-          class="bg-secondary text-secondary-foreground rounded-md px-4 py-2 text-sm font-medium"
-        >
-          Sign Up
-        </NuxtLink>
+        <Button as-child>
+          <NuxtLink to="/auth/login">Sign In</NuxtLink>
+        </Button>
+        <Button as-child variant="secondary">
+          <NuxtLink to="/auth/register">Sign Up</NuxtLink>
+        </Button>
       </div>
     </div>
   </div>

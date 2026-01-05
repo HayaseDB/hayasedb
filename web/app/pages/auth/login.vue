@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { toast } from 'vue-sonner'
   import { LoginForm } from '@/components/auth'
+  import { getErrorMessage } from '@/types/api'
 
   definePageMeta({
     layout: 'auth',
@@ -26,10 +27,7 @@
       toast.success('Welcome back!')
       await navigateTo('/')
     } catch (error: unknown) {
-      const message =
-        (error as { data?: { data?: { message?: string } } })?.data?.data?.message ||
-        'Unable to sign in'
-      toast.error(message)
+      toast.error(getErrorMessage(error, 'Unable to sign in'))
     } finally {
       isLoading.value = false
     }

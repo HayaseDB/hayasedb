@@ -13,6 +13,7 @@
 </script>
 
 <template>
+  <NuxtRouteAnnouncer />
   <NuxtLayout>
     <NuxtPage />
     <ClientOnly>
