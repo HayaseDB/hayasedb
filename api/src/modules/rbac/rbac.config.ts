@@ -14,7 +14,14 @@ export const RBAC_CONFIG: RoleConfigMap = {
 
   [Role.MODERATOR]: {
     inherits: [Role.USER],
-    permissions: ['users@read:any', 'sessions@read:any'],
+    permissions: [
+      'users@read:any',
+      'sessions@read:any',
+      'animes@create:any',
+      'animes@update:any',
+      'genres@create:any',
+      'genres@update:any',
+    ],
   },
 
   [Role.ADMINISTRATOR]: {
@@ -27,6 +34,8 @@ export const RBAC_CONFIG: RoleConfigMap = {
       'sessions@update:any',
       'sessions@delete:any',
       'rbac@read:any',
+      'animes@delete:any',
+      'genres@delete:any',
     ],
   },
 };
