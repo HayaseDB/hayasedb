@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+import { MediaResponseDto } from '../../media/dto/media-response.dto';
 import { Role } from '../../rbac/enums/role.enum';
 
 export class UserResponseDto {
@@ -33,4 +34,11 @@ export class UserResponseDto {
 
   @ApiProperty({ description: 'Last update date' })
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'User profile picture',
+    type: MediaResponseDto,
+    nullable: true,
+  })
+  profilePicture: MediaResponseDto | null;
 }

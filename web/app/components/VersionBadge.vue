@@ -18,7 +18,7 @@
   .version-badge {
     position: fixed;
     bottom: 0.75rem;
-    left: 1rem;
+    right: 1rem;
     font-size: 0.75rem;
     color: oklch(0.6 0 0);
     opacity: 0.4;

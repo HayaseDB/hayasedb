@@ -1,3 +1,14 @@
+export interface Media {
+  id: string
+  bucket: string
+  key: string
+  originalName: string
+  mimeType: string
+  size: number
+  etag: string | null
+  url: string | null
+}
+
 export interface User {
   id: string
   email: string
@@ -6,6 +17,7 @@ export interface User {
   lastName: string
   role: 'admin' | 'moderator' | 'user'
   isEmailVerified: boolean
+  profilePicture: Media | null
 }
 
 export interface AuthResponse {
