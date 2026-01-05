@@ -87,9 +87,11 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.rule=Host(`${API_MINIO_CONSOLE_DOMAIN:-localhost}`)"
         - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.entrypoints=web"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.service=hayasedb-${APP_ENV:-default}-minio-console"
         - "traefik.http.services.hayasedb-${APP_ENV:-default}-minio-console.loadbalancer.server.port=9001"
         - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.rule=Host(`${API_CDN_DOMAIN:-storage.localhost}`)"
         - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.entrypoints=web"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.service=hayasedb-${APP_ENV:-default}-minio-api"
         - "traefik.http.services.hayasedb-${APP_ENV:-default}-minio-api.loadbalancer.server.port=9000"
 
   web:
