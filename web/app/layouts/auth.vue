@@ -18,7 +18,7 @@
       </div>
     </div>
     <div class="relative hidden overflow-hidden bg-zinc-900 lg:block">
-      <AnimeScrollWall />
+      <AuthAnimeScrollWall />
     </div>
   </div>
 </template>
