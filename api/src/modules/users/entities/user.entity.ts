@@ -20,11 +20,11 @@ export class User {
   id: string;
 
   @Index()
-  @Column({ type: 'varchar', unique: true, length: 50, nullable: false })
+  @Column({ type: 'varchar', length: 50, nullable: false })
   username: string;
 
   @Index()
-  @Column({ unique: true, length: 255 })
+  @Column({ length: 255 })
   email: string;
 
   @Exclude()

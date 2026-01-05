@@ -55,4 +55,11 @@ export class SessionsService {
       order: { createdAt: 'DESC' },
     });
   }
+
+  async deleteAllByUserId(userId: string): Promise<void> {
+    const sessions = await this.findByUserId(userId);
+    if (sessions.length > 0) {
+      await this.sessionRepository.softRemove(sessions);
+    }
+  }
 }

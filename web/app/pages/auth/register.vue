@@ -17,6 +17,7 @@
     description: 'Create your HayaseDB account',
   })
 
+  const route = useRoute()
   const isLoading = ref(false)
 
   interface RegisterData {
@@ -37,7 +38,10 @@
       toast.success('Account created!', {
         description: 'Check your email to verify your account.',
       })
-      await navigateTo('/auth/login')
+      await navigateTo({
+        path: '/auth/login',
+        query: route.query.redirect ? { redirect: route.query.redirect } : undefined,
+      })
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Unable to create account'))
     } finally {

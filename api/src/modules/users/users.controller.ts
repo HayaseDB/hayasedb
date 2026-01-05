@@ -31,6 +31,7 @@ import {
   PROFILE_PICTURE_MAX_SIZE,
 } from './constants/profile-picture.constants';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { User } from './entities/user.entity';
@@ -131,5 +132,22 @@ export class UsersController {
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async deleteProfilePicture(@ActiveUser() user: User): Promise<User> {
     return this.usersService.deleteProfilePicture(user.id);
+  }
+
+  @Delete('me')
+  @Permission(['users@delete:own'])
+  @ApiOperation({ summary: 'Delete current user account' })
+  @ApiResponse({
+    status: 200,
+    description: 'Account deleted successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid password' })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  async deleteAccount(
+    @ActiveUser() user: User,
+    @Body() deleteAccountDto: DeleteAccountDto,
+  ): Promise<{ message: string }> {
+    await this.usersService.deleteAccount(user.id, deleteAccountDto);
+    return { message: 'Account deleted successfully' };
   }
 }

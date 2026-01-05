@@ -13,6 +13,7 @@ import {
   SendEmailOptions,
 } from './interfaces/mail.interface';
 import type { MailProvider } from './providers/mail-provider.interface';
+import { AccountDeletionEmail } from './templates/AccountDeletionEmail';
 import { LoginNotificationEmail } from './templates/LoginNotificationEmail';
 import { VerificationEmail } from './templates/VerificationEmail';
 import { WelcomeEmail } from './templates/WelcomeEmail';
@@ -136,6 +137,29 @@ export class MailService {
     await this.sendEmail({
       to: user.email,
       subject: `Verify your email for ${this.mailConfig.API_MAIL_FROM_NAME}`,
+      html,
+      text,
+    });
+  }
+
+  async sendAccountDeletionEmail(user: EmailUser): Promise<void> {
+    const userName = this.getUserName(user);
+    const deletionDate = new Date().toLocaleString('en-US', {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    });
+
+    const { html, text } = await this.renderTemplate(
+      createElement(AccountDeletionEmail, {
+        appName: this.mailConfig.API_MAIL_FROM_NAME,
+        userName,
+        deletionDate,
+      }),
+    );
+
+    await this.sendEmail({
+      to: user.email,
+      subject: `Your ${this.mailConfig.API_MAIL_FROM_NAME} Account Has Been Deleted`,
       html,
       text,
     });

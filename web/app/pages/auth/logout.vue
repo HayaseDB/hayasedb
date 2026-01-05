@@ -1,25 +1,15 @@
 <script setup lang="ts">
   definePageMeta({
-    layout: 'auth',
-    middleware: 'sidebase-auth',
-    auth: {
-      unauthenticatedOnly: false,
-      navigateUnauthenticatedTo: '/auth/login',
-    },
+    layout: false,
   })
 
-  const { signOut, token } = useAuth()
+  const { signOut } = useAuth()
 
-  onMounted(async () => {
-    await signOut().catch(() => {})
-    if (!token.value) {
-      navigateTo('/auth/login')
-    }
+  await signOut({ callbackUrl: '/auth/login', redirect: true }).catch(() => {
+    navigateTo('/auth/login', { replace: true })
   })
 </script>
 
 <template>
-  <div class="flex items-center justify-center">
-    <p class="text-muted-foreground">Signing out...</p>
-  </div>
+  <div />
 </template>

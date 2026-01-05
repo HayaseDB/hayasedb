@@ -11,6 +11,8 @@ import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { StorageService } from '../../storage/storage.service';
 import { MediaService } from '../media/media.service';
+import { SessionsService } from '../sessions/sessions.service';
+import { MailService } from '../../mail/mail.service';
 import {
   createMockRepository,
   MockRepository,
@@ -59,6 +61,20 @@ describe('UsersService', () => {
             hardDelete: jest.fn(),
             getUrl: jest.fn(),
             getUrlById: jest.fn(),
+          },
+        },
+        {
+          provide: SessionsService,
+          useValue: {
+            deleteAllForUser: jest.fn(),
+          },
+        },
+        {
+          provide: MailService,
+          useValue: {
+            sendWelcomeEmail: jest.fn(),
+            sendVerificationEmail: jest.fn(),
+            sendAccountDeletionEmail: jest.fn(),
           },
         },
       ],

@@ -13,11 +13,14 @@ import * as bcrypt from 'bcrypt';
 import sharp from 'sharp';
 import { MoreThan, Repository } from 'typeorm';
 
+import { MailService } from '../../mail/mail.service';
 import { Media } from '../media/entities/media.entity';
 import { CreateMediaInput, MediaService } from '../media/media.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { StorageService } from '../../storage/storage.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import {
@@ -34,6 +37,8 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
     private readonly storageService: StorageService,
     private readonly mediaService: MediaService,
+    private readonly sessionsService: SessionsService,
+    private readonly mailService: MailService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -286,5 +291,59 @@ export class UsersService {
   private async deleteProfilePictureMedia(media: Media): Promise<void> {
     await this.storageService.delete(media.bucket, media.key);
     await this.mediaService.hardDelete(media.id);
+  }
+
+  async deleteAccount(
+    userId: string,
+    deleteAccountDto: DeleteAccountDto,
+  ): Promise<void> {
+    const user = await this.findOne(userId);
+
+    const isPasswordValid = await bcrypt.compare(
+      deleteAccountDto.password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Password is incorrect');
+    }
+
+    const userEmail = user.email;
+    const userFirstName = user.firstName;
+    const userLastName = user.lastName;
+
+    if (user.profilePicture) {
+      try {
+        await this.deleteProfilePictureMedia(user.profilePicture);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to delete profile picture for user ${userId}: ${error}`,
+        );
+      }
+    }
+
+    try {
+      await this.sessionsService.deleteAllByUserId(userId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to delete sessions for user ${userId}: ${error}`,
+      );
+    }
+
+    await this.userRepository.softRemove(user);
+
+    void this.mailService
+      .sendAccountDeletionEmail({
+        email: userEmail,
+        firstName: userFirstName,
+        lastName: userLastName,
+      })
+      .catch((error) => {
+        this.logger.warn(
+          `Failed to send account deletion email to ${userEmail}: ${error}`,
+        );
+      });
+
+    this.logger.log(`Account deleted for user ${userId}`);
   }
 }

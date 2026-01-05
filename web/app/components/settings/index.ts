@@ -1,0 +1,4 @@
+export { default as ProfileForm } from './ProfileForm.vue'
+export { default as PasswordForm } from './PasswordForm.vue'
+export { default as ProfilePictureForm } from './ProfilePictureForm.vue'
+export { default as DangerZone } from './DangerZone.vue'

@@ -2,7 +2,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface AuthFetchOptions {
   method?: HttpMethod
-  body?: Record<string, unknown>
+  body?: Record<string, unknown> | FormData
   headers?: Record<string, string>
 }
 

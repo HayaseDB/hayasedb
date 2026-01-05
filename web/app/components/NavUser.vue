@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ChevronsUpDown, LogOut, Settings, User } from 'lucide-vue-next'
+  import { ChevronsUpDown, LogOut, Settings } from 'lucide-vue-next'
   import { computed } from 'vue'
 
   import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -25,25 +25,12 @@
   const user = computed(() => session.value)
 
   const userInitials = computed(() => {
-    if (!user.value) return 'U'
-    if (user.value.firstName && user.value.lastName) {
-      return `${user.value.firstName[0]}${user.value.lastName[0]}`.toUpperCase()
-    }
-    if (user.value.username) {
-      return user.value.username.substring(0, 2).toUpperCase()
-    }
-    if (user.value.email) {
-      return user.value.email.substring(0, 2).toUpperCase()
-    }
-    return 'U'
+    return user.value?.username?.[0]?.toUpperCase() ?? 'U'
   })
 
   const displayName = computed(() => {
     if (!user.value) return 'User'
-    if (user.value.firstName && user.value.lastName) {
-      return `${user.value.firstName} ${user.value.lastName}`
-    }
-    return user.value.username || user.value.email || 'User'
+    return user.value.username
   })
 
   const handleLogout = async () => {
@@ -60,7 +47,7 @@
             size="lg"
             class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
-            <Avatar class="h-8 w-8 rounded-lg">
+            <Avatar :key="user?.profilePicture?.url ?? 'fallback'" class="h-8 w-8 rounded-lg">
               <AvatarImage
                 v-if="user?.profilePicture?.url"
                 :src="user.profilePicture.url"
@@ -86,7 +73,7 @@
         >
           <DropdownMenuLabel class="p-0 font-normal">
             <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-              <Avatar class="h-8 w-8 rounded-lg">
+              <Avatar :key="user?.profilePicture?.url ?? 'fallback'" class="h-8 w-8 rounded-lg">
                 <AvatarImage
                   v-if="user?.profilePicture?.url"
                   :src="user.profilePicture.url"
@@ -106,13 +93,7 @@
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem as-child>
-              <NuxtLink to="/settings/profile" class="flex w-full items-center gap-2">
-                <User class="size-4" />
-                Profile
-              </NuxtLink>
-            </DropdownMenuItem>
-            <DropdownMenuItem as-child>
-              <NuxtLink to="/settings" class="flex w-full items-center gap-2">
+              <NuxtLink to="/dashboard/settings" class="flex w-full items-center gap-2">
                 <Settings class="size-4" />
                 Settings
               </NuxtLink>
