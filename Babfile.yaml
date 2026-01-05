@@ -12,6 +12,16 @@ tasks:
       - task: api:check
       - task: web:check
 
+  lefthook:install:
+    desc: Install lefthook git hooks
+    run:
+      - cmd: npx lefthook install
+
+  lefthook:uninstall:
+    desc: Uninstall lefthook git hooks
+    run:
+      - cmd: npx lefthook uninstall
+
   env:generate:
     desc: Generate .env file with interactive prompts
     run:
