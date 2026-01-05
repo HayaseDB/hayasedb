@@ -15,7 +15,7 @@ export interface User {
   username: string
   firstName: string
   lastName: string
-  role: 'admin' | 'moderator' | 'user'
+  role: 'administrator' | 'moderator' | 'user'
   isEmailVerified: boolean
   profilePicture: Media | null
 }

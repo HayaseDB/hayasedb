@@ -7,6 +7,38 @@ interface ApiErrorData {
   error?: string
 }
 
+function getClientIp(event: H3Event): string | undefined {
+  const forwarded = getHeader(event, 'x-forwarded-for')
+  if (forwarded) {
+    const firstIp = forwarded.split(',')[0]
+    return firstIp?.trim()
+  }
+
+  const realIp = getHeader(event, 'x-real-ip')
+  if (realIp) return realIp
+
+  const cfIp = getHeader(event, 'cf-connecting-ip')
+  if (cfIp) return cfIp
+
+  return event.node.req.socket?.remoteAddress
+}
+
+export function getClientHeaders(event: H3Event): Record<string, string> {
+  const headers: Record<string, string> = {}
+
+  const userAgent = getHeader(event, 'user-agent')
+  if (userAgent) {
+    headers['User-Agent'] = userAgent
+  }
+
+  const clientIp = getClientIp(event)
+  if (clientIp) {
+    headers['X-Forwarded-For'] = clientIp
+  }
+
+  return headers
+}
+
 export async function authFetchApi<T>(
   event: H3Event,
   path: string,

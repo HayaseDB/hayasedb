@@ -3,6 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Session } from './entities/session.entity';
+import {
+  DeviceType,
+  RequestMetadata,
+} from '../../common/types/request-metadata.interface';
+
+export interface CreateSessionData {
+  userId: string;
+  hash: string;
+  metadata?: RequestMetadata;
+}
 
 @Injectable()
 export class SessionsService {
@@ -11,10 +21,17 @@ export class SessionsService {
     private readonly sessionRepository: Repository<Session>,
   ) {}
 
-  async create(data: { userId: string; hash: string }): Promise<Session> {
+  async create(data: CreateSessionData): Promise<Session> {
     const session = this.sessionRepository.create({
       user: { id: data.userId },
       hash: data.hash,
+      browser: data.metadata?.browser || null,
+      browserVersion: data.metadata?.browserVersion || null,
+      os: data.metadata?.os || null,
+      osVersion: data.metadata?.osVersion || null,
+      deviceType: data.metadata?.deviceType || DeviceType.UNKNOWN,
+      ipAddress: data.metadata?.ipAddress || null,
+      userAgent: data.metadata?.userAgent || null,
     });
     return await this.sessionRepository.save(session);
   }
@@ -61,5 +78,24 @@ export class SessionsService {
     if (sessions.length > 0) {
       await this.sessionRepository.softRemove(sessions);
     }
+  }
+
+  async deleteAllExceptCurrent(
+    userId: string,
+    currentSessionId: string,
+  ): Promise<number> {
+    const sessions = await this.sessionRepository.find({
+      where: { user: { id: userId } },
+    });
+
+    const sessionsToDelete = sessions.filter(
+      (session) => session.id !== currentSessionId,
+    );
+
+    if (sessionsToDelete.length > 0) {
+      await this.sessionRepository.softRemove(sessionsToDelete);
+    }
+
+    return sessionsToDelete.length;
   }
 }

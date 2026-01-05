@@ -11,7 +11,12 @@
 <template>
   <AvatarRoot
     data-slot="avatar"
-    :class="cn('relative flex size-8 shrink-0 overflow-hidden rounded-full', props.class)"
+    :class="
+      cn(
+        'border-border relative flex size-8 shrink-0 overflow-hidden rounded-[20%] border',
+        props.class,
+      )
+    "
   >
     <slot />
   </AvatarRoot>

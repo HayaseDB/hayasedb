@@ -87,8 +87,11 @@ export class AuthController {
     status: 400,
     description: 'Invalid or expired verification token',
   })
-  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<AuthResponseDto> {
-    return await this.authService.verifyEmail(dto.token);
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @RequestMetadataDecorator() metadata: RequestMetadata,
+  ): Promise<AuthResponseDto> {
+    return await this.authService.verifyEmail(dto.token, metadata);
   }
 
   @Post('resend-verification')

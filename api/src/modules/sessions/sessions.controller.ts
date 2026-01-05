@@ -60,6 +60,12 @@ export class SessionsController {
 
     return sessions.map((session) => ({
       id: session.id,
+      browser: session.browser,
+      browserVersion: session.browserVersion,
+      os: session.os,
+      osVersion: session.osVersion,
+      deviceType: session.deviceType,
+      ipAddress: session.ipAddress,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
       isCurrent: session.id === currentSession.id,
@@ -102,10 +108,48 @@ export class SessionsController {
 
     return {
       id: session.id,
+      browser: session.browser,
+      browserVersion: session.browserVersion,
+      os: session.os,
+      osVersion: session.osVersion,
+      deviceType: session.deviceType,
+      ipAddress: session.ipAddress,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
       isCurrent: session.id === currentSession.id,
     };
+  }
+
+  @Delete('others')
+  @Permission(['sessions@delete:own'])
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Revoke all other sessions',
+    description: 'Revoke all sessions except the current one',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Other sessions revoked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        revokedCount: {
+          type: 'number',
+          description: 'Number of sessions revoked',
+        },
+      },
+    },
+  })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  async removeOthers(
+    @ActiveUser() user: User,
+    @ActiveSession() currentSession: Session,
+  ): Promise<{ revokedCount: number }> {
+    const revokedCount = await this.sessionsService.deleteAllExceptCurrent(
+      user.id,
+      currentSession.id,
+    );
+    return { revokedCount };
   }
 
   @Delete(':id')

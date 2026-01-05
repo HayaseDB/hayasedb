@@ -118,11 +118,14 @@ describe('RbacGuard', () => {
       .mockReturnValueOnce(permissions);
     rbacService.canAny.mockReturnValue(true);
 
-    const user = createMockUser({ role: Role.ADMIN });
+    const user = createMockUser({ role: Role.ADMINISTRATOR });
     const context = createMockExecutionContext(user);
 
     guard.canActivate(context);
 
-    expect(rbacService.canAny).toHaveBeenCalledWith(Role.ADMIN, permissions);
+    expect(rbacService.canAny).toHaveBeenCalledWith(
+      Role.ADMINISTRATOR,
+      permissions,
+    );
   });
 });

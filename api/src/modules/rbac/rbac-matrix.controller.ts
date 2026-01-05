@@ -25,7 +25,7 @@ export class RbacMatrixController {
   @ApiOperation({
     summary: 'Get RBAC permission matrix',
     description:
-      'Returns a matrix of all permissions and which roles have them. Admin only.',
+      'Returns a matrix of all permissions and which roles have them. Administrator only.',
   })
   @ApiResponse({
     status: 200,

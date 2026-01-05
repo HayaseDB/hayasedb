@@ -29,10 +29,18 @@ export class UserResponseDto {
   })
   role: Role;
 
-  @ApiProperty({ description: 'Account creation date' })
+  @ApiProperty({
+    description: 'Account creation date (ISO 8601 UTC)',
+    example: '2024-01-15T10:30:00.000Z',
+    type: String,
+  })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Last update date' })
+  @ApiProperty({
+    description: 'Last update date (ISO 8601 UTC)',
+    example: '2024-01-15T10:30:00.000Z',
+    type: String,
+  })
   updatedAt: Date;
 
   @ApiPropertyOptional({

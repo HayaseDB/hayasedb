@@ -322,19 +322,14 @@ describe('UsersService', () => {
   });
 
   describe('generateVerificationToken', () => {
-    it('should generate token and set expiry', async () => {
+    it('should generate token and set expiry using database time', async () => {
       const mockUser = createMockUser();
       repository.findOne!.mockResolvedValue(mockUser);
-      repository.save!.mockImplementation((user) => Promise.resolve(user));
 
       const result = await service.generateVerificationToken(mockUser.id);
 
       expect(result).toHaveLength(64);
-      expect(mockUser.emailVerificationToken).toBe(result);
-      expect(mockUser.emailVerificationExpiresAt).toBeInstanceOf(Date);
-      expect(mockUser.emailVerificationExpiresAt!.getTime()).toBeGreaterThan(
-        Date.now(),
-      );
+      expect(repository.createQueryBuilder).toHaveBeenCalled();
     });
   });
 
@@ -356,13 +351,22 @@ describe('UsersService', () => {
   });
 
   describe('verifyEmail', () => {
-    it('should verify email and clear token', async () => {
+    it('should verify email and clear token using database NOW()', async () => {
       const mockUser = createUnverifiedUser();
-      repository.findOne!.mockResolvedValue(mockUser);
-      repository.save!.mockImplementation((user) => Promise.resolve(user));
+      const verifiedUser = {
+        ...mockUser,
+        emailVerifiedAt: new Date(),
+        emailVerificationToken: null,
+        emailVerificationExpiresAt: null,
+      };
+
+      repository
+        .findOne!.mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce(verifiedUser);
 
       const result = await service.verifyEmail('valid-token');
 
+      expect(repository.createQueryBuilder).toHaveBeenCalled();
       expect(result.emailVerifiedAt).toBeInstanceOf(Date);
       expect(result.emailVerificationToken).toBeNull();
       expect(result.emailVerificationExpiresAt).toBeNull();

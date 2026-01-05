@@ -17,7 +17,7 @@ export const RBAC_CONFIG: RoleConfigMap = {
     permissions: ['users@read:any', 'sessions@read:any'],
   },
 
-  [Role.ADMIN]: {
+  [Role.ADMINISTRATOR]: {
     inherits: [Role.MODERATOR],
     permissions: [
       'users@create:any',

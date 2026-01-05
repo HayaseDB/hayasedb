@@ -55,31 +55,31 @@ describe('RbacService', () => {
       });
     });
 
-    describe('ADMIN role', () => {
+    describe('ADMINISTRATOR role', () => {
       it('should inherit MODERATOR permissions (users@read:any)', () => {
-        expect(service.can(Role.ADMIN, 'users@read:any')).toBe(true);
+        expect(service.can(Role.ADMINISTRATOR, 'users@read:any')).toBe(true);
       });
 
       it('should inherit USER permissions (users@read:own)', () => {
-        expect(service.can(Role.ADMIN, 'users@read:own')).toBe(true);
+        expect(service.can(Role.ADMINISTRATOR, 'users@read:own')).toBe(true);
       });
 
       it('should have users@create:any permission', () => {
-        expect(service.can(Role.ADMIN, 'users@create:any')).toBe(true);
+        expect(service.can(Role.ADMINISTRATOR, 'users@create:any')).toBe(true);
       });
 
       it('should have users@update:any permission', () => {
-        expect(service.can(Role.ADMIN, 'users@update:any')).toBe(true);
+        expect(service.can(Role.ADMINISTRATOR, 'users@update:any')).toBe(true);
       });
 
       it('should have rbac@read:any permission', () => {
-        expect(service.can(Role.ADMIN, 'rbac@read:any')).toBe(true);
+        expect(service.can(Role.ADMINISTRATOR, 'rbac@read:any')).toBe(true);
       });
     });
 
     describe('scope escalation prevention', () => {
       it('should allow any scope to cover own scope', () => {
-        expect(service.can(Role.ADMIN, 'users@read:own')).toBe(true);
+        expect(service.can(Role.ADMINISTRATOR, 'users@read:own')).toBe(true);
       });
 
       it('should NOT allow own scope to cover any scope for USER', () => {
@@ -141,8 +141,8 @@ describe('RbacService', () => {
       expect(permissions).toContain('sessions@read:any');
     });
 
-    it('should return all permissions for ADMIN including inherited', () => {
-      const permissions = service.getPermissionsForRole(Role.ADMIN);
+    it('should return all permissions for ADMINISTRATOR including inherited', () => {
+      const permissions = service.getPermissionsForRole(Role.ADMINISTRATOR);
 
       expect(permissions).toContain('users@read:own');
       expect(permissions).toContain('users@read:any');
@@ -157,7 +157,7 @@ describe('RbacService', () => {
 
       expect(roles).toContain(Role.USER);
       expect(roles).toContain(Role.MODERATOR);
-      expect(roles).toContain(Role.ADMIN);
+      expect(roles).toContain(Role.ADMINISTRATOR);
       expect(roles).toHaveLength(3);
     });
   });

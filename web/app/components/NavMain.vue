@@ -28,7 +28,7 @@
 
 <template>
   <SidebarGroup>
-    <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+    <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
     <SidebarMenu>
       <SidebarMenuItem v-for="item in items" :key="item.title">
         <SidebarMenuButton

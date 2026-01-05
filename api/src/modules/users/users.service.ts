@@ -169,16 +169,19 @@ export class UsersService {
   }
 
   async generateVerificationToken(userId: string): Promise<string> {
-    const user = await this.findOne(userId);
+    await this.findOne(userId);
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours
 
-    user.emailVerificationToken = token;
-    user.emailVerificationExpiresAt = expiresAt;
-
-    await this.userRepository.save(user);
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        emailVerificationToken: token,
+        emailVerificationExpiresAt: () => "NOW() + INTERVAL '24 hours'",
+      })
+      .where('id = :id', { id: userId })
+      .execute();
 
     return token;
   }
@@ -199,11 +202,18 @@ export class UsersService {
       throw new BadRequestException('Invalid or expired verification token');
     }
 
-    user.emailVerifiedAt = new Date();
-    user.emailVerificationToken = null;
-    user.emailVerificationExpiresAt = null;
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        emailVerifiedAt: () => 'NOW()',
+        emailVerificationToken: null,
+        emailVerificationExpiresAt: null,
+      })
+      .where('id = :id', { id: user.id })
+      .execute();
 
-    return await this.userRepository.save(user);
+    return await this.findOne(user.id);
   }
 
   async uploadProfilePicture(

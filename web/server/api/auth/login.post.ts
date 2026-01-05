@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { AuthResponse } from '../../types/auth'
+import { getClientHeaders } from '../../utils/api'
 
 const schema = z.object({
   email: z.email(),
@@ -12,5 +13,6 @@ export default defineEventHandler(async (event) => {
   return await fetchApi<AuthResponse>('/auth/login', {
     method: 'POST',
     body,
+    headers: getClientHeaders(event),
   })
 })

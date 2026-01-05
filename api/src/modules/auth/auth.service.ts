@@ -55,6 +55,7 @@ export class AuthService {
     const session = await this.sessionsService.create({
       userId: user.id,
       hash,
+      metadata,
     });
 
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
@@ -65,7 +66,7 @@ export class AuthService {
 
     if (metadata) {
       void this.mailService.sendLoginNotificationEmail(user, {
-        timestamp: new Date(metadata.timestamp),
+        timestamp: metadata.timestamp,
         device: `${metadata.os} - ${metadata.deviceType}`,
         location: 'Unknown',
         ipAddress: metadata.ipAddress,
@@ -95,7 +96,7 @@ export class AuthService {
     };
   }
 
-  async verifyEmail(token: string) {
+  async verifyEmail(token: string, metadata?: RequestMetadata) {
     const user = await this.usersService.verifyEmail(token);
 
     const hash = this.generateSessionHash();
@@ -103,6 +104,7 @@ export class AuthService {
     const session = await this.sessionsService.create({
       userId: user.id,
       hash,
+      metadata,
     });
 
     const {

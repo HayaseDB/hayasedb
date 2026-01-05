@@ -4,6 +4,7 @@ import { NotFoundException } from '@nestjs/common';
 
 import { SessionsService } from './sessions.service';
 import { Session } from './entities/session.entity';
+import { DeviceType } from '../../common/types/request-metadata.interface';
 import {
   createMockRepository,
   MockRepository,
@@ -55,6 +56,13 @@ describe('SessionsService', () => {
       expect(repository.create).toHaveBeenCalledWith({
         user: { id: userId },
         hash,
+        browser: null,
+        browserVersion: null,
+        os: null,
+        osVersion: null,
+        deviceType: DeviceType.UNKNOWN,
+        ipAddress: null,
+        userAgent: null,
       });
       expect(repository.save).toHaveBeenCalledWith(mockSession);
       expect(result).toBe(mockSession);
@@ -150,6 +158,60 @@ describe('SessionsService', () => {
       const result = await service.findByUserId('user-no-sessions');
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('deleteAllExceptCurrent', () => {
+    it('should delete all sessions except current', async () => {
+      const user = createMockUser();
+      const currentSession = createMockSession({ user });
+      const otherSession1 = createMockSession({ user });
+      const otherSession2 = createMockSession({ user });
+      const allSessions = [currentSession, otherSession1, otherSession2];
+
+      repository.find!.mockResolvedValue(allSessions);
+      repository.softRemove!.mockResolvedValue([otherSession1, otherSession2]);
+
+      const result = await service.deleteAllExceptCurrent(
+        user.id,
+        currentSession.id,
+      );
+
+      expect(repository.find).toHaveBeenCalledWith({
+        where: { user: { id: user.id } },
+      });
+      expect(repository.softRemove).toHaveBeenCalledWith([
+        otherSession1,
+        otherSession2,
+      ]);
+      expect(result).toBe(2);
+    });
+
+    it('should return 0 when only current session exists', async () => {
+      const user = createMockUser();
+      const currentSession = createMockSession({ user });
+
+      repository.find!.mockResolvedValue([currentSession]);
+
+      const result = await service.deleteAllExceptCurrent(
+        user.id,
+        currentSession.id,
+      );
+
+      expect(repository.softRemove).not.toHaveBeenCalled();
+      expect(result).toBe(0);
+    });
+
+    it('should return 0 when user has no sessions', async () => {
+      repository.find!.mockResolvedValue([]);
+
+      const result = await service.deleteAllExceptCurrent(
+        'user-no-sessions',
+        'session-id',
+      );
+
+      expect(repository.softRemove).not.toHaveBeenCalled();
+      expect(result).toBe(0);
     });
   });
 });

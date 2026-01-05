@@ -38,7 +38,7 @@
 </script>
 
 <template>
-  <form class="flex flex-col" @submit="onSubmit">
+  <form method="POST" class="flex flex-col" @submit="onSubmit">
     <FieldGroup class="gap-4">
       <AuthFormHeader
         title="Welcome back"
