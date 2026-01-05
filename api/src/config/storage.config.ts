@@ -20,4 +20,8 @@ export class StorageConfig {
   @IsString()
   @IsOptional()
   API_STORAGE_LOCAL_BASE_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  API_CDN_URL?: string;
 }

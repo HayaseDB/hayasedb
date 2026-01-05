@@ -4,23 +4,36 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import sharp from 'sharp';
 import { MoreThan, Repository } from 'typeorm';
 
+import { Media } from '../media/entities/media.entity';
+import { CreateMediaInput, MediaService } from '../media/media.service';
+import { StorageService } from '../../storage/storage.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import {
+  PROFILE_PICTURE_BUCKET,
+  PROFILE_PICTURE_OUTPUT_SIZE,
+} from './constants/profile-picture.constants';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly storageService: StorageService,
+    private readonly mediaService: MediaService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -186,5 +199,92 @@ export class UsersService {
     user.emailVerificationExpiresAt = null;
 
     return await this.userRepository.save(user);
+  }
+
+  async uploadProfilePicture(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<User> {
+    const user = await this.findOne(userId);
+    const oldProfilePicture = user.profilePicture;
+
+    const processedImage = await this.processProfilePicture(file.buffer);
+    const objectKey = `${userId}/${Date.now()}.webp`;
+
+    await this.storageService.ensureBucket(PROFILE_PICTURE_BUCKET, true);
+
+    const uploadResult = await this.storageService.uploadFile(
+      PROFILE_PICTURE_BUCKET,
+      objectKey,
+      processedImage,
+      {
+        contentType: 'image/webp',
+        size: processedImage.length,
+      },
+    );
+
+    const mediaInput: CreateMediaInput = {
+      bucket: PROFILE_PICTURE_BUCKET,
+      key: objectKey,
+      originalName: file.originalname,
+      mimeType: 'image/webp',
+      size: processedImage.length,
+      etag: uploadResult.etag,
+    };
+
+    const newMedia = await this.mediaService.create(mediaInput);
+
+    user.profilePicture = newMedia;
+    const updatedUser = await this.userRepository.save(user);
+
+    if (oldProfilePicture) {
+      await this.deleteProfilePictureMedia(oldProfilePicture);
+    }
+
+    this.logger.log(`Profile picture updated for user ${userId}`);
+    return updatedUser;
+  }
+
+  private async processProfilePicture(buffer: Buffer): Promise<Buffer> {
+    const image = sharp(buffer);
+    const metadata = await image.metadata();
+
+    const width = metadata.width || PROFILE_PICTURE_OUTPUT_SIZE;
+    const height = metadata.height || PROFILE_PICTURE_OUTPUT_SIZE;
+    const size = Math.min(width, height);
+
+    return image
+      .extract({
+        left: Math.floor((width - size) / 2),
+        top: Math.floor((height - size) / 2),
+        width: size,
+        height: size,
+      })
+      .resize(PROFILE_PICTURE_OUTPUT_SIZE, PROFILE_PICTURE_OUTPUT_SIZE)
+      .webp({ quality: 85 })
+      .toBuffer();
+  }
+
+  async deleteProfilePicture(userId: string): Promise<User> {
+    const user = await this.findOne(userId);
+
+    if (!user.profilePicture) {
+      throw new NotFoundException('User does not have a profile picture');
+    }
+
+    const profilePictureToDelete = user.profilePicture;
+
+    user.profilePicture = null;
+    const updatedUser = await this.userRepository.save(user);
+
+    await this.deleteProfilePictureMedia(profilePictureToDelete);
+
+    this.logger.log(`Profile picture deleted for user ${userId}`);
+    return updatedUser;
+  }
+
+  private async deleteProfilePictureMedia(media: Media): Promise<void> {
+    await this.storageService.delete(media.bucket, media.key);
+    await this.mediaService.hardDelete(media.id);
   }
 }

@@ -66,12 +66,20 @@ export class LocalStorageProvider implements StorageProvider {
     );
   }
 
-  createBucket(bucket: string): Promise<void> {
+  createBucket(
+    bucket: string,
+    _region?: string,
+    _publicRead?: boolean,
+  ): Promise<void> {
     const bucketPath = this.getBucketPath(bucket);
     if (!existsSync(bucketPath)) {
       mkdirSync(bucketPath, { recursive: true });
       this.logger.log(`Bucket created: ${bucket}`);
     }
+    return Promise.resolve();
+  }
+
+  setBucketPolicy(_bucket: string, _policy: string): Promise<void> {
     return Promise.resolve();
   }
 
@@ -124,16 +132,17 @@ export class LocalStorageProvider implements StorageProvider {
 
     await writeFile(objectPath, buffer);
 
+    const etag = this.computeEtag(buffer);
     const metadataPath = `${objectPath}.meta.json`;
     const metadata = {
       contentType:
         contentType || lookup(objectName) || 'application/octet-stream',
       size: buffer.length,
+      etag,
       uploadedAt: new Date().toISOString(),
     };
     await writeFile(metadataPath, JSON.stringify(metadata));
 
-    const etag = this.computeEtag(buffer);
     this.logger.log(`File uploaded: ${bucket}/${objectName}`);
 
     return {
@@ -175,11 +184,16 @@ export class LocalStorageProvider implements StorageProvider {
 
     const stats = await stat(objectPath);
     let contentType = 'application/octet-stream';
+    let etag = `"${stats.mtime.getTime()}"`;
 
     if (existsSync(metadataPath)) {
       const metaContent = await readFile(metadataPath, 'utf-8');
-      const meta = JSON.parse(metaContent) as { contentType?: string };
+      const meta = JSON.parse(metaContent) as {
+        contentType?: string;
+        etag?: string;
+      };
       contentType = meta.contentType || contentType;
+      etag = meta.etag || etag;
     }
 
     return {
@@ -187,7 +201,7 @@ export class LocalStorageProvider implements StorageProvider {
       objectName,
       size: stats.size,
       contentType,
-      etag: `"${stats.mtime.getTime()}"`,
+      etag,
       lastModified: stats.mtime,
     };
   }
@@ -225,10 +239,19 @@ export class LocalStorageProvider implements StorageProvider {
           }
         } else {
           const stats = await stat(fullPath);
+          let etag = `"${stats.mtime.getTime()}"`;
+
+          const metaPath = `${fullPath}.meta.json`;
+          if (existsSync(metaPath)) {
+            const metaContent = await readFile(metaPath, 'utf-8');
+            const meta = JSON.parse(metaContent) as { etag?: string };
+            etag = meta.etag || etag;
+          }
+
           objects.push({
             name: relativePath,
             size: stats.size,
-            etag: `"${stats.mtime.getTime()}"`,
+            etag,
             lastModified: stats.mtime,
           });
         }

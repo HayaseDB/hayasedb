@@ -9,6 +9,8 @@ import * as bcrypt from 'bcrypt';
 
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
+import { StorageService } from '../../storage/storage.service';
+import { MediaService } from '../media/media.service';
 import {
   createMockRepository,
   MockRepository,
@@ -36,6 +38,28 @@ describe('UsersService', () => {
         {
           provide: getRepositoryToken(User),
           useValue: createMockRepository<User>(),
+        },
+        {
+          provide: StorageService,
+          useValue: {
+            ensureBucket: jest.fn(),
+            uploadFile: jest.fn(),
+            delete: jest.fn(),
+            getPresignedUrl: jest.fn(),
+          },
+        },
+        {
+          provide: MediaService,
+          useValue: {
+            create: jest.fn(),
+            findById: jest.fn(),
+            findByIdOrNull: jest.fn(),
+            findByBucketAndKey: jest.fn(),
+            delete: jest.fn(),
+            hardDelete: jest.fn(),
+            getUrl: jest.fn(),
+            getUrlById: jest.fn(),
+          },
         },
       ],
     }).compile();

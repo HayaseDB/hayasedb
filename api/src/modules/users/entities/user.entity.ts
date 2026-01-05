@@ -5,10 +5,13 @@ import {
   DeleteDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
+import { Media } from '../../media/entities/media.entity';
 import { Role } from '../../rbac/enums/role.enum';
 
 @Entity('users')
@@ -68,6 +71,10 @@ export class User {
 
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date | null;
+
+  @OneToOne(() => Media, { nullable: true, eager: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'profile_picture_id' })
+  profilePicture: Media | null;
 
   get isEmailVerified(): boolean {
     return this.emailVerifiedAt !== null;

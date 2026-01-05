@@ -42,12 +42,36 @@ export class MinioStorageProvider implements StorageProvider {
     return this.client.bucketExists(bucket);
   }
 
-  async createBucket(bucket: string, region = 'us-east-1'): Promise<void> {
+  async createBucket(
+    bucket: string,
+    region = 'us-east-1',
+    publicRead = false,
+  ): Promise<void> {
     const exists = await this.bucketExists(bucket);
     if (!exists) {
       await this.client.makeBucket(bucket, region);
       this.logger.log(`Bucket created: ${bucket}`);
     }
+
+    if (publicRead) {
+      const policy = {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: { AWS: ['*'] },
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${bucket}/*`],
+          },
+        ],
+      };
+      await this.setBucketPolicy(bucket, JSON.stringify(policy));
+    }
+  }
+
+  async setBucketPolicy(bucket: string, policy: string): Promise<void> {
+    await this.client.setBucketPolicy(bucket, policy);
+    this.logger.log(`Bucket policy set: ${bucket}`);
   }
 
   async deleteBucket(bucket: string): Promise<void> {

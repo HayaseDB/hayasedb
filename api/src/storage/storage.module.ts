@@ -9,6 +9,7 @@ import { STORAGE_PROVIDER_TOKEN } from './constants/storage.constants';
 import { LocalStorageProvider } from './providers/local.provider';
 import { MinioStorageProvider } from './providers/minio.provider';
 import type { StorageProvider as IStorageProvider } from './providers/storage-provider.interface';
+import { StorageController } from './storage.controller';
 import { StorageService } from './storage.service';
 
 export function createStorageProvider(
@@ -44,6 +45,7 @@ export function createStorageProvider(
 
 @Global()
 @Module({
+  controllers: [StorageController],
   providers: [
     {
       provide: STORAGE_PROVIDER_TOKEN,

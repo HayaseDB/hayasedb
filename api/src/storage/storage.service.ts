@@ -23,12 +23,17 @@ export class StorageService {
     this.logger.log('Storage service initialized');
   }
 
-  async ensureBucket(bucket: string): Promise<void> {
+  async ensureBucket(bucket: string, publicRead = false): Promise<void> {
     const exists = await this.storageProvider.bucketExists(bucket);
     if (!exists) {
-      await this.storageProvider.createBucket(bucket);
+      await this.storageProvider.createBucket(bucket, undefined, publicRead);
       this.logger.log(`Bucket created: ${bucket}`);
     }
+  }
+
+  async setBucketPolicy(bucket: string, policy: string): Promise<void> {
+    await this.storageProvider.setBucketPolicy(bucket, policy);
+    this.logger.log(`Bucket policy set: ${bucket}`);
   }
 
   async bucketExists(bucket: string): Promise<boolean> {

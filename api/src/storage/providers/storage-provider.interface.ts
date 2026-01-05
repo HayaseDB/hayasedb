@@ -14,9 +14,14 @@ import type {
 
 export interface StorageProvider {
   bucketExists(bucket: string): Promise<boolean>;
-  createBucket(bucket: string, region?: string): Promise<void>;
+  createBucket(
+    bucket: string,
+    region?: string,
+    publicRead?: boolean,
+  ): Promise<void>;
   deleteBucket(bucket: string): Promise<void>;
   listBuckets(): Promise<BucketInfo[]>;
+  setBucketPolicy(bucket: string, policy: string): Promise<void>;
 
   upload(options: UploadOptions): Promise<UploadResult>;
   download(options: DownloadOptions): Promise<Readable>;

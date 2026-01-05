@@ -1,3 +1,4 @@
+import { Expose } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -8,6 +9,8 @@ import {
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
+
+import { MediaUrlHolder } from '../media-url.holder';
 
 @Entity('media')
 @Unique(['bucket', 'key'])
@@ -42,4 +45,9 @@ export class Media {
 
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date | null;
+
+  @Expose()
+  get url(): string | null {
+    return MediaUrlHolder.buildUrl(this.bucket, this.key);
+  }
 }

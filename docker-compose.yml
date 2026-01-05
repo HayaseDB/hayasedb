@@ -88,6 +88,9 @@ services:
         - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.rule=Host(`${API_MINIO_CONSOLE_DOMAIN:-localhost}`)"
         - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.entrypoints=web"
         - "traefik.http.services.hayasedb-${APP_ENV:-default}-minio-console.loadbalancer.server.port=9001"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.rule=Host(`${API_CDN_DOMAIN:-storage.localhost}`)"
+        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.entrypoints=web"
+        - "traefik.http.services.hayasedb-${APP_ENV:-default}-minio-api.loadbalancer.server.port=9000"
 
   web:
     image: ghcr.io/hayasedb/hayasedb-web:${WEB_IMAGE_TAG:-latest}
@@ -156,6 +159,7 @@ services:
       API_MINIO_PORT: 9000
       API_MINIO_ACCESS_KEY: ${API_MINIO_ACCESS_KEY:-minioadmin}
       API_MINIO_SECRET_KEY: ${API_MINIO_SECRET_KEY:?API_MINIO_SECRET_KEY is required}
+      API_CDN_URL: ${API_CDN_URL:-}
       API_JWT_SECRET: ${API_JWT_SECRET:?API_JWT_SECRET is required}
       API_JWT_EXPIRES_IN: ${API_JWT_EXPIRES_IN:-1h}
       API_JWT_REFRESH_SECRET: ${API_JWT_REFRESH_SECRET:?API_JWT_REFRESH_SECRET is required}
