@@ -17,7 +17,7 @@
 <template>
   <Transition name="fade">
     <div v-if="isLoading" class="loading-overlay">
-      <img :src="`/loading/${randomLogo}.png`" alt="Loading" class="loading-image" />
+      <img :src="`/loading/${randomLogo}.webp`" alt="Loading" class="loading-image" />
     </div>
   </Transition>
 </template>
