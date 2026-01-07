@@ -28,12 +28,10 @@ import {
 } from '@nestjs/swagger';
 import { Pagination } from 'nestjs-typeorm-paginate';
 
-import { ActiveUser } from '../../common/decorators/active-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Permission } from '../rbac/decorators/permission.decorator';
 import { Public } from '../rbac/decorators/public.decorator';
 import { RbacGuard } from '../rbac/guards/rbac.guard';
-import { User } from '../users/entities/user.entity';
 import { AnimesService } from './animes.service';
 import { AnimeQueryDto } from './dto/anime-query.dto';
 import { AnimeResponseDto } from './dto/anime-response.dto';
@@ -98,11 +96,8 @@ export class AnimesController {
     type: AnimeResponseDto,
   })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
-  async create(
-    @Body() createAnimeDto: CreateAnimeDto,
-    @ActiveUser() user: User,
-  ): Promise<Anime> {
-    return this.animesService.create(createAnimeDto, user);
+  async create(@Body() createAnimeDto: CreateAnimeDto): Promise<Anime> {
+    return this.animesService.create(createAnimeDto);
   }
 
   @Patch(':id')

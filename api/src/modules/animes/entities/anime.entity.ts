@@ -1,19 +1,19 @@
+import slugify from 'slugify';
 import {
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
   Index,
-  JoinColumn,
   JoinTable,
   ManyToMany,
-  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  VersionColumn,
 } from 'typeorm';
 
-import { User } from '../../users/entities/user.entity';
+import { Contributable } from '../../contributions/decorators/contributable.decorator';
 import { Genre } from '../../genres/entities/genre.entity';
 import { AnimeFormat } from '../enums/anime-format.enum';
 import { AnimeStatus } from '../enums/anime-status.enum';
@@ -27,13 +27,16 @@ export class Anime {
   @Column({ type: 'varchar', length: 255, nullable: false })
   slug: string;
 
+  @Contributable
   @Index()
   @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
 
+  @Contributable
   @Column({ type: 'text', nullable: true })
   synopsis: string | null;
 
+  @Contributable
   @Index()
   @Column({
     type: 'enum',
@@ -42,6 +45,7 @@ export class Anime {
   })
   format: AnimeFormat;
 
+  @Contributable
   @Index()
   @Column({
     type: 'enum',
@@ -50,22 +54,12 @@ export class Anime {
   })
   status: AnimeStatus;
 
+  @Contributable
   @Index()
   @Column({ type: 'int', nullable: true })
   year: number | null;
 
-  @VersionColumn({ default: 1 })
-  version: number;
-
-  @Index()
-  @ManyToOne(() => User, {
-    eager: true,
-    onDelete: 'SET NULL',
-    nullable: true,
-  })
-  @JoinColumn({ name: 'created_by_user_id' })
-  createdByUser: User | null;
-
+  @Contributable
   @ManyToMany(() => Genre, (genre) => genre.animes)
   @JoinTable({
     name: 'anime_genres',
@@ -83,4 +77,12 @@ export class Anime {
   @Index()
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date | null;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  generateSlug() {
+    if (this.title) {
+      this.slug = slugify(this.title, { lower: true, strict: true });
+    }
+  }
 }

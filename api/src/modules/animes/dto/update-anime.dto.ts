@@ -75,12 +75,12 @@ export class UpdateAnimeDto {
 
   @ApiPropertyOptional({
     description: 'Genre IDs to associate with this anime (replaces existing)',
-    example: ['a1b2c3d4-e5f6-7890-abcd-ef1234567890'],
     type: [String],
+    example: ['a1b2c3d4-e5f6-7890-abcd-ef1234567890'],
   })
   @IsArray()
   @IsUUID('4', { each: true })
   @ArrayMaxSize(20)
   @IsOptional()
-  genreIds?: string[];
+  genres?: string[];
 }

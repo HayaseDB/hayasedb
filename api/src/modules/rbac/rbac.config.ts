@@ -9,6 +9,10 @@ export const RBAC_CONFIG: RoleConfigMap = {
       'users@delete:own',
       'sessions@read:own',
       'sessions@delete:own',
+      'contributions@create:own',
+      'contributions@read:own',
+      'contributions@update:own',
+      'contributions@delete:own',
     ],
   },
 
@@ -21,6 +25,8 @@ export const RBAC_CONFIG: RoleConfigMap = {
       'animes@update:any',
       'genres@create:any',
       'genres@update:any',
+      'contributions@read:any',
+      'contributions@review:any',
     ],
   },
 

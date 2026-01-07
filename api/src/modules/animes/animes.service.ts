@@ -1,5 +1,3 @@
-import slugify from 'slugify';
-
 import {
   forwardRef,
   Inject,
@@ -10,10 +8,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { GenresService } from '../genres/genres.service';
-import { User } from '../users/entities/user.entity';
 import {
   AnimeQueryDto,
   AnimeSortField,
@@ -32,24 +29,26 @@ export class AnimesService {
     private readonly animeRepository: Repository<Anime>,
     @Inject(forwardRef(() => GenresService))
     private readonly genresService: GenresService,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async create(createAnimeDto: CreateAnimeDto, user: User): Promise<Anime> {
-    const { genreIds, ...animeData } = createAnimeDto;
-    const slug = await this.generateUniqueSlug(animeData.title);
+  async create(createAnimeDto: CreateAnimeDto): Promise<Anime> {
+    return this.dataSource.transaction(async (manager) => {
+      const { genres: genreIds, ...animeData } = createAnimeDto;
 
-    const genres = genreIds ? await this.genresService.findByIds(genreIds) : [];
+      const genres = genreIds?.length
+        ? await this.genresService.findByIds(genreIds)
+        : [];
 
-    const anime = this.animeRepository.create({
-      ...animeData,
-      slug,
-      createdByUser: user,
-      genres,
+      const anime = manager.create(Anime, {
+        ...animeData,
+        genres,
+      });
+
+      const savedAnime = await manager.save(anime);
+      this.logger.log(`Anime created: ${savedAnime.id} (${savedAnime.slug})`);
+      return savedAnime;
     });
-
-    const savedAnime = await this.animeRepository.save(anime);
-    this.logger.log(`Anime created: ${savedAnime.id} (${savedAnime.slug})`);
-    return savedAnime;
   }
 
   async findAll(query: AnimeQueryDto): Promise<Pagination<Anime>> {
@@ -66,7 +65,6 @@ export class AnimesService {
 
     const queryBuilder = this.animeRepository
       .createQueryBuilder('anime')
-      .leftJoinAndSelect('anime.createdByUser', 'createdByUser')
       .leftJoinAndSelect('anime.genres', 'genres');
 
     if (search) {
@@ -127,24 +125,20 @@ export class AnimesService {
   }
 
   async update(id: string, updateAnimeDto: UpdateAnimeDto): Promise<Anime> {
-    const { genreIds, ...animeData } = updateAnimeDto;
-    const anime = await this.findById(id);
+    return this.dataSource.transaction(async (manager) => {
+      const { genres: genreIds, ...animeData } = updateAnimeDto;
+      const anime = await this.findById(id);
 
-    if (animeData.title && animeData.title !== anime.title) {
-      anime.slug = await this.generateUniqueSlug(animeData.title, id);
-    }
+      Object.assign(anime, animeData);
 
-    Object.assign(anime, animeData);
+      if (genreIds !== undefined) {
+        anime.genres = await this.genresService.findByIds(genreIds);
+      }
 
-    if (genreIds !== undefined) {
-      anime.genres = await this.genresService.findByIds(genreIds);
-    }
-
-    const updatedAnime = await this.animeRepository.save(anime);
-    this.logger.log(
-      `Anime updated: ${updatedAnime.id} (version ${updatedAnime.version})`,
-    );
-    return updatedAnime;
+      const updatedAnime = await manager.save(anime);
+      this.logger.log(`Anime updated: ${updatedAnime.id}`);
+      return updatedAnime;
+    });
   }
 
   async softDelete(id: string): Promise<void> {
@@ -191,49 +185,10 @@ export class AnimesService {
       });
     }
 
-    const existingWithSlug = await this.animeRepository.findOne({
-      where: { slug: anime.slug },
-    });
-
-    if (existingWithSlug) {
-      anime.slug = await this.generateUniqueSlug(anime.title, id);
-    }
-
     anime.deletedAt = null;
     const restoredAnime = await this.animeRepository.save(anime);
     this.logger.log(`Anime restored: ${id}`);
     return restoredAnime;
-  }
-
-  private async generateUniqueSlug(
-    title: string,
-    excludeId?: string,
-  ): Promise<string> {
-    const baseSlug = slugify(title, { lower: true, strict: true });
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (true) {
-      const existingQuery = this.animeRepository
-        .createQueryBuilder('anime')
-        .where('anime.slug = :slug', { slug })
-        .andWhere('anime.deletedAt IS NULL');
-
-      if (excludeId) {
-        existingQuery.andWhere('anime.id != :excludeId', { excludeId });
-      }
-
-      const existing = await existingQuery.getOne();
-
-      if (!existing) {
-        break;
-      }
-
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    return slug;
   }
 
   private getSortField(sort: AnimeSortField): string {

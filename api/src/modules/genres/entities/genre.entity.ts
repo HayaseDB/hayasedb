@@ -1,19 +1,19 @@
+import slugify from 'slugify';
 import {
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
   Index,
-  JoinColumn,
   ManyToMany,
-  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  VersionColumn,
 } from 'typeorm';
 
-import { User } from '../../users/entities/user.entity';
 import { Anime } from '../../animes/entities/anime.entity';
+import { Contributable } from '../../contributions/decorators/contributable.decorator';
 
 @Entity('genres')
 @Index(['slug'], { unique: true, where: '"deleted_at" IS NULL' })
@@ -24,24 +24,14 @@ export class Genre {
   @Column({ type: 'varchar', length: 100, nullable: false })
   slug: string;
 
+  @Contributable
   @Index()
   @Column({ type: 'varchar', length: 100, nullable: false })
   name: string;
 
+  @Contributable
   @Column({ type: 'text', nullable: true })
   description: string | null;
-
-  @VersionColumn({ default: 1 })
-  version: number;
-
-  @Index()
-  @ManyToOne(() => User, {
-    eager: true,
-    onDelete: 'SET NULL',
-    nullable: true,
-  })
-  @JoinColumn({ name: 'created_by_user_id' })
-  createdByUser: User | null;
 
   @ManyToMany(() => Anime, (anime) => anime.genres)
   animes: Anime[];
@@ -55,4 +45,12 @@ export class Genre {
   @Index()
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date | null;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  generateSlug() {
+    if (this.name) {
+      this.slug = slugify(this.name, { lower: true, strict: true });
+    }
+  }
 }

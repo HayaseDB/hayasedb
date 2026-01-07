@@ -219,23 +219,19 @@ describe('AuthService', () => {
   });
 
   describe('verifyEmail', () => {
-    it('should verify email and return tokens', async () => {
+    it('should verify email and return success message', async () => {
       const mockUser = createMockUser();
-      const mockSession = createMockSession({ user: mockUser });
 
       usersService.verifyEmail.mockResolvedValue(mockUser);
-      sessionsService.create.mockResolvedValue(mockSession);
-      jwtService.signAsync
-        .mockResolvedValueOnce('access-token')
-        .mockResolvedValueOnce('refresh-token');
 
       const result = await service.verifyEmail('valid-token');
 
       expect(usersService.verifyEmail).toHaveBeenCalledWith('valid-token');
-      expect(sessionsService.create).toHaveBeenCalled();
       expect(mailService.sendWelcomeEmail).toHaveBeenCalledWith(mockUser);
-      expect(result).toHaveProperty('token', 'access-token');
-      expect(result).toHaveProperty('user', mockUser);
+      expect(result).toHaveProperty(
+        'message',
+        'Email verified successfully. You can now log in.',
+      );
     });
   });
 

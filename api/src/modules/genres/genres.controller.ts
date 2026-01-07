@@ -28,12 +28,10 @@ import {
 } from '@nestjs/swagger';
 import { Pagination } from 'nestjs-typeorm-paginate';
 
-import { ActiveUser } from '../../common/decorators/active-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Permission } from '../rbac/decorators/permission.decorator';
 import { Public } from '../rbac/decorators/public.decorator';
 import { RbacGuard } from '../rbac/guards/rbac.guard';
-import { User } from '../users/entities/user.entity';
 import { CreateGenreDto } from './dto/create-genre.dto';
 import { GenreQueryDto } from './dto/genre-query.dto';
 import { GenreResponseDto } from './dto/genre-response.dto';
@@ -98,11 +96,8 @@ export class GenresController {
     type: GenreResponseDto,
   })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
-  async create(
-    @Body() createGenreDto: CreateGenreDto,
-    @ActiveUser() user: User,
-  ): Promise<Genre> {
-    return this.genresService.create(createGenreDto, user);
+  async create(@Body() createGenreDto: CreateGenreDto): Promise<Genre> {
+    return this.genresService.create(createGenreDto);
   }
 
   @Patch(':id')

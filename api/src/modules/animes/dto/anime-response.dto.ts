@@ -4,20 +4,6 @@ import { GenreResponseDto } from '../../genres/dto/genre-response.dto';
 import { AnimeFormat } from '../enums/anime-format.enum';
 import { AnimeStatus } from '../enums/anime-status.enum';
 
-export class AnimeCreatedByUserDto {
-  @ApiProperty({
-    description: 'User ID',
-    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-  })
-  id: string;
-
-  @ApiProperty({
-    description: 'Username',
-    example: 'admin',
-  })
-  username: string;
-}
-
 export class AnimeResponseDto {
   @ApiProperty({
     description: 'Anime ID',
@@ -63,18 +49,6 @@ export class AnimeResponseDto {
     example: 2021,
   })
   year: number | null;
-
-  @ApiProperty({
-    description: 'Entity version (incremented on each update)',
-    example: 1,
-  })
-  version: number;
-
-  @ApiPropertyOptional({
-    description: 'User who created this anime entry',
-    type: AnimeCreatedByUserDto,
-  })
-  createdByUser: AnimeCreatedByUserDto | null;
 
   @ApiPropertyOptional({
     description: 'Genres associated with this anime',

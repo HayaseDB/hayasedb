@@ -1,5 +1,3 @@
-import slugify from 'slugify';
-
 import {
   Injectable,
   Logger,
@@ -8,9 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 
-import { User } from '../users/entities/user.entity';
 import { CreateGenreDto } from './dto/create-genre.dto';
 import {
   GenreQueryDto,
@@ -27,20 +24,17 @@ export class GenresService {
   constructor(
     @InjectRepository(Genre)
     private readonly genreRepository: Repository<Genre>,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async create(createGenreDto: CreateGenreDto, user: User): Promise<Genre> {
-    const slug = await this.generateUniqueSlug(createGenreDto.name);
+  async create(createGenreDto: CreateGenreDto): Promise<Genre> {
+    return this.dataSource.transaction(async (manager) => {
+      const genre = manager.create(Genre, createGenreDto);
 
-    const genre = this.genreRepository.create({
-      ...createGenreDto,
-      slug,
-      createdByUser: user,
+      const savedGenre = await manager.save(genre);
+      this.logger.log(`Genre created: ${savedGenre.id} (${savedGenre.slug})`);
+      return savedGenre;
     });
-
-    const savedGenre = await this.genreRepository.save(genre);
-    this.logger.log(`Genre created: ${savedGenre.id} (${savedGenre.slug})`);
-    return savedGenre;
   }
 
   async findAll(query: GenreQueryDto): Promise<Pagination<Genre>> {
@@ -52,9 +46,7 @@ export class GenresService {
       order = SortOrder.ASC,
     } = query;
 
-    const queryBuilder = this.genreRepository
-      .createQueryBuilder('genre')
-      .leftJoinAndSelect('genre.createdByUser', 'createdByUser');
+    const queryBuilder = this.genreRepository.createQueryBuilder('genre');
 
     if (search) {
       queryBuilder.andWhere('genre.name ILIKE :search', {
@@ -122,19 +114,15 @@ export class GenresService {
   }
 
   async update(id: string, updateGenreDto: UpdateGenreDto): Promise<Genre> {
-    const genre = await this.findById(id);
+    return this.dataSource.transaction(async (manager) => {
+      const genre = await this.findById(id);
 
-    if (updateGenreDto.name && updateGenreDto.name !== genre.name) {
-      genre.slug = await this.generateUniqueSlug(updateGenreDto.name, id);
-    }
+      Object.assign(genre, updateGenreDto);
 
-    Object.assign(genre, updateGenreDto);
-
-    const updatedGenre = await this.genreRepository.save(genre);
-    this.logger.log(
-      `Genre updated: ${updatedGenre.id} (version ${updatedGenre.version})`,
-    );
-    return updatedGenre;
+      const updatedGenre = await manager.save(genre);
+      this.logger.log(`Genre updated: ${updatedGenre.id}`);
+      return updatedGenre;
+    });
   }
 
   async softDelete(id: string): Promise<void> {
@@ -181,49 +169,10 @@ export class GenresService {
       });
     }
 
-    const existingWithSlug = await this.genreRepository.findOne({
-      where: { slug: genre.slug },
-    });
-
-    if (existingWithSlug) {
-      genre.slug = await this.generateUniqueSlug(genre.name, id);
-    }
-
     genre.deletedAt = null;
     const restoredGenre = await this.genreRepository.save(genre);
     this.logger.log(`Genre restored: ${id}`);
     return restoredGenre;
-  }
-
-  private async generateUniqueSlug(
-    name: string,
-    excludeId?: string,
-  ): Promise<string> {
-    const baseSlug = slugify(name, { lower: true, strict: true });
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (true) {
-      const existingQuery = this.genreRepository
-        .createQueryBuilder('genre')
-        .where('genre.slug = :slug', { slug })
-        .andWhere('genre.deletedAt IS NULL');
-
-      if (excludeId) {
-        existingQuery.andWhere('genre.id != :excludeId', { excludeId });
-      }
-
-      const existing = await existingQuery.getOne();
-
-      if (!existing) {
-        break;
-      }
-
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    return slug;
   }
 
   private getSortField(sort: GenreSortField): string {

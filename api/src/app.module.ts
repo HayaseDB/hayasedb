@@ -10,6 +10,7 @@ import { RbacModule } from './modules/rbac/rbac.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { StorageModule } from './storage/storage.module';
 import { AnimesModule } from './modules/animes/animes.module';
+import { ContributionsModule } from './modules/contributions/contributions.module';
 import { GenresModule } from './modules/genres/genres.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -27,6 +28,7 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule,
     AnimesModule,
     GenresModule,
+    ContributionsModule,
   ],
 })
 export class AppModule {}
