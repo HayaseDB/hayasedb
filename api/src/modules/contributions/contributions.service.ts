@@ -117,9 +117,14 @@ export class ContributionsService {
     if (status) qb.andWhere('c.status = :status', { status });
     if (target) qb.andWhere('c.target = :target', { target });
 
-    qb.orderBy(this.getSortField(sort), order);
+    const sortOrder = order === SortOrder.ASC ? 'ASC' : 'DESC';
+    qb.orderBy(this.getSortField(sort), sortOrder);
 
-    const result = await paginate<Contribution>(qb, { page, limit });
+    const result = await paginate<Contribution>(qb, {
+      page,
+      limit,
+      route: '/contributions',
+    });
     const resolvedItems = await Promise.all(
       result.items.map((item) => this.resolveContribution(item)),
     );
@@ -145,9 +150,14 @@ export class ContributionsService {
 
     if (target) qb.andWhere('c.target = :target', { target });
 
-    qb.orderBy(this.getSortField(sort), order);
+    const sortOrder = order === SortOrder.ASC ? 'ASC' : 'DESC';
+    qb.orderBy(this.getSortField(sort), sortOrder);
 
-    const result = await paginate<Contribution>(qb, { page, limit });
+    const result = await paginate<Contribution>(qb, {
+      page,
+      limit,
+      route: '/contributions/queue',
+    });
     const resolvedItems = await Promise.all(
       result.items.map((item) => this.resolveContribution(item)),
     );

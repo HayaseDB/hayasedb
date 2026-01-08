@@ -151,6 +151,34 @@ export class AuthService {
     return true;
   }
 
+  async logoutAllExceptCurrent(userId: string, currentSessionId: string) {
+    await this.sessionsService.deleteAllExceptCurrent(userId, currentSessionId);
+    return true;
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+
+    if (user) {
+      const token = await this.usersService.generatePasswordResetToken(user.id);
+      await this.mailService.sendPasswordResetEmail(user, token);
+    }
+
+    return {
+      message:
+        'If an account exists with this email, a password reset link has been sent.',
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    await this.usersService.resetPassword(token, newPassword);
+
+    return {
+      message:
+        'Password reset successfully. You can now log in with your new password.',
+    };
+  }
+
   private generateSessionHash(): string {
     return crypto
       .createHash('sha256')

@@ -8,7 +8,7 @@ const schema = z.object({
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, schema.parse)
   return await authFetchApi(event, '/users/me/password', {
-    method: 'PUT',
+    method: 'PATCH',
     body,
   })
 })

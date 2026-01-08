@@ -216,6 +216,59 @@ export class UsersService {
     return await this.findOne(user.id);
   }
 
+  async generatePasswordResetToken(userId: string): Promise<string> {
+    await this.findOne(userId);
+
+    const token = crypto.randomBytes(32).toString('hex');
+
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        passwordResetToken: token,
+        passwordResetExpiresAt: () => "NOW() + INTERVAL '1 hour'",
+      })
+      .where('id = :id', { id: userId })
+      .execute();
+
+    return token;
+  }
+
+  async findByPasswordResetToken(token: string): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpiresAt: MoreThan(new Date()),
+      },
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<User> {
+    const user = await this.findByPasswordResetToken(token);
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+      })
+      .where('id = :id', { id: user.id })
+      .execute();
+
+    await this.sessionsService.deleteAllByUserId(user.id);
+
+    this.logger.log(`Password reset for user ${user.id}`);
+    return await this.findOne(user.id);
+  }
+
   async uploadProfilePicture(
     userId: string,
     file: Express.Multer.File,

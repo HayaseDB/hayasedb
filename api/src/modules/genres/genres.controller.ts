@@ -29,12 +29,12 @@ import {
 import { Pagination } from 'nestjs-typeorm-paginate';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Permission } from '../rbac/decorators/permission.decorator';
 import { Public } from '../rbac/decorators/public.decorator';
-import { RbacGuard } from '../rbac/guards/rbac.guard';
+import { Permissions } from '../rbac/decorators/permissions.decorator';
 import { CreateGenreDto } from './dto/create-genre.dto';
 import { GenreQueryDto } from './dto/genre-query.dto';
 import { GenreResponseDto } from './dto/genre-response.dto';
+import { PaginatedGenreResponseDto } from './dto/paginated-genre-response.dto';
 import { UpdateGenreDto } from './dto/update-genre.dto';
 import { Genre } from './entities/genre.entity';
 import { GenresService } from './genres.service';
@@ -42,7 +42,7 @@ import { GenresService } from './genres.service';
 @ApiTags('Genres')
 @Controller('genres')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard, RbacGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class GenresController {
   constructor(private readonly genresService: GenresService) {}
@@ -57,6 +57,7 @@ export class GenresController {
   })
   @ApiOkResponse({
     description: 'Genres retrieved successfully',
+    type: PaginatedGenreResponseDto,
   })
   async findAll(@Query() query: GenreQueryDto): Promise<Pagination<Genre>> {
     return this.genresService.findAll(query);
@@ -85,7 +86,7 @@ export class GenresController {
   }
 
   @Post()
-  @Permission(['genres@create:any'])
+  @Permissions(['global:genres.create'])
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create genre',
@@ -101,7 +102,7 @@ export class GenresController {
   }
 
   @Patch(':id')
-  @Permission(['genres@update:any'])
+  @Permissions(['global:genres.update'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update genre',
@@ -127,7 +128,7 @@ export class GenresController {
   }
 
   @Delete(':id')
-  @Permission(['genres@delete:any'])
+  @Permissions(['global:genres.delete'])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete genre',
@@ -152,7 +153,7 @@ export class GenresController {
   }
 
   @Post(':id/restore')
-  @Permission(['genres@update:any'])
+  @Permissions(['global:genres.update'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Restore genre',

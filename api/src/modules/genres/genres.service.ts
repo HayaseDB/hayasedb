@@ -58,7 +58,7 @@ export class GenresService {
     const sortOrder = order === SortOrder.ASC ? 'ASC' : 'DESC';
     queryBuilder.orderBy(sortField, sortOrder);
 
-    return paginate<Genre>(queryBuilder, { page, limit });
+    return paginate<Genre>(queryBuilder, { page, limit, route: '/genres' });
   }
 
   async findBySlug(slug: string): Promise<Genre> {

@@ -89,7 +89,7 @@ export class AnimesService {
     const sortOrder = order === SortOrder.ASC ? 'ASC' : 'DESC';
     queryBuilder.orderBy(sortField, sortOrder);
 
-    return paginate<Anime>(queryBuilder, { page, limit });
+    return paginate<Anime>(queryBuilder, { page, limit, route: '/animes' });
   }
 
   async findBySlug(slug: string): Promise<Anime> {

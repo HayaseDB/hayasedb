@@ -15,6 +15,7 @@ import {
 import type { MailProvider } from './providers/mail-provider.interface';
 import { AccountDeletionEmail } from './templates/AccountDeletionEmail';
 import { LoginNotificationEmail } from './templates/LoginNotificationEmail';
+import { PasswordResetEmail } from './templates/PasswordResetEmail';
 import { VerificationEmail } from './templates/VerificationEmail';
 import { WelcomeEmail } from './templates/WelcomeEmail';
 
@@ -160,6 +161,31 @@ export class MailService {
     await this.sendEmail({
       to: user.email,
       subject: `Your ${this.mailConfig.API_MAIL_FROM_NAME} Account Has Been Deleted`,
+      html,
+      text,
+    });
+  }
+
+  async sendPasswordResetEmail(
+    user: EmailUser,
+    resetToken: string,
+  ): Promise<void> {
+    const userName = this.getUserName(user);
+    const baseUrl = this.appConfig.API_WEB_URL || 'http://localhost:5173';
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
+
+    const { html, text } = await this.renderTemplate(
+      createElement(PasswordResetEmail, {
+        appName: this.mailConfig.API_MAIL_FROM_NAME,
+        userName,
+        resetUrl,
+        expiresIn: '1 hour',
+      }),
+    );
+
+    await this.sendEmail({
+      to: user.email,
+      subject: `Reset your ${this.mailConfig.API_MAIL_FROM_NAME} password`,
       html,
       text,
     });

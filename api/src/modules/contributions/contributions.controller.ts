@@ -32,12 +32,12 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../rbac/decorators/public.decorator';
-import { Permission } from '../rbac/decorators/permission.decorator';
-import { RbacGuard } from '../rbac/guards/rbac.guard';
+import { Permissions } from '../rbac/decorators/permissions.decorator';
 import { User } from '../users/entities/user.entity';
 import { ContributionsService } from './contributions.service';
 import { ContributionResponseDto } from './dto/contribution-response.dto';
 import { CreateContributionDto } from './dto/create-contribution.dto';
+import { PaginatedContributionResponseDto } from './dto/paginated-contribution-response.dto';
 import { QueryContributionsDto } from './dto/query-contributions.dto';
 import { ResolveContributionDto } from './dto/resolve-contribution.dto';
 import { UpdateContributionDto } from './dto/update-contribution.dto';
@@ -49,7 +49,7 @@ import type { JSONSchema7 } from './schema/types/json-schema.types';
 @ApiTags('Contributions')
 @Controller('contributions')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard, RbacGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class ContributionsController {
   constructor(
@@ -58,7 +58,7 @@ export class ContributionsController {
   ) {}
 
   @Post()
-  @Permission(['contributions@create:own'])
+  @Permissions(['global:contributions.create:own'])
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create contribution',
@@ -80,7 +80,7 @@ export class ContributionsController {
   }
 
   @Get()
-  @Permission(['contributions@read:own'])
+  @Permissions(['global:contributions.read:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'List own contributions',
@@ -88,6 +88,7 @@ export class ContributionsController {
   })
   @ApiOkResponse({
     description: 'Contributions retrieved successfully',
+    type: PaginatedContributionResponseDto,
   })
   async findOwn(
     @Query() query: QueryContributionsDto,
@@ -97,7 +98,7 @@ export class ContributionsController {
   }
 
   @Get('queue')
-  @Permission(['contributions@review:any'])
+  @Permissions(['global:contributions.review:any'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get pending queue',
@@ -106,6 +107,7 @@ export class ContributionsController {
   })
   @ApiOkResponse({
     description: 'Pending contributions retrieved successfully',
+    type: PaginatedContributionResponseDto,
   })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async findQueue(
@@ -138,7 +140,7 @@ export class ContributionsController {
   }
 
   @Get(':id')
-  @Permission(['contributions@read:own'])
+  @Permissions(['global:contributions.read:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get contribution',
@@ -165,7 +167,7 @@ export class ContributionsController {
   }
 
   @Put(':id')
-  @Permission(['contributions@update:own'])
+  @Permissions(['global:contributions.update:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update contribution',
@@ -197,7 +199,7 @@ export class ContributionsController {
   }
 
   @Delete(':id')
-  @Permission(['contributions@delete:own'])
+  @Permissions(['global:contributions.delete:own'])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete/withdraw contribution',
@@ -227,7 +229,7 @@ export class ContributionsController {
   }
 
   @Post(':id/submit')
-  @Permission(['contributions@update:own'])
+  @Permissions(['global:contributions.update:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Submit contribution',
@@ -258,7 +260,7 @@ export class ContributionsController {
   }
 
   @Post(':id/approve')
-  @Permission(['contributions@review:any'])
+  @Permissions(['global:contributions.review:any'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Approve contribution',
@@ -292,7 +294,7 @@ export class ContributionsController {
   }
 
   @Post(':id/reject')
-  @Permission(['contributions@review:any'])
+  @Permissions(['global:contributions.review:any'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reject contribution',

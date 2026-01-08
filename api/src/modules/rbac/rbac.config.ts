@@ -1,47 +1,52 @@
-import { Role } from './enums/role.enum';
-import { RoleConfigMap } from './interfaces/permission.interface';
-
-export const RBAC_CONFIG: RoleConfigMap = {
-  [Role.USER]: {
-    permissions: [
-      'users@read:own',
-      'users@update:own',
-      'users@delete:own',
-      'sessions@read:own',
-      'sessions@delete:own',
-      'contributions@create:own',
-      'contributions@read:own',
-      'contributions@update:own',
-      'contributions@delete:own',
-    ],
+export const rbacConfig = {
+  scopes: {
+    global: {
+      permissions: {
+        users: {
+          actions: ['read', 'create', 'update', 'delete'],
+          variants: ['own', 'any'],
+        },
+        sessions: {
+          actions: ['read', 'create', 'update', 'delete'],
+          variants: ['own', 'any'],
+        },
+        animes: ['create', 'update', 'delete'],
+        genres: ['create', 'update', 'delete'],
+        contributions: {
+          actions: ['create', 'read', 'update', 'delete', 'review'],
+          variants: ['own', 'any'],
+        },
+        rbac: ['read'],
+      },
+      roles: {
+        administrator: ['*'],
+        moderator: [
+          'users.read:own',
+          'users.update:own',
+          'users.delete:own',
+          'users.read:any',
+          'sessions.read:own',
+          'sessions.delete:own',
+          'sessions.read:any',
+          'animes.create',
+          'animes.update',
+          'genres.create',
+          'genres.update',
+          'contributions.*:own',
+          'contributions.read:any',
+          'contributions.review:any',
+        ],
+        user: [
+          'users.read:own',
+          'users.update:own',
+          'users.delete:own',
+          'sessions.read:own',
+          'sessions.delete:own',
+          'contributions.*:own',
+        ],
+      },
+    },
   },
+} as const;
 
-  [Role.MODERATOR]: {
-    inherits: [Role.USER],
-    permissions: [
-      'users@read:any',
-      'sessions@read:any',
-      'animes@create:any',
-      'animes@update:any',
-      'genres@create:any',
-      'genres@update:any',
-      'contributions@read:any',
-      'contributions@review:any',
-    ],
-  },
-
-  [Role.ADMINISTRATOR]: {
-    inherits: [Role.MODERATOR],
-    permissions: [
-      'users@create:any',
-      'users@update:any',
-      'users@delete:any',
-      'sessions@create:any',
-      'sessions@update:any',
-      'sessions@delete:any',
-      'rbac@read:any',
-      'animes@delete:any',
-      'genres@delete:any',
-    ],
-  },
-};
+export type RbacConfig = typeof rbacConfig;

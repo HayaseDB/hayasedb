@@ -5,11 +5,22 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 
+import { Session } from '../../sessions/entities/session.entity';
 import { User } from '../../users/entities/user.entity';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { PERMISSION_KEY } from '../decorators/permission.decorator';
+import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { Role } from '../enums/role.enum';
 import { RbacService } from '../rbac.service';
+import { Permission, RoleKey } from '../rbac.types';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    user: User;
+    session: Session;
+  };
+  roles?: RoleKey[];
+}
 
 @Injectable()
 export class RbacGuard implements CanActivate {
@@ -18,40 +29,32 @@ export class RbacGuard implements CanActivate {
     private readonly rbacService: RbacService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+  canActivate(ctx: ExecutionContext): boolean {
+    const permissions = this.reflector.getAllAndOverride<Permission[]>(
+      PERMISSIONS_KEY,
+      [ctx.getHandler(), ctx.getClass()],
+    );
 
-    if (isPublic) {
+    if (!permissions?.length) {
       return true;
     }
 
-    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
-      PERMISSION_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+    const userData = request.user;
 
-    if (!requiredPermissions || requiredPermissions.length === 0) {
-      return true;
+    if (!userData?.user) {
+      throw new ForbiddenException('Authentication required');
     }
 
-    const request = context.switchToHttp().getRequest<{ user: User }>();
-    const user = request.user;
+    const role = userData.user.role ?? Role.USER;
+    const roleKey: RoleKey = `global:${role}`;
 
-    if (!user) {
-      throw new ForbiddenException('User not authenticated');
-    }
+    const roles: RoleKey[] = [roleKey];
+    request.roles = roles;
 
-    const hasPermission = this.rbacService.canAny(
-      user.role,
-      requiredPermissions,
-    );
-
-    if (!hasPermission) {
+    if (!this.rbacService.hasAnyPermission(roles, permissions)) {
       throw new ForbiddenException(
-        `Insufficient permissions. Required: ${requiredPermissions.join(' OR ')}`,
+        `Insufficient permissions. Required: ${permissions.join(' or ')}`,
       );
     }
 

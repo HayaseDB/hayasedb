@@ -1,14 +1,18 @@
 import { Global, Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 
 import { RbacGuard } from './guards/rbac.guard';
-import { RbacMatrixController } from './rbac-matrix.controller';
-import { RbacMatrixService } from './rbac-matrix.service';
 import { RbacService } from './rbac.service';
 
 @Global()
 @Module({
-  controllers: [RbacMatrixController],
-  providers: [RbacService, RbacMatrixService, RbacGuard],
-  exports: [RbacService, RbacMatrixService, RbacGuard],
+  providers: [
+    RbacService,
+    {
+      provide: APP_GUARD,
+      useClass: RbacGuard,
+    },
+  ],
+  exports: [RbacService],
 })
 export class RbacModule {}

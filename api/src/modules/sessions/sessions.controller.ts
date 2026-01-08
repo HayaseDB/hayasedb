@@ -9,24 +9,28 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Pagination } from 'nestjs-typeorm-paginate';
 
 import { ActiveSession } from '../../common/decorators/active-session.decorator';
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Permission } from '../rbac/decorators/permission.decorator';
-import { RbacGuard } from '../rbac/guards/rbac.guard';
+import { Permissions } from '../rbac/decorators/permissions.decorator';
 import { User } from '../users/entities/user.entity';
+import { PaginatedSessionResponseDto } from './dto/paginated-session-response.dto';
+import { SessionQueryDto } from './dto/session-query.dto';
 import { SessionResponseDto } from './dto/session-response.dto';
 import { Session } from './entities/session.entity';
 import { SessionsService } from './sessions.service';
@@ -34,31 +38,34 @@ import { SessionsService } from './sessions.service';
 @ApiTags('Sessions')
 @Controller('sessions')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard, RbacGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Get()
-  @Permission(['sessions@read:own'])
+  @Permissions(['global:sessions.read:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'List user sessions',
-    description: 'Get all sessions for the authenticated user',
+    description: 'Get a paginated list of sessions for the authenticated user',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Sessions retrieved successfully',
-    type: [SessionResponseDto],
+    type: PaginatedSessionResponseDto,
   })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async findAll(
+    @Query() query: SessionQueryDto,
     @ActiveUser() user: User,
     @ActiveSession() currentSession: Session,
-  ): Promise<SessionResponseDto[]> {
-    const sessions = await this.sessionsService.findByUserId(user.id);
+  ): Promise<Pagination<SessionResponseDto>> {
+    const result = await this.sessionsService.findByUserIdPaginated(
+      user.id,
+      query,
+    );
 
-    return sessions.map((session) => ({
+    const transformedItems = result.items.map((session) => ({
       id: session.id,
       browser: session.browser,
       browserVersion: session.browserVersion,
@@ -70,10 +77,16 @@ export class SessionsController {
       updatedAt: session.updatedAt,
       isCurrent: session.id === currentSession.id,
     }));
+
+    return {
+      items: transformedItems,
+      meta: result.meta,
+      links: result.links,
+    };
   }
 
   @Get(':id')
-  @Permission(['sessions@read:own'])
+  @Permissions(['global:sessions.read:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get session by ID',
@@ -121,7 +134,7 @@ export class SessionsController {
   }
 
   @Delete('others')
-  @Permission(['sessions@delete:own'])
+  @Permissions(['global:sessions.delete:own'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Revoke all other sessions',
@@ -153,7 +166,7 @@ export class SessionsController {
   }
 
   @Delete(':id')
-  @Permission(['sessions@delete:own'])
+  @Permissions(['global:sessions.delete:own'])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Revoke session',

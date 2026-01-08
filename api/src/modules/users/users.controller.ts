@@ -6,7 +6,6 @@ import {
   Get,
   Patch,
   Post,
-  Put,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -24,8 +23,7 @@ import {
 
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Permission } from '../rbac/decorators/permission.decorator';
-import { RbacGuard } from '../rbac/guards/rbac.guard';
+import { Permissions } from '../rbac/decorators/permissions.decorator';
 import {
   PROFILE_PICTURE_ALLOWED_MIME_TYPES,
   PROFILE_PICTURE_MAX_SIZE,
@@ -41,13 +39,13 @@ import { UsersService } from './users.service';
 @ApiTags('Users')
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard, RbacGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('me/profile')
-  @Permission(['users@read:own'])
+  @Get('me')
+  @Permissions(['global:users.read:own'])
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
@@ -55,8 +53,8 @@ export class UsersController {
     return user;
   }
 
-  @Patch('me/profile')
-  @Permission(['users@update:own'])
+  @Patch('me')
+  @Permissions(['global:users.update:own'])
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
@@ -67,8 +65,8 @@ export class UsersController {
     return this.usersService.update(user.id, updateUserDto);
   }
 
-  @Put('me/password')
-  @Permission(['users@update:own'])
+  @Patch('me/password')
+  @Permissions(['global:users.update:own'])
   @ApiOperation({ summary: 'Change user password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
@@ -80,7 +78,7 @@ export class UsersController {
   }
 
   @Post('me/profile-picture')
-  @Permission(['users@update:own'])
+  @Permissions(['global:users.update:own'])
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -121,7 +119,7 @@ export class UsersController {
   }
 
   @Delete('me/profile-picture')
-  @Permission(['users@update:own'])
+  @Permissions(['global:users.update:own'])
   @ApiOperation({ summary: 'Delete profile picture' })
   @ApiResponse({
     status: 200,
@@ -135,7 +133,7 @@ export class UsersController {
   }
 
   @Delete('me')
-  @Permission(['users@delete:own'])
+  @Permissions(['global:users.delete:own'])
   @ApiOperation({ summary: 'Delete current user account' })
   @ApiResponse({
     status: 200,

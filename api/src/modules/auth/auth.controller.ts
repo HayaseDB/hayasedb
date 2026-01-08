@@ -20,17 +20,19 @@ import {
 import { ActiveSession } from '../../common/decorators/active-session.decorator';
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
 import { RequestMetadataDecorator } from '../../common/decorators/request-metadata.decorator';
+import { MessageResponseDto } from '../../common/dto/message-response.dto';
 import type { RequestMetadata } from '../../common/types/request-metadata.interface';
 import { Session } from '../sessions/entities/session.entity';
 import { User } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { CurrentUserResponseDto } from './dto/current-user-response.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
 import { RegisterDto } from './dto/register.dto';
-import { RegisterResponseDto } from './dto/register-response.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyEmailResponseDto } from './dto/verify-email-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -56,7 +58,7 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'Verification email sent successfully',
-    type: RegisterResponseDto,
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 409,
@@ -64,7 +66,7 @@ export class AuthController {
   })
   async register(
     @Body() registerDto: RegisterDto,
-  ): Promise<RegisterResponseDto> {
+  ): Promise<MessageResponseDto> {
     return await this.authService.register(registerDto);
   }
 
@@ -108,7 +110,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Verification email sent successfully',
-    type: RegisterResponseDto,
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -120,7 +122,7 @@ export class AuthController {
   })
   async resendVerification(
     @Body() dto: ResendVerificationDto,
-  ): Promise<RegisterResponseDto> {
+  ): Promise<MessageResponseDto> {
     return await this.authService.resendVerificationEmail(dto.email);
   }
 
@@ -188,6 +190,72 @@ export class AuthController {
   })
   async logout(@ActiveSession() currentSession: Session): Promise<void> {
     await this.authService.logout(currentSession.id);
+  }
+
+  @ApiBearerAuth('access_token')
+  @Post('logout-all')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Logout all sessions',
+    description: 'Terminate all sessions except the current one',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'All other sessions logged out successfully',
+  })
+  async logoutAll(
+    @ActiveUser() user: User,
+    @ActiveSession() currentSession: Session,
+  ): Promise<void> {
+    await this.authService.logoutAllExceptCurrent(user.id, currentSession.id);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Request password reset',
+    description:
+      'Send a password reset link to the email address. Always returns success to prevent email enumeration.',
+  })
+  @ApiBody({
+    type: ForgotPasswordDto,
+    description: 'Email address',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent (if account exists)',
+    type: MessageResponseDto,
+  })
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<MessageResponseDto> {
+    return await this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reset password',
+    description: 'Reset password using the token received via email.',
+  })
+  @ApiBody({
+    type: ResetPasswordDto,
+    description: 'Password reset token and new password',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successfully',
+    type: MessageResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired password reset token',
+  })
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<MessageResponseDto> {
+    return await this.authService.resetPassword(dto.token, dto.newPassword);
   }
 
   @ApiBearerAuth('access_token')

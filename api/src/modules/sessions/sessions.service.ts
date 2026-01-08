@@ -1,7 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { paginate, Pagination } from 'nestjs-typeorm-paginate';
 import { Repository } from 'typeorm';
 
+import {
+  SessionQueryDto,
+  SessionSortField,
+  SortOrder,
+} from './dto/session-query.dto';
 import { Session } from './entities/session.entity';
 import {
   DeviceType,
@@ -71,6 +77,42 @@ export class SessionsService {
       where: { user: { id: userId } },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async findByUserIdPaginated(
+    userId: string,
+    query: SessionQueryDto,
+  ): Promise<Pagination<Session>> {
+    const {
+      page = 1,
+      limit = 20,
+      sort = SessionSortField.CREATED_AT,
+      order = SortOrder.DESC,
+    } = query;
+
+    const queryBuilder = this.sessionRepository
+      .createQueryBuilder('session')
+      .where('session.user_id = :userId', { userId });
+
+    const sortField = this.getSortField(sort);
+    const sortOrder = order === SortOrder.ASC ? 'ASC' : 'DESC';
+    queryBuilder.orderBy(sortField, sortOrder);
+
+    return paginate<Session>(queryBuilder, {
+      page,
+      limit,
+      route: '/sessions',
+    });
+  }
+
+  private getSortField(sort: SessionSortField): string {
+    switch (sort) {
+      case SessionSortField.UPDATED_AT:
+        return 'session.updatedAt';
+      case SessionSortField.CREATED_AT:
+      default:
+        return 'session.createdAt';
+    }
   }
 
   async deleteAllByUserId(userId: string): Promise<void> {

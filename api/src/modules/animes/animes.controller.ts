@@ -29,20 +29,20 @@ import {
 import { Pagination } from 'nestjs-typeorm-paginate';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Permission } from '../rbac/decorators/permission.decorator';
 import { Public } from '../rbac/decorators/public.decorator';
-import { RbacGuard } from '../rbac/guards/rbac.guard';
+import { Permissions } from '../rbac/decorators/permissions.decorator';
 import { AnimesService } from './animes.service';
 import { AnimeQueryDto } from './dto/anime-query.dto';
 import { AnimeResponseDto } from './dto/anime-response.dto';
 import { CreateAnimeDto } from './dto/create-anime.dto';
+import { PaginatedAnimeResponseDto } from './dto/paginated-anime-response.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { Anime } from './entities/anime.entity';
 
 @ApiTags('Animes')
 @Controller('animes')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard, RbacGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class AnimesController {
   constructor(private readonly animesService: AnimesService) {}
@@ -57,6 +57,7 @@ export class AnimesController {
   })
   @ApiOkResponse({
     description: 'Animes retrieved successfully',
+    type: PaginatedAnimeResponseDto,
   })
   async findAll(@Query() query: AnimeQueryDto): Promise<Pagination<Anime>> {
     return this.animesService.findAll(query);
@@ -85,7 +86,7 @@ export class AnimesController {
   }
 
   @Post()
-  @Permission(['animes@create:any'])
+  @Permissions(['global:animes.create'])
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create anime',
@@ -101,7 +102,7 @@ export class AnimesController {
   }
 
   @Patch(':id')
-  @Permission(['animes@update:any'])
+  @Permissions(['global:animes.update'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update anime',
@@ -127,7 +128,7 @@ export class AnimesController {
   }
 
   @Delete(':id')
-  @Permission(['animes@delete:any'])
+  @Permissions(['global:animes.delete'])
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete anime',
@@ -152,7 +153,7 @@ export class AnimesController {
   }
 
   @Post(':id/restore')
-  @Permission(['animes@update:any'])
+  @Permissions(['global:animes.update'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Restore anime',
