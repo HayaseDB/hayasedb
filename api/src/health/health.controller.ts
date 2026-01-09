@@ -1,35 +1,68 @@
+import { Controller, Get } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+  HealthCheck,
+  HealthCheckService,
+  TypeOrmHealthIndicator,
+} from '@nestjs/terminus';
 
 import { HealthService } from './health.service';
+import { StorageHealthIndicator } from './indicators';
 
+@ApiTags('Health')
 @Controller()
 export class HealthController {
-  constructor(private readonly healthService: HealthService) {}
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly db: TypeOrmHealthIndicator,
+    private readonly storage: StorageHealthIndicator,
+    private readonly healthService: HealthService,
+  ) {}
 
   @Get()
-  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get application info' })
   info() {
     return this.healthService.getInfo();
   }
 
+  @Get('health/live')
+  @HealthCheck()
+  @ApiOperation({ summary: 'Liveness probe' })
+  live() {
+    return this.health.check([]);
+  }
+
   @Get('health/ready')
-  @HttpCode(HttpStatus.OK)
-  async ready(): Promise<{ status: string }> {
-    const isDatabaseHealthy = await this.healthService.checkDatabase();
+  @HealthCheck()
+  @ApiOperation({ summary: 'Readiness probe' })
+  ready() {
+    return this.health.check([
+      () => this.db.pingCheck('database'),
+      () => this.storage.isHealthy('storage'),
+    ]);
+  }
 
-    if (!isDatabaseHealthy) {
-      throw new ServiceUnavailableException({
-        status: 'error',
-        message: 'Database unavailable',
-      });
-    }
+  @Get('health')
+  @HealthCheck()
+  @ApiOperation({ summary: 'Full health check' })
+  check() {
+    return this.health.check([
+      () => this.db.pingCheck('database'),
+      () => this.storage.isHealthy('storage'),
+    ]);
+  }
 
-    return { status: 'ok' };
+  @Get('health/database')
+  @HealthCheck()
+  @ApiOperation({ summary: 'Database health check' })
+  database() {
+    return this.health.check([() => this.db.pingCheck('database')]);
+  }
+
+  @Get('health/storage')
+  @HealthCheck()
+  @ApiOperation({ summary: 'Storage health check' })
+  storageHealth() {
+    return this.health.check([() => this.storage.isHealthy('storage')]);
   }
 }
