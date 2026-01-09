@@ -300,9 +300,7 @@ export class UsersService {
       etag: uploadResult.etag,
     };
 
-    const newMedia = await this.mediaService.create(mediaInput);
-
-    user.profilePicture = newMedia;
+    user.profilePicture = await this.mediaService.create(mediaInput);
     const updatedUser = await this.userRepository.save(user);
 
     if (oldProfilePicture) {

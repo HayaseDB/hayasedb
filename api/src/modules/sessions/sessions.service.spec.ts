@@ -5,18 +5,12 @@ import { NotFoundException } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { Session } from './entities/session.entity';
 import { DeviceType } from '../../common/types/request-metadata.interface';
-import {
-  createMockRepository,
-  MockRepository,
-} from '../../../test/mocks/repository.mock';
+import { createMockRepository, MockRepository } from '../../../test/mocks';
 import {
   createMockSession,
   resetSessionFactory,
-} from '../../../test/factories/session.factory';
-import {
-  createMockUser,
-  resetUserFactory,
-} from '../../../test/factories/user.factory';
+} from '../../../test/factories';
+import { createMockUser, resetUserFactory } from '../../../test/factories';
 
 describe('SessionsService', () => {
   let service: SessionsService;
@@ -212,6 +206,67 @@ describe('SessionsService', () => {
 
       expect(repository.softRemove).not.toHaveBeenCalled();
       expect(result).toBe(0);
+    });
+  });
+
+  describe('deleteAllByUserId', () => {
+    it('should delete all sessions for user', async () => {
+      const user = createMockUser();
+      const sessions = [
+        createMockSession({ user }),
+        createMockSession({ user }),
+        createMockSession({ user }),
+      ];
+      repository.find!.mockResolvedValue(sessions);
+      repository.softRemove!.mockResolvedValue(sessions);
+
+      await service.deleteAllByUserId(user.id);
+
+      expect(repository.softRemove).toHaveBeenCalledWith(sessions);
+    });
+
+    it('should not call softRemove when user has no sessions', async () => {
+      repository.find!.mockResolvedValue([]);
+
+      await service.deleteAllByUserId('user-no-sessions');
+
+      expect(repository.softRemove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('create with metadata', () => {
+    it('should create session with all metadata fields', async () => {
+      const userId = 'user-123';
+      const hash = 'session-hash';
+      const metadata = {
+        browser: 'Chrome',
+        browserVersion: '120.0',
+        os: 'macOS',
+        osVersion: '14.0',
+        deviceType: DeviceType.DESKTOP,
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+        timestamp: new Date(),
+      };
+      const mockSession = createMockSession({ hash });
+
+      repository.create!.mockReturnValue(mockSession);
+      repository.save!.mockResolvedValue(mockSession);
+
+      const result = await service.create({ userId, hash, metadata });
+
+      expect(repository.create).toHaveBeenCalledWith({
+        user: { id: userId },
+        hash,
+        browser: 'Chrome',
+        browserVersion: '120.0',
+        os: 'macOS',
+        osVersion: '14.0',
+        deviceType: DeviceType.DESKTOP,
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+      });
+      expect(result).toBe(mockSession);
     });
   });
 });

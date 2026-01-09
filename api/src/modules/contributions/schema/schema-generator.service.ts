@@ -65,22 +65,20 @@ export class SchemaGeneratorService {
       );
 
       if (columnMeta) {
-        const fieldSchema = this.buildColumnSchema(
+        schema.properties![fieldName] = this.buildColumnSchema(
           entityClass,
           fieldName,
           columnMeta,
         );
-        schema.properties![fieldName] = fieldSchema;
 
         if (!columnMeta.isNullable && columnMeta.default === undefined) {
           (schema.required as string[]).push(fieldName);
         }
       } else if (relationMeta) {
-        const fieldSchema = this.buildRelationSchema(
+        schema.properties![fieldName] = this.buildRelationSchema(
           relationMeta,
           new Set(visited),
         );
-        schema.properties![fieldName] = fieldSchema;
       }
     }
 

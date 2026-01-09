@@ -15,11 +15,11 @@ import {
   createMockUser,
   createUnverifiedUser,
   resetUserFactory,
-} from '../../../test/factories/user.factory';
+} from '../../../test/factories';
 import {
   createMockSession,
   resetSessionFactory,
-} from '../../../test/factories/session.factory';
+} from '../../../test/factories';
 
 jest.mock('../../mail/mail.service', () => ({
   MailService: jest.fn().mockImplementation(() => ({

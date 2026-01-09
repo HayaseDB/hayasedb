@@ -74,7 +74,7 @@ async function bootstrap() {
         layout: 'modern',
         metaData: {
           title: 'HayaseDB API',
-          description: `${'HayaseDB API'} Documentation`,
+          description: `HayaseDB API Documentation`,
         },
         hideClientButton: true,
         showSidebar: true,

@@ -15,31 +15,39 @@ import { SessionsService } from '../sessions/sessions.service';
 import { MailService } from '../../mail/mail.service';
 import {
   createMockRepository,
+  createMockQueryBuilder,
   MockRepository,
-} from '../../../test/mocks/repository.mock';
+  MockQueryBuilder,
+} from '../../../test/mocks';
 import {
   createMockUser,
   createUnverifiedUser,
   resetUserFactory,
-} from '../../../test/factories/user.factory';
+} from '../../../test/factories';
 
 jest.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
   let repository: MockRepository<User>;
+  let queryBuilder: MockQueryBuilder<User>;
 
   const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
   beforeEach(async () => {
     resetUserFactory();
+    queryBuilder = createMockQueryBuilder<User>();
+    queryBuilder.execute!.mockResolvedValue({ affected: 1 });
+
+    const mockRepository = createMockRepository<User>();
+    mockRepository.createQueryBuilder!.mockReturnValue(queryBuilder);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
         {
           provide: getRepositoryToken(User),
-          useValue: createMockRepository<User>(),
+          useValue: mockRepository,
         },
         {
           provide: StorageService,
@@ -67,14 +75,15 @@ describe('UsersService', () => {
           provide: SessionsService,
           useValue: {
             deleteAllForUser: jest.fn(),
+            deleteAllByUserId: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
           provide: MailService,
           useValue: {
-            sendWelcomeEmail: jest.fn(),
-            sendVerificationEmail: jest.fn(),
-            sendAccountDeletionEmail: jest.fn(),
+            sendWelcomeEmail: jest.fn().mockResolvedValue(undefined),
+            sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+            sendAccountDeletionEmail: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -378,6 +387,117 @@ describe('UsersService', () => {
       await expect(service.verifyEmail('invalid-token')).rejects.toThrow(
         'Invalid or expired verification token',
       );
+    });
+  });
+
+  describe('generatePasswordResetToken', () => {
+    it('should generate token and set expiry using database time', async () => {
+      const mockUser = createMockUser();
+      repository.findOne!.mockResolvedValue(mockUser);
+
+      const result = await service.generatePasswordResetToken(mockUser.id);
+
+      expect(result).toHaveLength(64);
+      expect(repository.createQueryBuilder).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      repository.findOne!.mockResolvedValue(null);
+
+      await expect(
+        service.generatePasswordResetToken('nonexistent'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findByPasswordResetToken', () => {
+    it('should find user with valid non-expired token', async () => {
+      const mockUser = createMockUser();
+      repository.findOne!.mockResolvedValue(mockUser);
+
+      const result = await service.findByPasswordResetToken('valid-token');
+
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: {
+          passwordResetToken: 'valid-token',
+          passwordResetExpiresAt: expect.any(Object) as unknown,
+        },
+      });
+      expect(result).toBe(mockUser);
+    });
+
+    it('should return null when token is invalid or expired', async () => {
+      repository.findOne!.mockResolvedValue(null);
+
+      const result = await service.findByPasswordResetToken('invalid-token');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should reset password and clear token', async () => {
+      const mockUser = createMockUser();
+      const updatedUser = {
+        ...mockUser,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+      };
+
+      repository
+        .findOne!.mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce(updatedUser);
+      mockBcrypt.hash.mockResolvedValue('new-hashed-password' as never);
+
+      const result = await service.resetPassword('valid-token', 'newpassword');
+
+      expect(mockBcrypt.hash).toHaveBeenCalledWith('newpassword', 10);
+      expect(repository.createQueryBuilder).toHaveBeenCalled();
+      expect(result.passwordResetToken).toBeNull();
+    });
+
+    it('should throw BadRequestException for invalid token', async () => {
+      repository.findOne!.mockResolvedValue(null);
+
+      await expect(
+        service.resetPassword('invalid-token', 'newpassword'),
+      ).rejects.toThrow('Invalid or expired password reset token');
+    });
+  });
+
+  describe('deleteProfilePicture', () => {
+    it('should throw NotFoundException when user has no profile picture', async () => {
+      const mockUser = createMockUser();
+      mockUser.profilePicture = null;
+      repository.findOne!.mockResolvedValue(mockUser);
+
+      await expect(service.deleteProfilePicture(mockUser.id)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('should throw UnauthorizedException when password is incorrect', async () => {
+      const mockUser = createMockUser();
+      repository.findOne!.mockResolvedValue(mockUser);
+      mockBcrypt.compare.mockResolvedValue(false as never);
+
+      await expect(
+        service.deleteAccount(mockUser.id, { password: 'wrongpassword' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should soft remove user when password is correct', async () => {
+      const mockUser = createMockUser();
+      mockUser.profilePicture = null;
+      repository.findOne!.mockResolvedValue(mockUser);
+      mockBcrypt.compare.mockResolvedValue(true as never);
+      repository.softRemove!.mockResolvedValue(mockUser);
+
+      await service.deleteAccount(mockUser.id, { password: 'correctpassword' });
+
+      expect(repository.softRemove).toHaveBeenCalledWith(mockUser);
     });
   });
 });
