@@ -11,11 +11,16 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -23,21 +28,30 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiPayloadTooLargeResponse,
   ApiTags,
   ApiUnprocessableEntityResponse,
+  ApiUnsupportedMediaTypeResponse,
 } from '@nestjs/swagger';
 import { Pagination } from 'nestjs-typeorm-paginate';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../rbac/decorators/public.decorator';
+import { Media } from '../media/entities/media.entity';
+import { MediaResponseDto } from '../media/dto/media-response.dto';
 import { Permissions } from '../rbac/decorators/permissions.decorator';
+import { Public } from '../rbac/decorators/public.decorator';
 import { AnimesService } from './animes.service';
+import {
+  ANIME_COVER_ALLOWED_MIME_TYPES,
+  ANIME_COVER_MAX_SIZE,
+} from './constants/anime-cover.constants';
 import { AnimeQueryDto } from './dto/anime-query.dto';
 import { AnimeResponseDto } from './dto/anime-response.dto';
 import { CreateAnimeDto } from './dto/create-anime.dto';
 import { PaginatedAnimeResponseDto } from './dto/paginated-anime-response.dto';
 import { UpdateAnimeDto } from './dto/update-anime.dto';
 import { Anime } from './entities/anime.entity';
+import { AnimeCoverValidationPipe } from './pipes/anime-cover-validation.pipe';
 
 @ApiTags('Animes')
 @Controller('animes')
@@ -99,6 +113,49 @@ export class AnimesController {
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async create(@Body() createAnimeDto: CreateAnimeDto): Promise<Anime> {
     return this.animesService.create(createAnimeDto);
+  }
+
+  @Post('covers')
+  @Permissions(['global:contributions.create:own'])
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: ANIME_COVER_MAX_SIZE,
+      },
+    }),
+  )
+  @ApiOperation({
+    summary: 'Upload anime cover',
+    description:
+      'Upload an anime cover image. Returns a Media object to reference in contributions.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: `Cover image (max ${ANIME_COVER_MAX_SIZE / (1024 * 1024)}MB, allowed: ${ANIME_COVER_ALLOWED_MIME_TYPES.join(', ')})`,
+        },
+      },
+    },
+  })
+  @ApiCreatedResponse({
+    description: 'Cover uploaded successfully',
+    type: MediaResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Cover image file is required' })
+  @ApiPayloadTooLargeResponse({ description: 'File size exceeds maximum' })
+  @ApiUnsupportedMediaTypeResponse({ description: 'Invalid file type' })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  async uploadCover(
+    @UploadedFile(AnimeCoverValidationPipe) file: Express.Multer.File,
+  ): Promise<Media> {
+    return this.animesService.uploadCover(file);
   }
 
   @Patch(':id')

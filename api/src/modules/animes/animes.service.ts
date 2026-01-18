@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   forwardRef,
   Inject,
@@ -8,9 +10,18 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
+import sharp from 'sharp';
 import { DataSource, Repository } from 'typeorm';
 
+import { StorageService } from '../../storage/storage.service';
 import { GenresService } from '../genres/genres.service';
+import { Media } from '../media/entities/media.entity';
+import { CreateMediaInput, MediaService } from '../media/media.service';
+import {
+  ANIME_COVER_BUCKET,
+  ANIME_COVER_OUTPUT_HEIGHT,
+  ANIME_COVER_OUTPUT_WIDTH,
+} from './constants/anime-cover.constants';
 import {
   AnimeQueryDto,
   AnimeSortField,
@@ -30,6 +41,8 @@ export class AnimesService {
     @Inject(forwardRef(() => GenresService))
     private readonly genresService: GenresService,
     private readonly dataSource: DataSource,
+    private readonly storageService: StorageService,
+    private readonly mediaService: MediaService,
   ) {}
 
   async create(createAnimeDto: CreateAnimeDto): Promise<Anime> {
@@ -201,5 +214,45 @@ export class AnimesService {
       default:
         return 'anime.createdAt';
     }
+  }
+
+  async uploadCover(file: Express.Multer.File): Promise<Media> {
+    const processedImage = await this.processCoverImage(file.buffer);
+    const objectKey = `${randomUUID()}.webp`;
+
+    await this.storageService.ensureBucket(ANIME_COVER_BUCKET, true);
+
+    const uploadResult = await this.storageService.uploadFile(
+      ANIME_COVER_BUCKET,
+      objectKey,
+      processedImage,
+      {
+        contentType: 'image/webp',
+        size: processedImage.length,
+      },
+    );
+
+    const mediaInput: CreateMediaInput = {
+      bucket: ANIME_COVER_BUCKET,
+      key: objectKey,
+      originalName: file.originalname,
+      mimeType: 'image/webp',
+      size: processedImage.length,
+      etag: uploadResult.etag,
+    };
+
+    const media = await this.mediaService.create(mediaInput);
+    this.logger.log(`Anime cover uploaded: ${media.id}`);
+    return media;
+  }
+
+  private async processCoverImage(buffer: Buffer): Promise<Buffer> {
+    return sharp(buffer)
+      .resize(ANIME_COVER_OUTPUT_WIDTH, ANIME_COVER_OUTPUT_HEIGHT, {
+        fit: 'cover',
+        position: 'center',
+      })
+      .webp({ quality: 85 })
+      .toBuffer();
   }
 }

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { GenreResponseDto } from '../../genres/dto/genre-response.dto';
+import { MediaResponseDto } from '../../media/dto/media-response.dto';
 import { AnimeFormat } from '../enums/anime-format.enum';
 import { AnimeStatus } from '../enums/anime-status.enum';
 
@@ -55,6 +56,13 @@ export class AnimeResponseDto {
     type: [GenreResponseDto],
   })
   genres?: GenreResponseDto[];
+
+  @ApiPropertyOptional({
+    description: 'Anime cover image',
+    type: MediaResponseDto,
+    nullable: true,
+  })
+  cover?: MediaResponseDto | null;
 
   @ApiProperty({
     description: 'Creation date (ISO 8601 UTC)',

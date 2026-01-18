@@ -2,11 +2,13 @@ import { Type } from '@nestjs/common';
 
 import { Anime } from '../../animes/entities/anime.entity';
 import { Genre } from '../../genres/entities/genre.entity';
+import { Media } from '../../media/entities/media.entity';
 import { EntityType } from '../enums/entity-type.enum';
 
 export const ENTITY_REGISTRY: Record<EntityType, Type<unknown>> = {
   [EntityType.ANIME]: Anime,
   [EntityType.GENRE]: Genre,
+  [EntityType.MEDIA]: Media,
 };
 
 export function getEntityClass(entityType: EntityType): Type<unknown> {

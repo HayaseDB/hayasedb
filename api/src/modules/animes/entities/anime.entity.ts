@@ -7,14 +7,17 @@ import {
   DeleteDateColumn,
   Entity,
   Index,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 import { Contributable } from '../../contributions/decorators/contributable.decorator';
 import { Genre } from '../../genres/entities/genre.entity';
+import { Media } from '../../media/entities/media.entity';
 import { AnimeFormat } from '../enums/anime-format.enum';
 import { AnimeStatus } from '../enums/anime-status.enum';
 
@@ -67,6 +70,11 @@ export class Anime {
     inverseJoinColumn: { name: 'genre_id', referencedColumnName: 'id' },
   })
   genres: Genre[];
+
+  @Contributable
+  @OneToOne(() => Media, { nullable: true, eager: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'cover_id' })
+  cover: Media | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
