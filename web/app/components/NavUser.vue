@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { ChevronsUpDown, LogOut, Settings } from 'lucide-vue-next'
-  import { computed } from 'vue'
 
   import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
   import {
@@ -18,11 +17,10 @@
     SidebarMenuItem,
     useSidebar,
   } from '@/components/ui/sidebar'
+  import RoleBadge from '@/components/RoleBadge.vue'
 
-  const { data: session, signOut } = useAuth()
   const { isMobile } = useSidebar()
-
-  const user = computed(() => session.value)
+  const { user, logout } = useAuth()
 
   const userInitials = computed(() => {
     return user.value?.username?.[0]?.toUpperCase() ?? 'U'
@@ -34,7 +32,8 @@
   })
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/auth/login' })
+    await logout()
+    await navigateTo('/auth/login')
   }
 </script>
 

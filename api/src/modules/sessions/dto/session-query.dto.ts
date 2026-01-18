@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 
 import {
   BasePaginationQueryDto,
@@ -31,4 +31,13 @@ export class SessionQueryDto extends BasePaginationQueryDto {
   @IsEnum(SortOrder)
   @IsOptional()
   order?: SortOrder = SortOrder.DESC;
+
+  @ApiPropertyOptional({
+    description: 'Search sessions by browser, OS, device type, or IP address',
+    example: 'Chrome',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  search?: string;
 }

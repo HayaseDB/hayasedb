@@ -9,15 +9,9 @@ import { Repository } from 'typeorm';
 
 import { StorageService } from '../../storage/storage.service';
 import { Media } from './entities/media.entity';
+import { CreateMediaInput } from './interfaces/create-media.interface';
 
-export interface CreateMediaInput {
-  bucket: string;
-  key: string;
-  originalName: string;
-  mimeType: string;
-  size: number;
-  etag?: string;
-}
+export type { CreateMediaInput } from './interfaces/create-media.interface';
 
 @Injectable()
 export class MediaService {
@@ -47,7 +41,7 @@ export class MediaService {
     });
 
     const saved = await this.mediaRepository.save(media);
-    this.logger.log(
+    this.logger.debug(
       `Media created: ${saved.id} (${input.bucket}/${input.key})`,
     );
     return saved;
@@ -80,7 +74,7 @@ export class MediaService {
   async delete(id: string): Promise<void> {
     const media = await this.findById(id);
     await this.mediaRepository.softRemove(media);
-    this.logger.log(`Media soft deleted: ${id}`);
+    this.logger.debug(`Media soft deleted: ${id}`);
   }
 
   async hardDelete(id: string): Promise<void> {
@@ -94,7 +88,7 @@ export class MediaService {
     }
 
     await this.mediaRepository.remove(media);
-    this.logger.log(`Media hard deleted: ${id}`);
+    this.logger.debug(`Media hard deleted: ${id}`);
   }
 
   async getUrl(media: Media, expirySeconds?: number): Promise<string> {

@@ -1,27 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
 import { Repository } from 'typeorm';
 
+import { DeviceType } from '../../common/types/request-metadata.interface';
 import {
   SessionQueryDto,
   SessionSortField,
   SortOrder,
 } from './dto/session-query.dto';
 import { Session } from './entities/session.entity';
-import {
-  DeviceType,
-  RequestMetadata,
-} from '../../common/types/request-metadata.interface';
-
-export interface CreateSessionData {
-  userId: string;
-  hash: string;
-  metadata?: RequestMetadata;
-}
+import { CreateSessionData } from './interfaces/create-session.interface';
 
 @Injectable()
 export class SessionsService {
+  private readonly logger = new Logger(SessionsService.name);
+
   constructor(
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
@@ -39,7 +33,11 @@ export class SessionsService {
       ipAddress: data.metadata?.ipAddress || null,
       userAgent: data.metadata?.userAgent || null,
     });
-    return await this.sessionRepository.save(session);
+    const savedSession = await this.sessionRepository.save(session);
+    this.logger.debug(
+      `Session created: ${savedSession.id} for user: ${data.userId}`,
+    );
+    return savedSession;
   }
 
   async findById(id: string): Promise<Session | null> {
@@ -70,6 +68,7 @@ export class SessionsService {
     }
 
     await this.sessionRepository.softRemove(session);
+    this.logger.debug(`Session deleted: ${id}`);
   }
 
   async findByUserId(userId: string): Promise<Session[]> {
@@ -88,11 +87,25 @@ export class SessionsService {
       limit = 20,
       sort = SessionSortField.CREATED_AT,
       order = SortOrder.DESC,
+      search,
     } = query;
 
     const queryBuilder = this.sessionRepository
       .createQueryBuilder('session')
       .where('session.user_id = :userId', { userId });
+
+    if (search) {
+      const searchTerm = `%${search.toLowerCase()}%`;
+      queryBuilder.andWhere(
+        `(
+          LOWER(session.browser) LIKE :search OR
+          LOWER(session.os) LIKE :search OR
+          LOWER(session.device_type::text) LIKE :search OR
+          session.ip_address LIKE :search
+        )`,
+        { search: searchTerm },
+      );
+    }
 
     const sortField = this.getSortField(sort);
     const sortOrder = order === SortOrder.ASC ? 'ASC' : 'DESC';
@@ -119,6 +132,9 @@ export class SessionsService {
     const sessions = await this.findByUserId(userId);
     if (sessions.length > 0) {
       await this.sessionRepository.softRemove(sessions);
+      this.logger.debug(
+        `Deleted ${sessions.length} sessions for user: ${userId}`,
+      );
     }
   }
 
@@ -136,6 +152,9 @@ export class SessionsService {
 
     if (sessionsToDelete.length > 0) {
       await this.sessionRepository.softRemove(sessionsToDelete);
+      this.logger.debug(
+        `Deleted ${sessionsToDelete.length} sessions for user: ${userId} (except current)`,
+      );
     }
 
     return sessionsToDelete.length;

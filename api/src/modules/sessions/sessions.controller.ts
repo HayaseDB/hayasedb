@@ -10,7 +10,6 @@ import {
   Param,
   ParseUUIDPipe,
   Query,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -26,7 +25,6 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 
 import { ActiveSession } from '../../common/decorators/active-session.decorator';
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Permissions } from '../rbac/decorators/permissions.decorator';
 import { User } from '../users/entities/user.entity';
 import { PaginatedSessionResponseDto } from './dto/paginated-session-response.dto';
@@ -38,7 +36,6 @@ import { SessionsService } from './sessions.service';
 @ApiTags('Sessions')
 @Controller('sessions')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}

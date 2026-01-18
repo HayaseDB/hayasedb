@@ -25,5 +25,8 @@ export class CreateGenreDto {
   @IsString()
   @IsOptional()
   @MaxLength(1000)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   description?: string;
 }

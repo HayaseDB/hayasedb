@@ -1,13 +1,13 @@
 <script setup lang="ts">
   definePageMeta({
     layout: 'dashboard',
-    middleware: 'sidebase-auth',
+    middleware: 'auth',
     breadcrumb: {
       label: 'Dashboard',
     },
   })
 
-  const { data: session } = useAuth()
+  const { user } = useAuth()
 </script>
 
 <template>
@@ -15,7 +15,7 @@
     <div>
       <h1 class="text-3xl font-bold tracking-tight">Dashboard</h1>
       <p class="text-muted-foreground">
-        Welcome back{{ session?.firstName ? `, ${session.firstName}` : '' }}!
+        Welcome back{{ user?.firstName ? `, ${user.firstName}` : '' }}!
       </p>
     </div>
 

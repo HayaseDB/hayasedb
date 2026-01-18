@@ -1,3 +1,3 @@
 export default defineEventHandler(async (event) => {
-  return await authFetchApi(event, '/sessions/others', { method: 'DELETE' })
+  return await authApi<RevokedSessionsResponse>(event, '/sessions/others', { method: 'DELETE' })
 })

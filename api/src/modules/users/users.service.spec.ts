@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { DataSource, EntityManager } from 'typeorm';
 
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
@@ -31,6 +32,9 @@ describe('UsersService', () => {
   let service: UsersService;
   let repository: MockRepository<User>;
   let queryBuilder: MockQueryBuilder<User>;
+  let mockDataSource: {
+    transaction: jest.Mock;
+  };
 
   const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
@@ -42,12 +46,24 @@ describe('UsersService', () => {
     const mockRepository = createMockRepository<User>();
     mockRepository.createQueryBuilder!.mockReturnValue(queryBuilder);
 
+    mockDataSource = {
+      transaction: jest.fn(
+        (callback: (manager: EntityManager) => Promise<unknown>) => {
+          return callback(mockRepository as unknown as EntityManager);
+        },
+      ),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
         {
           provide: getRepositoryToken(User),
           useValue: mockRepository,
+        },
+        {
+          provide: DataSource,
+          useValue: mockDataSource,
         },
         {
           provide: StorageService,
@@ -116,7 +132,7 @@ describe('UsersService', () => {
 
       const result = await service.create(createUserDto);
 
-      expect(repository.create).toHaveBeenCalledWith({
+      expect(repository.create).toHaveBeenCalledWith(User, {
         username: 'newuser',
         email: 'new@example.com',
         password: 'hashed-password',
@@ -146,12 +162,12 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findOne', () => {
+  describe('findById', () => {
     it('should return a user by id', async () => {
       const mockUser = createMockUser({ id: 'test-id' });
       repository.findOne!.mockResolvedValue(mockUser);
 
-      const result = await service.findOne('test-id');
+      const result = await service.findById('test-id');
 
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { id: 'test-id' },
@@ -162,7 +178,7 @@ describe('UsersService', () => {
     it('should throw NotFoundException when user not found', async () => {
       repository.findOne!.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent')).rejects.toThrow(
+      await expect(service.findById('non-existent')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -241,17 +257,6 @@ describe('UsersService', () => {
       await expect(
         service.update(existingUser.id, { username: 'taken' }),
       ).rejects.toThrow(ConflictException);
-    });
-
-    it('should hash password when updating', async () => {
-      const existingUser = createMockUser();
-      repository.findOne!.mockResolvedValue(existingUser);
-      repository.save!.mockImplementation((user) => Promise.resolve(user));
-      mockBcrypt.hash.mockResolvedValue('new-hashed-password' as never);
-
-      await service.update(existingUser.id, { password: 'newpassword' });
-
-      expect(mockBcrypt.hash).toHaveBeenCalledWith('newpassword', 10);
     });
   });
 

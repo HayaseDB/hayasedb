@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  return await authFetchApi(event, '/users/me/profile-picture', {
+  return await authApi<UserResponse>(event, '/users/me/profile-picture', {
     method: 'DELETE',
   })
 })

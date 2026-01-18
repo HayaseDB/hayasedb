@@ -1,4 +1,4 @@
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -92,6 +92,7 @@ export class User {
   @JoinColumn({ name: 'profile_picture_id' })
   profilePicture: Media | null;
 
+  @Expose()
   get isEmailVerified(): boolean {
     return this.emailVerifiedAt !== null;
   }

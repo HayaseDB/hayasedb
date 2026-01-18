@@ -1,15 +1,19 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { rbacConfig } from './rbac.config';
 import { Permission, RoleKey } from './rbac.types';
 
 @Injectable()
 export class RbacService implements OnModuleInit {
+  private readonly logger = new Logger(RbacService.name);
   private rolePermissions = new Map<string, Set<string>>();
   private scopePermissions = new Map<string, Set<string>>();
 
   onModuleInit() {
     this.initialize();
+    this.logger.debug(
+      `RBAC initialized with ${this.rolePermissions.size} role configurations`,
+    );
   }
 
   private initialize() {

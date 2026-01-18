@@ -1,13 +1,8 @@
-import { z } from 'zod'
+export default defineEventHandler(async (event): Promise<MessageResponse> => {
+  const body = await readBody(event)
 
-const schema = z.object({
-  password: z.string().min(1),
-})
+  await authApi<MessageResponse>(event, '/users/me', { method: 'DELETE', body })
+  await clearUserSession(event)
 
-export default defineEventHandler(async (event) => {
-  const body = await readValidatedBody(event, schema.parse)
-  return await authFetchApi(event, '/users/me', {
-    method: 'DELETE',
-    body,
-  })
+  return { message: 'Account deleted successfully' }
 })

@@ -2,7 +2,8 @@ import { Logger } from '@nestjs/common';
 import nodemailer from 'nodemailer';
 import type SMTPPool from 'nodemailer/lib/smtp-pool';
 
-import type { MailProvider, SendMailOptions } from './mail-provider.interface';
+import type { SendEmailOptions } from '../interfaces/mail.interface';
+import type { MailProvider } from './mail-provider.interface';
 
 export interface SmtpConfig {
   host?: string;
@@ -39,14 +40,14 @@ export class SmtpMailProvider implements MailProvider {
     this.logger.log('SMTP provider initialized');
   }
 
-  private getFromAddress(options: SendMailOptions): string {
+  private getFromAddress(options: SendEmailOptions): string {
     if (options.from) {
       return `"${options.from.name ?? this.config.from.name}" <${options.from.email}>`;
     }
     return `"${this.config.from.name}" <${this.config.from.address}>`;
   }
 
-  async sendEmail(options: SendMailOptions): Promise<void> {
+  async sendEmail(options: SendEmailOptions): Promise<void> {
     const info = await this.transporter.sendMail({
       from: this.getFromAddress(options),
       to: Array.isArray(options.to) ? options.to.join(', ') : options.to,

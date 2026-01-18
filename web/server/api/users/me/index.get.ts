@@ -1,3 +1,3 @@
 export default defineEventHandler(async (event) => {
-  return await authFetchApi(event, '/users/me')
+  return await authApi<UserResponse>(event, '/users/me')
 })

@@ -1,15 +1,10 @@
 <script setup lang="ts">
   import { toast } from 'vue-sonner'
   import { RegisterForm } from '@/components/auth'
-  import { getErrorMessage } from '@/types/api'
 
   definePageMeta({
     layout: 'auth',
-    middleware: 'sidebase-auth',
-    auth: {
-      unauthenticatedOnly: true,
-      navigateAuthenticatedTo: '/',
-    },
+    middleware: 'guest',
   })
 
   useSeoMeta({
@@ -18,6 +13,7 @@
   })
 
   const route = useRoute()
+  const { register } = useAuth()
   const isLoading = ref(false)
 
   interface RegisterData {
@@ -31,10 +27,7 @@
   async function handleRegister(data: RegisterData) {
     isLoading.value = true
     try {
-      await $fetch('/api/auth/register', {
-        method: 'POST',
-        body: data,
-      })
+      await register(data)
       toast.success('Account created!', {
         description: 'Check your email to verify your account.',
       })
@@ -42,8 +35,8 @@
         path: '/auth/login',
         query: route.query.redirect ? { redirect: route.query.redirect } : undefined,
       })
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Unable to create account'))
+    } catch {
+      toast.error('Unable to create account')
     } finally {
       isLoading.value = false
     }

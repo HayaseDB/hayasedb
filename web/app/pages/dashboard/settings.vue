@@ -4,7 +4,7 @@
 
   definePageMeta({
     layout: 'dashboard',
-    middleware: 'sidebase-auth',
+    middleware: 'auth',
     breadcrumb: {
       label: 'Settings',
     },

@@ -40,6 +40,9 @@ export class CreateAnimeDto {
   @IsString()
   @IsOptional()
   @MaxLength(10000)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   synopsis?: string;
 
   @ApiProperty({

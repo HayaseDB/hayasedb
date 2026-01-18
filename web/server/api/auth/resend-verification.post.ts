@@ -1,14 +1,7 @@
-import { z } from 'zod'
-import type { MessageResponse } from '../../types/auth'
-
-const schema = z.object({
-  email: z.string().email(),
-})
-
 export default defineEventHandler(async (event) => {
-  const body = await readValidatedBody(event, schema.parse)
+  const body = await readBody(event)
 
-  return await fetchApi<MessageResponse>('/auth/resend-verification', {
+  return await publicApi<MessageResponse>('/auth/resend-verification', {
     method: 'POST',
     body,
   })

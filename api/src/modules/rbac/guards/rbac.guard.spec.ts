@@ -45,10 +45,8 @@ describe('RbacGuard', () => {
   });
 
   interface MockRequest {
-    user?: {
-      user: ReturnType<typeof createMockUser>;
-      session: ReturnType<typeof createMockSession>;
-    };
+    user?: ReturnType<typeof createMockUser>;
+    session?: ReturnType<typeof createMockSession>;
     roles?: string[];
   }
 
@@ -123,7 +121,8 @@ describe('RbacGuard', () => {
       mockRbacService.hasAnyPermission.mockReturnValue(true);
 
       const context = createMockExecutionContext({
-        user: { user: mockUser, session: mockSession },
+        user: mockUser,
+        session: mockSession,
       });
 
       const result = guard.canActivate(context);
@@ -140,7 +139,8 @@ describe('RbacGuard', () => {
       mockRbacService.hasAnyPermission.mockReturnValue(false);
 
       const context = createMockExecutionContext({
-        user: { user: mockUser, session: mockSession },
+        user: mockUser,
+        session: mockSession,
       });
 
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
@@ -157,7 +157,8 @@ describe('RbacGuard', () => {
       mockRbacService.hasAnyPermission.mockReturnValue(false);
 
       const context = createMockExecutionContext({
-        user: { user: mockUser, session: mockSession },
+        user: mockUser,
+        session: mockSession,
       });
 
       expect(() => guard.canActivate(context)).toThrow(
@@ -175,7 +176,8 @@ describe('RbacGuard', () => {
       mockRbacService.hasAnyPermission.mockReturnValue(true);
 
       const context = createMockExecutionContext({
-        user: { user: mockUser, session: mockSession },
+        user: mockUser,
+        session: mockSession,
       });
 
       guard.canActivate(context);
@@ -195,7 +197,8 @@ describe('RbacGuard', () => {
       mockRbacService.hasAnyPermission.mockReturnValue(true);
 
       const request: MockRequest = {
-        user: { user: mockUser, session: mockSession },
+        user: mockUser,
+        session: mockSession,
       };
       const context = createMockExecutionContext(request);
 
@@ -212,7 +215,8 @@ describe('RbacGuard', () => {
       mockRbacService.hasAnyPermission.mockReturnValue(true);
 
       const context = createMockExecutionContext({
-        user: { user: mockUser, session: mockSession },
+        user: mockUser,
+        session: mockSession,
       });
 
       guard.canActivate(context);

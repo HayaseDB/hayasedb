@@ -1,11 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateContributionDto {
   @ApiProperty({
@@ -19,7 +13,6 @@ export class UpdateContributionDto {
     },
   })
   @IsObject()
-  @IsNotEmpty()
   data: Record<string, unknown>;
 
   @ApiPropertyOptional({

@@ -27,10 +27,10 @@ import { CreateContributionDto } from './dto/create-contribution.dto';
 import { QueryContributionsDto } from './dto/query-contributions.dto';
 import { UpdateContributionDto } from './dto/update-contribution.dto';
 import { Contribution } from './entities/contribution.entity';
+import { SortOrder } from '../../common/dto/pagination-query.dto';
 import { ContributionSortField } from './enums/contribution-sort-field.enum';
 import { ContributionStatus } from './enums/contribution-status.enum';
 import { EntityType } from './enums/entity-type.enum';
-import { SortOrder } from './enums/sort-order.enum';
 import {
   ENTITY_REGISTRY,
   getEntityClass,
@@ -53,10 +53,7 @@ export class ContributionsService {
 
   async create(dto: CreateContributionDto, user: User): Promise<Contribution> {
     if (!(dto.target in ENTITY_REGISTRY)) {
-      throw new UnprocessableEntityException({
-        code: 'UNKNOWN_TARGET',
-        message: `Unknown target: ${dto.target}`,
-      });
+      throw new UnprocessableEntityException(`Unknown target: ${dto.target}`);
     }
 
     await this.validateData(dto.target, dto.data);
@@ -81,10 +78,7 @@ export class ContributionsService {
     });
 
     if (!contribution) {
-      throw new NotFoundException({
-        code: 'CONTRIBUTION_NOT_FOUND',
-        message: `Contribution not found: ${id}`,
-      });
+      throw new NotFoundException(`Contribution not found: ${id}`);
     }
 
     return contribution;
@@ -193,10 +187,9 @@ export class ContributionsService {
       contribution.status !== ContributionStatus.DRAFT &&
       contribution.status !== ContributionStatus.PENDING
     ) {
-      throw new UnprocessableEntityException({
-        code: 'CANNOT_DELETE',
-        message: 'Only draft or pending contributions can be deleted',
-      });
+      throw new UnprocessableEntityException(
+        'Only draft or pending contributions can be deleted',
+      );
     }
 
     await this.contributionRepository.remove(contribution);
@@ -213,10 +206,7 @@ export class ContributionsService {
     if (dataId) {
       const exists = await this.entityExists(contribution.target, dataId);
       if (!exists) {
-        throw new UnprocessableEntityException({
-          code: 'TARGET_NOT_FOUND',
-          message: `Target not found: ${dataId}`,
-        });
+        throw new UnprocessableEntityException(`Target not found: ${dataId}`);
       }
     }
 
@@ -259,10 +249,9 @@ export class ContributionsService {
     this.ensureNotSelfReview(contribution, reviewer);
 
     if (!note?.trim()) {
-      throw new UnprocessableEntityException({
-        code: 'NOTE_REQUIRED',
-        message: 'A note is required when rejecting',
-      });
+      throw new UnprocessableEntityException(
+        'A note is required when rejecting',
+      );
     }
 
     contribution.status = ContributionStatus.REJECTED;
@@ -438,10 +427,9 @@ export class ContributionsService {
       }
       const missing = idsToFetch.filter((id) => !refMap.has(id));
       if (missing.length > 0) {
-        throw new NotFoundException({
-          code: 'NOT_FOUND',
-          message: `${targetType} not found: ${missing.join(', ')}`,
-        });
+        throw new NotFoundException(
+          `${targetType} not found: ${missing.join(', ')}`,
+        );
       }
     }
 
@@ -479,28 +467,19 @@ export class ContributionsService {
 
   private ensureOwnership(contribution: Contribution, user: User): void {
     if (contribution.contributor.id !== user.id) {
-      throw new ForbiddenException({
-        code: 'NOT_OWNER',
-        message: 'Not your contribution',
-      });
+      throw new ForbiddenException('Not your contribution');
     }
   }
 
   private ensureDraftStatus(contribution: Contribution): void {
     if (contribution.status !== ContributionStatus.DRAFT) {
-      throw new UnprocessableEntityException({
-        code: 'NOT_DRAFT',
-        message: 'Only drafts can be modified',
-      });
+      throw new UnprocessableEntityException('Only drafts can be modified');
     }
   }
 
   private ensurePendingStatus(contribution: Contribution): void {
     if (contribution.status !== ContributionStatus.PENDING) {
-      throw new UnprocessableEntityException({
-        code: 'NOT_PENDING',
-        message: 'Only pending can be reviewed',
-      });
+      throw new UnprocessableEntityException('Only pending can be reviewed');
     }
   }
 
@@ -512,10 +491,7 @@ export class ContributionsService {
       contribution.contributor.id === reviewer.id &&
       reviewer.role !== Role.ADMINISTRATOR
     ) {
-      throw new ForbiddenException({
-        code: 'SELF_REVIEW',
-        message: 'Cannot review own contribution',
-      });
+      throw new ForbiddenException('Cannot review own contribution');
     }
   }
 
@@ -546,10 +522,7 @@ export class ContributionsService {
     });
 
     if (!entity) {
-      throw new NotFoundException({
-        code: 'NOT_FOUND',
-        message: `${type} not found: ${id}`,
-      });
+      throw new NotFoundException(`${type} not found: ${id}`);
     }
 
     return entity as BaseEntity;

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateGenreDto {
   @ApiPropertyOptional({
@@ -9,7 +9,6 @@ export class UpdateGenreDto {
     maxLength: 100,
   })
   @IsString()
-  @IsNotEmpty()
   @IsOptional()
   @MaxLength(100)
   @Transform(({ value }: { value: unknown }) =>
@@ -26,5 +25,8 @@ export class UpdateGenreDto {
   @IsString()
   @IsOptional()
   @MaxLength(1000)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   description?: string;
 }

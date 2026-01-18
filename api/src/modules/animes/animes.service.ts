@@ -112,10 +112,7 @@ export class AnimesService {
     });
 
     if (!anime) {
-      throw new NotFoundException({
-        code: 'ANIME_NOT_FOUND',
-        message: `Anime with slug "${slug}" not found`,
-      });
+      throw new NotFoundException(`Anime with slug "${slug}" not found`);
     }
 
     return anime;
@@ -128,10 +125,7 @@ export class AnimesService {
     });
 
     if (!anime) {
-      throw new NotFoundException({
-        code: 'ANIME_NOT_FOUND',
-        message: `Anime with ID "${id}" not found`,
-      });
+      throw new NotFoundException(`Anime with ID "${id}" not found`);
     }
 
     return anime;
@@ -161,17 +155,13 @@ export class AnimesService {
     });
 
     if (!anime) {
-      throw new NotFoundException({
-        code: 'ANIME_NOT_FOUND',
-        message: `Anime with ID "${id}" not found`,
-      });
+      throw new NotFoundException(`Anime with ID "${id}" not found`);
     }
 
     if (anime.deletedAt) {
-      throw new UnprocessableEntityException({
-        code: 'ANIME_ALREADY_DELETED',
-        message: `Anime with ID "${id}" is already deleted`,
-      });
+      throw new UnprocessableEntityException(
+        `Anime with ID "${id}" is already deleted`,
+      );
     }
 
     await this.animeRepository.softRemove(anime);
@@ -185,17 +175,13 @@ export class AnimesService {
     });
 
     if (!anime) {
-      throw new NotFoundException({
-        code: 'ANIME_NOT_FOUND',
-        message: `Anime with ID "${id}" not found`,
-      });
+      throw new NotFoundException(`Anime with ID "${id}" not found`);
     }
 
     if (!anime.deletedAt) {
-      throw new UnprocessableEntityException({
-        code: 'ANIME_NOT_DELETED',
-        message: `Anime with ID "${id}" is not deleted`,
-      });
+      throw new UnprocessableEntityException(
+        `Anime with ID "${id}" is not deleted`,
+      );
     }
 
     anime.deletedAt = null;
@@ -242,7 +228,7 @@ export class AnimesService {
     };
 
     const media = await this.mediaService.create(mediaInput);
-    this.logger.log(`Anime cover uploaded: ${media.id}`);
+    this.logger.debug(`Anime cover uploaded: ${media.id}`);
     return media;
   }
 

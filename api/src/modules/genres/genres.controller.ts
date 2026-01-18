@@ -11,7 +11,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -28,7 +27,6 @@ import {
 } from '@nestjs/swagger';
 import { Pagination } from 'nestjs-typeorm-paginate';
 
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../rbac/decorators/public.decorator';
 import { Permissions } from '../rbac/decorators/permissions.decorator';
 import { CreateGenreDto } from './dto/create-genre.dto';
@@ -42,7 +40,6 @@ import { GenresService } from './genres.service';
 @ApiTags('Genres')
 @Controller('genres')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class GenresController {
   constructor(private readonly genresService: GenresService) {}

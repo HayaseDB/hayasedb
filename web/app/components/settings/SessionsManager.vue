@@ -1,36 +1,20 @@
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
-  import type { ColumnDef } from '@tanstack/vue-table'
+  import { getCoreRowModel, useVueTable } from '@tanstack/vue-table'
   import {
-    FlexRender,
-    getCoreRowModel,
-    getPaginationRowModel,
-    getFilteredRowModel,
-    useVueTable,
-  } from '@tanstack/vue-table'
-  import { Monitor, Smartphone, Tablet, MoreHorizontal, Eye, LogOut } from 'lucide-vue-next'
-  import type { Session } from '@/types/session'
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    Eye,
+    LogOut,
+    Monitor,
+    MoreHorizontal,
+    Smartphone,
+    Tablet,
+  } from 'lucide-vue-next'
+  import type { SessionResponse as Session, PaginationMeta } from '#shared/types'
+  import type { SessionSortField, SessionSortOrder } from '@/composables/useSettings'
   import { formatRelativeTime } from '@/utils/formatRelativeTime'
 
-  import { Button } from '@/components/ui/button'
-  import { Badge } from '@/components/ui/badge'
-  import { Input } from '@/components/ui/input'
-  import { Skeleton } from '@/components/ui/skeleton'
-  import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-  } from '@/components/ui/table'
-  import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSeparator,
-  } from '@/components/ui/dropdown-menu'
   import {
     AlertDialog,
     AlertDialogAction,
@@ -41,6 +25,8 @@
     AlertDialogHeader,
     AlertDialogTitle,
   } from '@/components/ui/alert-dialog'
+  import { Badge } from '@/components/ui/badge'
+  import { Button } from '@/components/ui/button'
   import {
     Dialog,
     DialogContent,
@@ -49,24 +35,48 @@
     DialogTitle,
   } from '@/components/ui/dialog'
   import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+  } from '@/components/ui/dropdown-menu'
+  import { Input } from '@/components/ui/input'
+  import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
   } from '@/components/ui/select'
+  import { Skeleton } from '@/components/ui/skeleton'
+  import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from '@/components/ui/table'
 
   const props = defineProps<{
     sessions: Session[]
     isLoading?: boolean
+    meta: PaginationMeta | null
+    currentSort: SessionSortField
+    currentOrder: SessionSortOrder
   }>()
+
+  const search = defineModel<string>('search', { default: '' })
 
   const emit = defineEmits<{
     terminateSession: [sessionId: string]
     terminateAllOtherSessions: []
+    'update:page': [page: number]
+    'update:pageSize': [size: number]
+    'update:sort': [sort: SessionSortField, order: SessionSortOrder]
   }>()
 
-  const globalFilter = ref('')
   const selectedSession = ref<Session | null>(null)
   const showDetailsDialog = ref(false)
   const showTerminateDialog = ref(false)
@@ -80,57 +90,50 @@
     Unknown: Monitor,
   }
 
-  const columns: ColumnDef<Session>[] = [
-    {
-      accessorKey: 'deviceType',
-      header: 'Device',
-    },
-    {
-      accessorKey: 'ipAddress',
-      header: 'IP Address',
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Last Active',
-    },
-    {
-      id: 'actions',
-      header: '',
-    },
-  ]
-
   const table = useVueTable({
     get data() {
       return props.sessions
     },
-    columns,
+    columns: [
+      { accessorKey: 'deviceType', header: 'Device' },
+      { accessorKey: 'ipAddress', header: 'IP Address' },
+      { accessorKey: 'updatedAt', header: 'Last Active' },
+      { id: 'actions', header: '' },
+    ],
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      get globalFilter() {
-        return globalFilter.value
-      },
-    },
-    onGlobalFilterChange: (value) => {
-      globalFilter.value = String(value)
-    },
-    globalFilterFn: (row, _columnId, filterValue) => {
-      const session = row.original
-      const searchValue = String(filterValue).toLowerCase()
-      return (
-        (session.browser?.toLowerCase().includes(searchValue) ?? false) ||
-        (session.os?.toLowerCase().includes(searchValue) ?? false) ||
-        (session.ipAddress?.includes(searchValue) ?? false) ||
-        session.deviceType.toLowerCase().includes(searchValue)
-      )
-    },
-    initialState: {
-      pagination: {
-        pageSize: 5,
-      },
-    },
   })
+
+  const currentPage = computed(() => props.meta?.currentPage ?? 1)
+  const totalPages = computed(() => props.meta?.totalPages ?? 1)
+  const pageSize = computed(() => props.meta?.itemsPerPage ?? 5)
+  const canPreviousPage = computed(() => currentPage.value > 1)
+  const canNextPage = computed(() => currentPage.value < totalPages.value)
+  const otherSessionsCount = computed(() => props.sessions.filter((s) => !s.isCurrent).length)
+
+  function handlePageChange(page: number) {
+    emit('update:page', page)
+  }
+
+  function handlePageSizeChange(size: unknown) {
+    if (size != null) {
+      emit('update:pageSize', Number(size))
+    }
+  }
+
+  function handleSortChange(field: NonNullable<SessionSortField>) {
+    if (props.currentSort !== field) {
+      emit('update:sort', field, 'desc')
+    } else if (props.currentOrder === 'desc') {
+      emit('update:sort', field, 'asc')
+    } else {
+      emit('update:sort', null, null)
+    }
+  }
+
+  function getSortIcon(field: NonNullable<SessionSortField>) {
+    if (props.currentSort !== field) return ArrowUpDown
+    return props.currentOrder === 'asc' ? ArrowUp : ArrowDown
+  }
 
   function handleViewDetails(session: Session) {
     selectedSession.value = session
@@ -158,18 +161,15 @@
     emit('terminateAllOtherSessions')
     showTerminateAllDialog.value = false
   }
-
-  const otherSessionsCount = computed(() => props.sessions.filter((s) => !s.isCurrent).length)
 </script>
 
 <template>
   <div class="space-y-4">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <Input
-        :model-value="globalFilter"
-        placeholder="Search by device or location..."
+        v-model="search"
+        placeholder="Search by browser, OS, device, or IP..."
         class="max-w-sm"
-        @update:model-value="(value) => (globalFilter = String(value))"
       />
       <Button
         v-if="otherSessionsCount > 0"
@@ -182,48 +182,86 @@
       </Button>
     </div>
 
-    <div v-if="props.isLoading" class="space-y-3">
-      <Skeleton class="h-12 w-full" />
-      <Skeleton class="h-12 w-full" />
-      <Skeleton class="h-12 w-full" />
-    </div>
-
-    <div v-else class="rounded-md border">
+    <div class="rounded-md border">
       <Table>
         <TableHeader>
-          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-            <TableHead v-for="header in headerGroup.headers" :key="header.id">
-              <FlexRender
-                v-if="!header.isPlaceholder"
-                :render="header.column.columnDef.header"
-                :props="header.getContext()"
-              />
+          <TableRow>
+            <TableHead>Device</TableHead>
+            <TableHead>IP Address</TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                class="data-[state=open]:bg-accent -ml-3 h-8"
+                @click="handleSortChange('updated_at')"
+              >
+                Last Active
+                <component :is="getSortIcon('updated_at')" class="ml-2 h-4 w-4" />
+              </Button>
             </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                class="data-[state=open]:bg-accent -ml-3 h-8"
+                @click="handleSortChange('created_at')"
+              >
+                Created
+                <component :is="getSortIcon('created_at')" class="ml-2 h-4 w-4" />
+              </Button>
+            </TableHead>
+            <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
-          <template v-if="table.getRowModel().rows.length">
+          <template v-if="props.isLoading">
+            <TableRow v-for="i in pageSize" :key="`skeleton-${i}`" class="h-16">
+              <TableCell>
+                <div class="flex items-center gap-3">
+                  <Skeleton class="h-5 w-5 shrink-0 rounded-md" />
+                  <div class="flex flex-col gap-1.5">
+                    <Skeleton class="h-4 w-32 rounded-md" />
+                    <Skeleton class="h-3 w-24 rounded-md" />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-28 rounded-md" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-24 rounded-md" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-24 rounded-md" />
+              </TableCell>
+              <TableCell class="text-right">
+                <Skeleton class="ml-auto h-8 w-8 rounded-md" />
+              </TableCell>
+            </TableRow>
+          </template>
+          <template v-else-if="table.getRowModel().rows.length">
             <TableRow
               v-for="row in table.getRowModel().rows"
               :key="row.id"
+              class="h-16"
               :class="{ 'bg-muted/50': row.original.isCurrent }"
             >
               <TableCell>
                 <div class="flex items-center gap-3">
                   <component
                     :is="deviceIcons[row.original.deviceType]"
-                    class="text-muted-foreground h-5 w-5"
+                    class="text-muted-foreground h-5 w-5 shrink-0"
                   />
-                  <div>
+                  <div class="min-w-0">
                     <div class="flex items-center gap-2">
-                      <span class="font-medium">
+                      <span class="truncate font-medium">
                         {{ row.original.browser ?? 'Unknown' }}
                         {{ row.original.browserVersion ?? '' }}
                       </span>
                       <Badge
                         v-if="row.original.isCurrent"
                         variant="secondary"
-                        class="border-green-500/50 bg-green-500/10 text-green-600"
+                        class="shrink-0 border-green-500/50 bg-green-500/10 text-green-600"
                       >
                         Current
                       </Badge>
@@ -242,6 +280,10 @@
 
               <TableCell>
                 {{ formatRelativeTime(row.original.updatedAt) }}
+              </TableCell>
+
+              <TableCell>
+                {{ formatRelativeTime(row.original.createdAt) }}
               </TableCell>
 
               <TableCell class="text-right">
@@ -273,7 +315,7 @@
             </TableRow>
           </template>
           <TableRow v-else>
-            <TableCell :colspan="4" class="text-muted-foreground h-24 text-center">
+            <TableCell :colspan="5" class="text-muted-foreground h-24 text-center">
               No sessions found.
             </TableCell>
           </TableRow>
@@ -284,10 +326,7 @@
     <div class="flex items-center justify-between px-2">
       <div class="text-muted-foreground flex items-center gap-2 text-sm">
         <span>Rows per page:</span>
-        <Select
-          :model-value="String(table.getState().pagination.pageSize)"
-          @update:model-value="(value) => table.setPageSize(Number(value))"
-        >
+        <Select :model-value="String(pageSize)" @update:model-value="handlePageSizeChange">
           <SelectTrigger class="h-8 w-[70px]">
             <SelectValue />
           </SelectTrigger>
@@ -300,23 +339,22 @@
       </div>
       <div class="flex items-center gap-2">
         <span class="text-muted-foreground text-sm">
-          Page {{ table.getState().pagination.pageIndex + 1 }} of
-          {{ table.getPageCount() }}
+          Page {{ currentPage }} of {{ totalPages }}
         </span>
         <div class="flex gap-1">
           <Button
             variant="outline"
             size="sm"
-            :disabled="!table.getCanPreviousPage()"
-            @click="table.previousPage()"
+            :disabled="!canPreviousPage || props.isLoading"
+            @click="handlePageChange(currentPage - 1)"
           >
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
-            :disabled="!table.getCanNextPage()"
-            @click="table.nextPage()"
+            :disabled="!canNextPage || props.isLoading"
+            @click="handlePageChange(currentPage + 1)"
           >
             Next
           </Button>

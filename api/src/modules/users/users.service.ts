@@ -11,7 +11,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import sharp from 'sharp';
-import { MoreThan, Repository } from 'typeorm';
+import { DataSource, MoreThan, Repository } from 'typeorm';
 
 import { MailService } from '../../mail/mail.service';
 import { Media } from '../media/entities/media.entity';
@@ -35,6 +35,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly dataSource: DataSource,
     private readonly storageService: StorageService,
     private readonly mediaService: MediaService,
     private readonly sessionsService: SessionsService,
@@ -55,20 +56,22 @@ export class UsersService {
       throw new ConflictException('Username already taken');
     }
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    return this.dataSource.transaction(async (manager) => {
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    const user = this.userRepository.create({
-      username,
-      email,
-      password: hashedPassword,
-      firstName: createUserDto.firstName,
-      lastName: createUserDto.lastName,
+      const user = manager.create(User, {
+        username,
+        email,
+        password: hashedPassword,
+        firstName: createUserDto.firstName,
+        lastName: createUserDto.lastName,
+      });
+
+      return await manager.save(user);
     });
-
-    return await this.userRepository.save(user);
   }
 
-  async findOne(id: string): Promise<User> {
+  async findById(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
     });
@@ -93,7 +96,7 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
+    const user = await this.findById(id);
 
     if (updateUserDto.email) {
       const newEmail = updateUserDto.email.toLowerCase();
@@ -125,10 +128,6 @@ export class UsersService {
       user.lastName = updateUserDto.lastName;
     }
 
-    if (updateUserDto.password) {
-      user.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
-
     return await this.userRepository.save(user);
   }
 
@@ -136,7 +135,7 @@ export class UsersService {
     userId: string,
     changePasswordDto: ChangePasswordDto,
   ): Promise<void> {
-    const user = await this.findOne(userId);
+    const user = await this.findById(userId);
 
     const isPasswordValid = await bcrypt.compare(
       changePasswordDto.currentPassword,
@@ -169,7 +168,7 @@ export class UsersService {
   }
 
   async generateVerificationToken(userId: string): Promise<string> {
-    await this.findOne(userId);
+    await this.findById(userId);
 
     const token = crypto.randomBytes(32).toString('hex');
 
@@ -213,11 +212,11 @@ export class UsersService {
       .where('id = :id', { id: user.id })
       .execute();
 
-    return await this.findOne(user.id);
+    return await this.findById(user.id);
   }
 
   async generatePasswordResetToken(userId: string): Promise<string> {
-    await this.findOne(userId);
+    await this.findById(userId);
 
     const token = crypto.randomBytes(32).toString('hex');
 
@@ -265,15 +264,15 @@ export class UsersService {
 
     await this.sessionsService.deleteAllByUserId(user.id);
 
-    this.logger.log(`Password reset for user ${user.id}`);
-    return await this.findOne(user.id);
+    this.logger.log(`Password reset completed for user: ${user.id}`);
+    return await this.findById(user.id);
   }
 
   async uploadProfilePicture(
     userId: string,
     file: Express.Multer.File,
   ): Promise<User> {
-    const user = await this.findOne(userId);
+    const user = await this.findById(userId);
     const oldProfilePicture = user.profilePicture;
 
     const processedImage = await this.processProfilePicture(file.buffer);
@@ -307,7 +306,7 @@ export class UsersService {
       await this.deleteProfilePictureMedia(oldProfilePicture);
     }
 
-    this.logger.log(`Profile picture updated for user ${userId}`);
+    this.logger.debug(`Profile picture updated for user: ${userId}`);
     return updatedUser;
   }
 
@@ -332,7 +331,7 @@ export class UsersService {
   }
 
   async deleteProfilePicture(userId: string): Promise<User> {
-    const user = await this.findOne(userId);
+    const user = await this.findById(userId);
 
     if (!user.profilePicture) {
       throw new NotFoundException('User does not have a profile picture');
@@ -345,7 +344,7 @@ export class UsersService {
 
     await this.deleteProfilePictureMedia(profilePictureToDelete);
 
-    this.logger.log(`Profile picture deleted for user ${userId}`);
+    this.logger.debug(`Profile picture deleted for user: ${userId}`);
     return updatedUser;
   }
 
@@ -358,7 +357,7 @@ export class UsersService {
     userId: string,
     deleteAccountDto: DeleteAccountDto,
   ): Promise<void> {
-    const user = await this.findOne(userId);
+    const user = await this.findById(userId);
 
     const isPasswordValid = await bcrypt.compare(
       deleteAccountDto.password,
@@ -405,6 +404,6 @@ export class UsersService {
         );
       });
 
-    this.logger.log(`Account deleted for user ${userId}`);
+    this.logger.log(`Account deleted for user: ${userId}`);
   }
 }

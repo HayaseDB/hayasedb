@@ -2,7 +2,8 @@ import { Logger } from '@nestjs/common';
 import { Resend } from 'resend';
 import type { CreateEmailOptions } from 'resend';
 
-import type { MailProvider, SendMailOptions } from './mail-provider.interface';
+import type { SendEmailOptions } from '../interfaces/mail.interface';
+import type { MailProvider } from './mail-provider.interface';
 
 export interface ResendConfig {
   apiKey: string;
@@ -21,14 +22,14 @@ export class ResendMailProvider implements MailProvider {
     this.logger.log('Resend provider initialized');
   }
 
-  private getFromAddress(options: SendMailOptions): string {
+  private getFromAddress(options: SendEmailOptions): string {
     if (options.from) {
       return `${options.from.name ?? this.config.from.name} <${options.from.email}>`;
     }
     return `${this.config.from.name} <${this.config.from.address}>`;
   }
 
-  async sendEmail(options: SendMailOptions): Promise<void> {
+  async sendEmail(options: SendEmailOptions): Promise<void> {
     if (!options.html && !options.text) {
       throw new Error('Email must contain either html or text content');
     }

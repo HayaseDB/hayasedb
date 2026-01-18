@@ -12,7 +12,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -30,7 +29,6 @@ import {
 import { Pagination } from 'nestjs-typeorm-paginate';
 
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../rbac/decorators/public.decorator';
 import { Permissions } from '../rbac/decorators/permissions.decorator';
 import { User } from '../users/entities/user.entity';
@@ -49,7 +47,6 @@ import type { JSONSchema7 } from './schema/types/json-schema.types';
 @ApiTags('Contributions')
 @Controller('contributions')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class ContributionsController {
   constructor(

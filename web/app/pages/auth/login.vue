@@ -1,15 +1,10 @@
 <script setup lang="ts">
   import { toast } from 'vue-sonner'
   import { LoginForm } from '@/components/auth'
-  import { getErrorMessage } from '@/types/api'
 
   definePageMeta({
     layout: 'auth',
-    middleware: 'sidebase-auth',
-    auth: {
-      unauthenticatedOnly: true,
-      navigateAuthenticatedTo: '/',
-    },
+    middleware: 'guest',
   })
 
   useSeoMeta({
@@ -18,22 +13,22 @@
   })
 
   const route = useRoute()
-  const { signIn } = useAuth()
+  const { login } = useAuth()
   const isLoading = ref(false)
 
   const redirectTo = computed(() => {
     const redirect = route.query.redirect
-    return typeof redirect === 'string' && redirect.startsWith('/') ? redirect : '/'
+    return typeof redirect === 'string' && redirect.startsWith('/') ? redirect : '/dashboard'
   })
 
   async function handleLogin(credentials: { email: string; password: string }) {
     isLoading.value = true
     try {
-      await signIn(credentials, { redirect: false })
+      await login(credentials)
       toast.success('Welcome back!')
       await navigateTo(redirectTo.value)
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Unable to sign in'))
+    } catch {
+      toast.error('Unable to sign in')
     } finally {
       isLoading.value = false
     }

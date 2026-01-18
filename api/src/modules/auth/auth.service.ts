@@ -3,6 +3,7 @@ import * as crypto from 'node:crypto';
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -20,6 +21,8 @@ import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly sessionsService: SessionsService,
@@ -32,6 +35,9 @@ export class AuthService {
     const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
+      this.logger.warn(
+        `Login attempt for non-existent email: ${loginDto.email}`,
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -41,10 +47,12 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
+      this.logger.warn(`Invalid password for user: ${user.id}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (!user.isEmailVerified) {
+      this.logger.debug(`Unverified email login attempt: ${user.id}`);
       throw new UnauthorizedException(
         'Email not verified. Please check your inbox for the verification email.',
       );
@@ -74,6 +82,8 @@ export class AuthService {
       });
     }
 
+    this.logger.log(`User logged in: ${user.id}`);
+
     return {
       token,
       refreshToken,
@@ -91,6 +101,8 @@ export class AuthService {
 
     await this.mailService.sendVerificationEmail(user, verificationToken);
 
+    this.logger.log(`User registered: ${user.id}`);
+
     return {
       message: 'Verification email sent. Please check your inbox.',
     };
@@ -100,6 +112,8 @@ export class AuthService {
     const user = await this.usersService.verifyEmail(token);
 
     void this.mailService.sendWelcomeEmail(user);
+
+    this.logger.log(`Email verified for user: ${user.id}`);
 
     return {
       message: 'Email verified successfully. You can now log in.',
@@ -162,6 +176,7 @@ export class AuthService {
     if (user) {
       const token = await this.usersService.generatePasswordResetToken(user.id);
       await this.mailService.sendPasswordResetEmail(user, token);
+      this.logger.debug(`Password reset requested for user: ${user.id}`);
     }
 
     return {
@@ -171,7 +186,9 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    await this.usersService.resetPassword(token, newPassword);
+    const user = await this.usersService.resetPassword(token, newPassword);
+
+    this.logger.log(`Password reset completed for user: ${user.id}`);
 
     return {
       message:

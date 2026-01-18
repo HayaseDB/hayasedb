@@ -3,13 +3,16 @@
     layout: false,
   })
 
-  const { signOut } = useAuth()
+  const { logout } = useAuth()
 
-  await signOut({ callbackUrl: '/auth/login', redirect: true }).catch(() => {
-    navigateTo('/auth/login', { replace: true })
+  onMounted(async () => {
+    await logout()
+    await navigateTo('/auth/login', { replace: true })
   })
 </script>
 
 <template>
-  <div />
+  <div class="flex min-h-screen items-center justify-center">
+    <p class="text-muted-foreground">Signing out...</p>
+  </div>
 </template>

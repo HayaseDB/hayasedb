@@ -1,4 +1,4 @@
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
-  return await authFetchApi(event, `/contributions/${id}`, { method: 'DELETE' })
+  return await authApi(event, `/contributions/${id}`, { method: 'DELETE' })
 })

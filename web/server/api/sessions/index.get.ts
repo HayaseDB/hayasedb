@@ -1,3 +1,4 @@
 export default defineEventHandler(async (event) => {
-  return await authFetchApi(event, '/sessions')
+  const query = getQuery(event)
+  return await authApi<PaginatedSessionResponse>(event, '/sessions', { query })
 })

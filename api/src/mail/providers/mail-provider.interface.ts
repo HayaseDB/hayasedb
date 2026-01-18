@@ -1,16 +1,6 @@
-export interface SendMailOptions {
-  to: string | string[];
-  subject: string;
-  html?: string;
-  text?: string;
-  from?: {
-    name?: string;
-    email: string;
-  };
-  replyTo?: string;
-}
+import type { SendEmailOptions } from '../interfaces/mail.interface';
 
 export interface MailProvider {
-  sendEmail(options: SendMailOptions): Promise<void>;
+  sendEmail(options: SendEmailOptions): Promise<void>;
   verify?(): Promise<boolean>;
 }

@@ -1,22 +1,52 @@
+import { refDebounced } from '@vueuse/core'
 import { toast } from 'vue-sonner'
-import { getErrorMessage } from '@/types/api'
-import type { Session } from '@/types/session'
 import type { ProfileForm, PasswordForm } from '@/components/settings'
 
+export type SessionSortField = 'created_at' | 'updated_at' | null
+export type SessionSortOrder = 'asc' | 'desc' | null
+
 export function useSettings() {
-  const { data: session, refresh: refreshSession } = useAuth()
-  const { authFetch } = useAuthFetch()
-  const { rawToken } = useAuthState()
+  const { user, refreshSession } = useAuth()
+
+  const sessionsPage = ref<number>(1)
+  const sessionsLimit = ref<number>(5)
+  const sessionsSort = ref<SessionSortField>(null)
+  const sessionsOrder = ref<SessionSortOrder>(null)
+  const sessionsSearch = ref('')
+  const sessionsSearchDebounced = refDebounced(sessionsSearch, 300)
+
+  watch(sessionsSearchDebounced, () => {
+    sessionsPage.value = 1
+  })
+
+  const sessionsQuery = computed(() => {
+    const query: Record<string, string | number> = {
+      page: sessionsPage.value,
+      limit: sessionsLimit.value,
+    }
+    if (sessionsSort.value) {
+      query.sort = sessionsSort.value
+    }
+    if (sessionsOrder.value) {
+      query.order = sessionsOrder.value
+    }
+    const trimmedSearch = sessionsSearchDebounced.value.trim()
+    if (trimmedSearch) {
+      query.search = trimmedSearch
+    }
+    return query
+  })
 
   const {
-    data: sessions,
+    data: sessionsData,
     status: sessionsStatus,
     refresh: refreshSessions,
-  } = useFetch<Session[]>('/api/sessions', {
-    headers: computed(() => ({
-      Authorization: rawToken.value ? `Bearer ${rawToken.value}` : '',
-    })),
+  } = useFetch<PaginatedSessionResponse>('/api/sessions', {
+    query: sessionsQuery,
   })
+
+  const sessions = computed(() => sessionsData.value?.items ?? [])
+  const sessionsMeta = computed<PaginationMeta | null>(() => sessionsData.value?.meta ?? null)
 
   const profileLoading = ref(false)
   const passwordLoading = ref(false)
@@ -27,15 +57,13 @@ export function useSettings() {
   const profileFormRef = ref<InstanceType<typeof ProfileForm> | null>(null)
   const passwordFormRef = ref<InstanceType<typeof PasswordForm> | null>(null)
 
-  const userInitials = computed(() => {
-    return session.value?.username?.[0]?.toUpperCase() ?? 'U'
-  })
+  const userInitials = computed(() => user.value?.username?.[0]?.toUpperCase() ?? 'U')
 
   const profileCurrentValues = computed(() => ({
-    email: session.value?.email ?? '',
-    username: session.value?.username ?? '',
-    firstName: session.value?.firstName ?? '',
-    lastName: session.value?.lastName ?? '',
+    email: user.value?.email ?? '',
+    username: user.value?.username ?? '',
+    firstName: user.value?.firstName ?? '',
+    lastName: user.value?.lastName ?? '',
   }))
 
   const isSessionsLoading = computed(
@@ -50,15 +78,12 @@ export function useSettings() {
   }) {
     profileLoading.value = true
     try {
-      await authFetch('/api/users/me/profile', {
-        method: 'PATCH',
-        body: data,
-      })
+      await $fetch('/api/users/me', { method: 'PATCH', body: data })
       await refreshSession()
       profileFormRef.value?.reset()
       toast.success('Profile updated successfully')
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to update profile'))
+    } catch {
+      toast.error('Failed to update profile')
     } finally {
       profileLoading.value = false
     }
@@ -67,14 +92,11 @@ export function useSettings() {
   async function handlePasswordChange(data: { currentPassword: string; newPassword: string }) {
     passwordLoading.value = true
     try {
-      await authFetch('/api/users/me/password', {
-        method: 'PUT',
-        body: data,
-      })
+      await $fetch('/api/users/me/password', { method: 'PATCH', body: data })
       passwordFormRef.value?.reset()
       toast.success('Password changed successfully')
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to change password'))
+    } catch {
+      toast.error('Failed to change password')
     } finally {
       passwordLoading.value = false
     }
@@ -85,15 +107,11 @@ export function useSettings() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-
-      await authFetch('/api/users/me/profile-picture', {
-        method: 'POST',
-        body: formData,
-      })
+      await $fetch('/api/users/me/profile-picture', { method: 'POST', body: formData })
       await refreshSession()
       toast.success('Profile picture updated')
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to upload picture'))
+    } catch {
+      toast.error('Failed to upload picture')
     } finally {
       pictureLoading.value = false
     }
@@ -102,13 +120,11 @@ export function useSettings() {
   async function handlePictureDelete() {
     pictureLoading.value = true
     try {
-      await authFetch('/api/users/me/profile-picture', {
-        method: 'DELETE',
-      })
+      await $fetch('/api/users/me/profile-picture', { method: 'DELETE' })
       await refreshSession()
       toast.success('Profile picture removed')
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to remove picture'))
+    } catch {
+      toast.error('Failed to remove picture')
     } finally {
       pictureLoading.value = false
     }
@@ -117,14 +133,11 @@ export function useSettings() {
   async function handleAccountDelete(data: { password: string }) {
     deleteLoading.value = true
     try {
-      await authFetch('/api/users/me', {
-        method: 'DELETE',
-        body: data,
-      })
+      await $fetch('/api/users/me', { method: 'DELETE', body: data })
       toast.success('Account deleted successfully')
       await navigateTo('/auth/logout')
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to delete account'))
+    } catch {
+      toast.error('Failed to delete account')
       deleteLoading.value = false
     }
   }
@@ -132,11 +145,11 @@ export function useSettings() {
   async function handleTerminateSession(sessionId: string) {
     sessionsLoading.value = true
     try {
-      await authFetch(`/api/sessions/${sessionId}`, { method: 'DELETE' })
+      await $fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' })
       await refreshSessions()
       toast.success('Session terminated successfully')
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to terminate session'))
+    } catch {
+      toast.error('Failed to terminate session')
     } finally {
       sessionsLoading.value = false
     }
@@ -145,37 +158,49 @@ export function useSettings() {
   async function handleTerminateAllOtherSessions() {
     sessionsLoading.value = true
     try {
-      await authFetch('/api/sessions/others', { method: 'DELETE' })
+      await $fetch('/api/sessions/others', { method: 'DELETE' })
+      sessionsPage.value = 1
       await refreshSessions()
       toast.success('All other sessions terminated')
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to terminate sessions'))
+    } catch {
+      toast.error('Failed to terminate sessions')
     } finally {
       sessionsLoading.value = false
     }
   }
 
-  return {
-    // Session data
-    session,
-    sessions,
+  function setSessionsPage(page: number) {
+    sessionsPage.value = page
+  }
 
-    // Loading states
+  function setSessionsPageSize(size: number) {
+    sessionsLimit.value = size
+    sessionsPage.value = 1
+  }
+
+  function setSessionsSort(sort: SessionSortField, order: SessionSortOrder) {
+    sessionsSort.value = sort
+    sessionsOrder.value = order
+  }
+
+  return {
+    session: user,
+    sessions,
+    sessionsMeta,
+    sessionsPage,
+    sessionsLimit,
+    sessionsSort,
+    sessionsOrder,
+    sessionsSearch,
     profileLoading,
     passwordLoading,
     pictureLoading,
     deleteLoading,
     isSessionsLoading,
-
-    // Form refs
     profileFormRef,
     passwordFormRef,
-
-    // Computed values
     userInitials,
     profileCurrentValues,
-
-    // Handlers
     handleProfileUpdate,
     handlePasswordChange,
     handlePictureUpload,
@@ -183,5 +208,8 @@ export function useSettings() {
     handleAccountDelete,
     handleTerminateSession,
     handleTerminateAllOtherSessions,
+    setSessionsPage,
+    setSessionsPageSize,
+    setSessionsSort,
   }
 }

@@ -1,10 +1,8 @@
-import type { Contribution } from '../../types/contribution'
-
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)
 
-  return await authFetchApi<Contribution>(event, `/contributions/${id}`, {
+  return await authApi<ContributionResponse>(event, `/contributions/${id}`, {
     method: 'PUT',
     body,
   })

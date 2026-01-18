@@ -5,7 +5,6 @@ import {
   IsString,
   Length,
   Matches,
-  MinLength,
 } from 'class-validator';
 
 export class UpdateUserDto {
@@ -16,15 +15,6 @@ export class UpdateUserDto {
   @IsEmail()
   @IsOptional()
   email?: string;
-
-  @ApiPropertyOptional({
-    description: 'User password',
-    minLength: 8,
-  })
-  @IsString()
-  @IsOptional()
-  @MinLength(8)
-  password?: string;
 
   @ApiPropertyOptional({
     description:

@@ -15,10 +15,8 @@ import { RbacService } from '../rbac.service';
 import { Permission, RoleKey } from '../rbac.types';
 
 interface AuthenticatedRequest extends Request {
-  user?: {
-    user: User;
-    session: Session;
-  };
+  user?: User;
+  session?: Session;
   roles?: RoleKey[];
 }
 
@@ -40,13 +38,12 @@ export class RbacGuard implements CanActivate {
     }
 
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
-    const userData = request.user;
+    const user = request.user;
 
-    if (!userData?.user) {
+    if (!user) {
       throw new ForbiddenException('Authentication required');
     }
-
-    const role = userData.user.role ?? Role.USER;
+    const role = user.role ?? Role.USER;
     const roleKey: RoleKey = `global:${role}`;
 
     const roles: RoleKey[] = [roleKey];

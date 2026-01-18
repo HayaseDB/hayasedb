@@ -17,6 +17,7 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    'nuxt-auth-utils',
     '@nuxtjs/seo',
     '@nuxtjs/color-mode',
     '@nuxt/eslint',
@@ -25,55 +26,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/image',
     'shadcn-nuxt',
-    '@sidebase/nuxt-auth',
   ],
-
-  auth: {
-    baseURL: '/api/auth',
-    provider: {
-      type: 'local',
-      endpoints: {
-        signIn: { path: '/login', method: 'post' },
-        signUp: { path: '/register', method: 'post' },
-        signOut: { path: '/logout', method: 'post' },
-        getSession: { path: '/session', method: 'get' },
-      },
-      token: {
-        signInResponseTokenPointer: '/token',
-        maxAgeInSeconds: 3600,
-      },
-      refresh: {
-        isEnabled: true,
-        endpoint: { path: '/refresh', method: 'post' },
-        refreshOnlyToken: false,
-        token: {
-          signInResponseRefreshTokenPointer: '/refreshToken',
-          refreshResponseTokenPointer: '/token',
-          refreshRequestTokenPointer: '/refreshToken',
-          maxAgeInSeconds: 604800,
-        },
-      },
-      session: {
-        dataType: {
-          id: 'string',
-          username: 'string',
-          email: 'string',
-          firstName: 'string',
-          lastName: 'string',
-          role: 'string',
-          profilePicture:
-            '{ id: string, bucket: string, key: string, originalName: string, mimeType: string, size: number, etag: string | null, url: string | null } | null',
-        },
-        dataResponsePointer: '/',
-      },
-      pages: {
-        login: '/auth/login',
-      },
-    },
-    globalAppMiddleware: {
-      isEnabled: false,
-    },
-  },
 
   runtimeConfig: {
     apiUrl: process.env.WEB_API_URL || 'http://localhost:3000',

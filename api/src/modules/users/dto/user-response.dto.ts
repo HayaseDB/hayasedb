@@ -30,6 +30,12 @@ export class UserResponseDto {
   role: Role;
 
   @ApiProperty({
+    description: 'Whether the user email is verified',
+    example: true,
+  })
+  isEmailVerified: boolean;
+
+  @ApiProperty({
     description: 'Account creation date (ISO 8601 UTC)',
     example: '2024-01-15T10:30:00.000Z',
     type: String,

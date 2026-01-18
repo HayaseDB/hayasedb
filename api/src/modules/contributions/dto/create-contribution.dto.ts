@@ -31,7 +31,6 @@ export class CreateContributionDto {
     },
   })
   @IsObject()
-  @IsNotEmpty()
   data: Record<string, unknown>;
 
   @ApiPropertyOptional({

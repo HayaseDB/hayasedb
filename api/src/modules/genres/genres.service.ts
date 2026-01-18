@@ -67,10 +67,7 @@ export class GenresService {
     });
 
     if (!genre) {
-      throw new NotFoundException({
-        code: 'GENRE_NOT_FOUND',
-        message: `Genre with slug "${slug}" not found`,
-      });
+      throw new NotFoundException(`Genre with slug "${slug}" not found`);
     }
 
     return genre;
@@ -82,10 +79,7 @@ export class GenresService {
     });
 
     if (!genre) {
-      throw new NotFoundException({
-        code: 'GENRE_NOT_FOUND',
-        message: `Genre with ID "${id}" not found`,
-      });
+      throw new NotFoundException(`Genre with ID "${id}" not found`);
     }
 
     return genre;
@@ -104,10 +98,9 @@ export class GenresService {
     const missingIds = ids.filter((id) => !foundIds.has(id));
 
     if (missingIds.length > 0) {
-      throw new NotFoundException({
-        code: 'GENRES_NOT_FOUND',
-        message: `Genres with IDs "${missingIds.join(', ')}" not found`,
-      });
+      throw new NotFoundException(
+        `Genres with IDs "${missingIds.join(', ')}" not found`,
+      );
     }
 
     return genres;
@@ -132,17 +125,13 @@ export class GenresService {
     });
 
     if (!genre) {
-      throw new NotFoundException({
-        code: 'GENRE_NOT_FOUND',
-        message: `Genre with ID "${id}" not found`,
-      });
+      throw new NotFoundException(`Genre with ID "${id}" not found`);
     }
 
     if (genre.deletedAt) {
-      throw new UnprocessableEntityException({
-        code: 'GENRE_ALREADY_DELETED',
-        message: `Genre with ID "${id}" is already deleted`,
-      });
+      throw new UnprocessableEntityException(
+        `Genre with ID "${id}" is already deleted`,
+      );
     }
 
     await this.genreRepository.softRemove(genre);
@@ -156,17 +145,13 @@ export class GenresService {
     });
 
     if (!genre) {
-      throw new NotFoundException({
-        code: 'GENRE_NOT_FOUND',
-        message: `Genre with ID "${id}" not found`,
-      });
+      throw new NotFoundException(`Genre with ID "${id}" not found`);
     }
 
     if (!genre.deletedAt) {
-      throw new UnprocessableEntityException({
-        code: 'GENRE_NOT_DELETED',
-        message: `Genre with ID "${id}" is not deleted`,
-      });
+      throw new UnprocessableEntityException(
+        `Genre with ID "${id}" is not deleted`,
+      );
     }
 
     genre.deletedAt = null;

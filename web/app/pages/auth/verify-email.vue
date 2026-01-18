@@ -2,11 +2,9 @@
   import { toast } from 'vue-sonner'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
-  import { getErrorMessage } from '@/types/api'
 
   definePageMeta({
     layout: 'auth',
-    auth: false,
   })
 
   useSeoMeta({
@@ -29,13 +27,17 @@
     }
 
     try {
-      await $fetch('/api/auth/verify-email', { method: 'POST', body: { token } })
+      await $fetch<MessageResponse>('/api/auth/verify-email', {
+        method: 'POST',
+        body: { token },
+      })
       toast.success('Email verified!', {
-        description: 'You can now sign in to your account',
+        description: 'Please log in to continue',
       })
       await navigateTo('/auth/login')
     } catch (e: unknown) {
-      const message = getErrorMessage(e, 'Verification failed')
+      const err = e as { data?: { message?: string }; message?: string }
+      const message = err.data?.message || err.message || 'Verification failed'
       error.value = message
       toast.error(message)
     } finally {

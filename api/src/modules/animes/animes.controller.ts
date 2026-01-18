@@ -12,7 +12,6 @@ import {
   Post,
   Query,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -35,7 +34,6 @@ import {
 } from '@nestjs/swagger';
 import { Pagination } from 'nestjs-typeorm-paginate';
 
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Media } from '../media/entities/media.entity';
 import { MediaResponseDto } from '../media/dto/media-response.dto';
 import { Permissions } from '../rbac/decorators/permissions.decorator';
@@ -56,7 +54,6 @@ import { AnimeCoverValidationPipe } from './pipes/anime-cover-validation.pipe';
 @ApiTags('Animes')
 @Controller('animes')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class AnimesController {
   constructor(private readonly animesService: AnimesService) {}

@@ -5,7 +5,6 @@ import {
   IsArray,
   IsEnum,
   IsInt,
-  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -24,7 +23,6 @@ export class UpdateAnimeDto {
     maxLength: 255,
   })
   @IsString()
-  @IsNotEmpty()
   @IsOptional()
   @MaxLength(255)
   @Transform(({ value }: { value: unknown }) =>
@@ -41,6 +39,9 @@ export class UpdateAnimeDto {
   @IsString()
   @IsOptional()
   @MaxLength(10000)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   synopsis?: string;
 
   @ApiPropertyOptional({

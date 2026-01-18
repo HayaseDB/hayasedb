@@ -4,25 +4,30 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Patch,
   Post,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
-  ApiResponse,
+  ApiPayloadTooLargeResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
+  ApiUnsupportedMediaTypeResponse,
 } from '@nestjs/swagger';
 
 import { ActiveUser } from '../../common/decorators/active-user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Permissions } from '../rbac/decorators/permissions.decorator';
 import {
   PROFILE_PICTURE_ALLOWED_MIME_TYPES,
@@ -39,15 +44,15 @@ import { UsersService } from './users.service';
 @ApiTags('Users')
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access_token')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
   @Permissions(['global:users.read:own'])
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiOkResponse({ type: UserResponseDto })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   getProfile(@ActiveUser() user: User): User {
     return user;
@@ -55,8 +60,9 @@ export class UsersController {
 
   @Patch('me')
   @Permissions(['global:users.update:own'])
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update current user profile' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiOkResponse({ type: UserResponseDto })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async updateProfile(
     @ActiveUser() user: User,
@@ -67,8 +73,10 @@ export class UsersController {
 
   @Patch('me/password')
   @Permissions(['global:users.update:own'])
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Change user password' })
-  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiOkResponse({ description: 'Password changed successfully' })
+  @ApiUnauthorizedResponse({ description: 'Current password is incorrect' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async changePassword(
     @ActiveUser() user: User,
@@ -79,6 +87,7 @@ export class UsersController {
 
   @Post('me/profile-picture')
   @Permissions(['global:users.update:own'])
+  @HttpCode(HttpStatus.OK)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -101,14 +110,13 @@ export class UsersController {
       },
     },
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: UserResponseDto,
     description: 'Profile picture uploaded successfully',
   })
-  @ApiResponse({ status: 400, description: 'Invalid file' })
-  @ApiResponse({ status: 413, description: 'File too large' })
-  @ApiResponse({ status: 415, description: 'Unsupported media type' })
+  @ApiBadRequestResponse({ description: 'Invalid file' })
+  @ApiPayloadTooLargeResponse({ description: 'File too large' })
+  @ApiUnsupportedMediaTypeResponse({ description: 'Unsupported media type' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async uploadProfilePicture(
     @ActiveUser() user: User,
@@ -120,13 +128,13 @@ export class UsersController {
 
   @Delete('me/profile-picture')
   @Permissions(['global:users.update:own'])
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete profile picture' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: UserResponseDto,
     description: 'Profile picture deleted successfully',
   })
-  @ApiResponse({ status: 404, description: 'No profile picture to delete' })
+  @ApiNotFoundResponse({ description: 'No profile picture to delete' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async deleteProfilePicture(@ActiveUser() user: User): Promise<User> {
     return this.usersService.deleteProfilePicture(user.id);
@@ -134,12 +142,10 @@ export class UsersController {
 
   @Delete('me')
   @Permissions(['global:users.delete:own'])
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete current user account' })
-  @ApiResponse({
-    status: 200,
-    description: 'Account deleted successfully',
-  })
-  @ApiResponse({ status: 401, description: 'Invalid password' })
+  @ApiOkResponse({ description: 'Account deleted successfully' })
+  @ApiUnauthorizedResponse({ description: 'Invalid password' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async deleteAccount(
     @ActiveUser() user: User,

@@ -2,8 +2,19 @@
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { SessionsManager } from '@/components/settings'
 
-  const { sessions, isSessionsLoading, handleTerminateSession, handleTerminateAllOtherSessions } =
-    useSettings()
+  const {
+    sessions,
+    sessionsMeta,
+    sessionsSort,
+    sessionsOrder,
+    sessionsSearch,
+    isSessionsLoading,
+    handleTerminateSession,
+    handleTerminateAllOtherSessions,
+    setSessionsPage,
+    setSessionsPageSize,
+    setSessionsSort,
+  } = useSettings()
 </script>
 
 <template>
@@ -17,10 +28,17 @@
     </CardHeader>
     <CardContent>
       <SessionsManager
+        v-model:search="sessionsSearch"
         :sessions="sessions ?? []"
         :is-loading="isSessionsLoading"
+        :meta="sessionsMeta"
+        :current-sort="sessionsSort"
+        :current-order="sessionsOrder"
         @terminate-session="handleTerminateSession"
         @terminate-all-other-sessions="handleTerminateAllOtherSessions"
+        @update:page="setSessionsPage"
+        @update:page-size="setSessionsPageSize"
+        @update:sort="setSessionsSort"
       />
     </CardContent>
   </Card>

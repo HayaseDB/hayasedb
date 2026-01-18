@@ -35,8 +35,8 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyEmailResponseDto } from './dto/verify-email-response.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
+import { Public } from '../rbac/decorators/public.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -44,6 +44,7 @@ import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -70,6 +71,7 @@ export class AuthController {
     return await this.authService.register(registerDto);
   }
 
+  @Public()
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -96,6 +98,7 @@ export class AuthController {
     return await this.authService.verifyEmail(dto.token);
   }
 
+  @Public()
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -126,6 +129,7 @@ export class AuthController {
     return await this.authService.resendVerificationEmail(dto.email);
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -153,6 +157,7 @@ export class AuthController {
     return await this.authService.validateLogin(loginDto, metadata);
   }
 
+  @Public()
   @ApiBearerAuth('refresh_token')
   @Post('refresh')
   @UseGuards(JwtRefreshAuthGuard)
@@ -178,7 +183,6 @@ export class AuthController {
 
   @ApiBearerAuth('access_token')
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Logout user',
@@ -194,7 +198,6 @@ export class AuthController {
 
   @ApiBearerAuth('access_token')
   @Post('logout-all')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Logout all sessions',
@@ -211,6 +214,7 @@ export class AuthController {
     await this.authService.logoutAllExceptCurrent(user.id, currentSession.id);
   }
 
+  @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -233,6 +237,7 @@ export class AuthController {
     return await this.authService.forgotPassword(dto.email);
   }
 
+  @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -259,7 +264,6 @@ export class AuthController {
   }
 
   @ApiBearerAuth('access_token')
-  @UseGuards(JwtAuthGuard)
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

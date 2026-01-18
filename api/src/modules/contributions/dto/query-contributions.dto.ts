@@ -1,39 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 
+import {
+  BasePaginationQueryDto,
+  SortOrder,
+} from '../../../common/dto/pagination-query.dto';
 import { ContributionSortField } from '../enums/contribution-sort-field.enum';
 import { ContributionStatus } from '../enums/contribution-status.enum';
 import { EntityType } from '../enums/entity-type.enum';
-import { SortOrder } from '../enums/sort-order.enum';
 
-export class QueryContributionsDto {
-  @ApiPropertyOptional({
-    description: 'Page number (1-indexed)',
-    example: 1,
-    default: 1,
-    minimum: 1,
-  })
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  page?: number = 1;
-
-  @ApiPropertyOptional({
-    description: 'Number of items per page',
-    example: 20,
-    default: 20,
-    minimum: 1,
-    maximum: 100,
-  })
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  @IsOptional()
-  limit?: number = 20;
-
+export class QueryContributionsDto extends BasePaginationQueryDto {
   @ApiPropertyOptional({
     description: 'Filter by contribution status',
     enum: ContributionStatus,

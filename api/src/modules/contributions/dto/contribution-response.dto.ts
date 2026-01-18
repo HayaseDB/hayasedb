@@ -49,15 +49,33 @@ export class ContributionResponseDto {
   @ApiPropertyOptional({ type: () => ContributorResponseDto, nullable: true })
   reviewer: ContributorResponseDto | null;
 
-  @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Submission date (ISO 8601 UTC)',
+    example: '2024-01-15T10:30:00.000Z',
+    type: String,
+    nullable: true,
+  })
   submittedAt: Date | null;
 
-  @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Review date (ISO 8601 UTC)',
+    example: '2024-01-15T10:30:00.000Z',
+    type: String,
+    nullable: true,
+  })
   reviewedAt: Date | null;
 
-  @ApiProperty({ type: 'string', format: 'date-time' })
+  @ApiProperty({
+    description: 'Creation date (ISO 8601 UTC)',
+    example: '2024-01-15T10:30:00.000Z',
+    type: String,
+  })
   createdAt: Date;
 
-  @ApiProperty({ type: 'string', format: 'date-time' })
+  @ApiProperty({
+    description: 'Last update date (ISO 8601 UTC)',
+    example: '2024-01-15T10:30:00.000Z',
+    type: String,
+  })
   updatedAt: Date;
 }
