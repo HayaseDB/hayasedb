@@ -1,13 +1,24 @@
 {
-  "name": "hayasedb",
+  "name": "@hayasedb/root",
+  "version": "0.0.1",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@10.30.1",
+  "author": "HayaseDB",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HayaseDB/hayasedb.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
-    "lefthook": "^1.11.13"
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
+    "lefthook": "^2.1.3"
   }
 }

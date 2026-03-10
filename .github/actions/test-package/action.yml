@@ -1,0 +1,55 @@
+name: Test Package
+description: Lint, type check, test, and build a package
+
+inputs:
+  package-dir:
+    description: Package directory (e.g., apps/api, apps/web)
+    required: true
+  has-tests:
+    description: Whether the package has unit tests
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: "10.30.1"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: pnpm-lock.yaml
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile --prefer-offline
+
+    - name: Build workspace dependencies
+      shell: bash
+      run: pnpm --filter "{./${{ inputs.package-dir }}}..." --filter "!{./${{ inputs.package-dir }}}" build
+
+    - name: Lint
+      shell: bash
+      working-directory: ./${{ inputs.package-dir }}
+      run: pnpm lint --max-warnings 0
+
+    - name: Type check
+      shell: bash
+      working-directory: ./${{ inputs.package-dir }}
+      run: pnpm typecheck
+
+    - name: Test
+      if: inputs.has-tests == 'true'
+      shell: bash
+      run: pnpm test
+      working-directory: ./${{ inputs.package-dir }}
+
+    - name: Build
+      shell: bash
+      run: pnpm build
+      working-directory: ./${{ inputs.package-dir }}

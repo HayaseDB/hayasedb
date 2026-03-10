@@ -1,74 +1,23 @@
-name: Release
+name: Staging
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
 
 permissions: {}
 
 concurrency:
-  group: release
-  cancel-in-progress: false
+  group: staging
+  cancel-in-progress: true
 
 jobs:
-  validate-version:
-    name: Validate (${{ matrix.package }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - package: api
-            path: apps/api/package.json
-          - package: web
-            path: apps/web/package.json
-          - package: sdk
-            path: packages/sdk/package.json
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            ${{ matrix.path }}
-            .github
-
-      - name: Validate version
-        uses: ./.github/actions/validate-version
-        with:
-          package: ${{ matrix.package }}
-          path: ${{ matrix.path }}
-
-  changelog:
-    name: Changelog
-    needs: validate-version
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: .github
-
-      - name: Generate changelog
-        uses: ./.github/actions/generate-changelog
-        with:
-          tag-name: ${{ github.event.release.tag_name }}
-          release-body: ${{ github.event.release.body }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
   test:
-    needs: validate-version
     permissions:
       contents: read
     uses: ./.github/workflows/test.yml
 
   publish-sdk:
-    name: Publish SDK
+    name: Publish SDK (dev)
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -88,10 +37,16 @@ jobs:
             pnpm-workspace.yaml
             .github
 
+      - name: Compute short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Publish
         uses: ./.github/actions/publish-sdk
         with:
           registry-token: ${{ secrets.GITHUB_TOKEN }}
+          dist-tag: dev
+          version-suffix: dev.${{ steps.sha.outputs.short }}
 
   build:
     name: Build (${{ matrix.package }})
@@ -125,14 +80,19 @@ jobs:
             pnpm-workspace.yaml
             .github
 
+      - name: Stamp dev version
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          VERSION=$(jq -r '.version' ${{ matrix.app-dir }}/package.json)
+          jq --arg v "${VERSION}-${SHORT_SHA}" '.version = $v' ${{ matrix.app-dir }}/package.json > tmp.json && mv tmp.json ${{ matrix.app-dir }}/package.json
+          echo "Stamped version: ${VERSION}-${SHORT_SHA}"
+
       - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ${{ matrix.image }}
-          tags: |
-            type=semver,pattern=v{{version}}
-            type=raw,value=latest
+          tags: type=raw,value=dev
 
       - name: Build and push
         uses: ./.github/actions/docker-build
@@ -152,25 +112,26 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           sparse-checkout: |
             apps/api/package.json
+            .npmrc
             .github
 
       - name: Compute expected version
         id: version
         run: |
           VERSION=$(jq -r '.version' apps/api/package.json)
-          echo "expected=${VERSION}" >> "$GITHUB_OUTPUT"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "expected=${VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Deploy
         uses: ./.github/actions/deploy-portainer
         with:
-          webhook-url: ${{ secrets.PORTAINER_WEBHOOK_URL }}
-          environment: production
-          api-url: ${{ vars.PRODUCTION_API_URL }}
+          webhook-url: ${{ secrets.PORTAINER_STAGING_WEBHOOK_URL }}
+          environment: staging
+          api-url: ${{ vars.STAGING_API_URL }}
           expected-version: ${{ steps.version.outputs.expected }}

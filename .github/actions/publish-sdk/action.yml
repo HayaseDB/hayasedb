@@ -1,0 +1,53 @@
+name: Publish SDK
+description: Build and publish @hayasedb/sdk to GitHub Packages with optional version stamping
+
+inputs:
+  registry-token:
+    description: GitHub token for GitHub Packages authentication
+    required: true
+  dist-tag:
+    description: npm dist-tag to publish under (e.g., latest, dev)
+    required: false
+    default: "latest"
+  version-suffix:
+    description: Suffix to append to the package version (e.g., dev.abc1234). Leave empty for release versions.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Stamp version
+      if: inputs.version-suffix != ''
+      shell: bash
+      run: |
+        VERSION=$(jq -r '.version' packages/sdk/package.json)
+        STAMPED="${VERSION}-${{ inputs.version-suffix }}"
+        jq --arg v "${STAMPED}" '.version = $v' packages/sdk/package.json > tmp.json && mv tmp.json packages/sdk/package.json
+        echo "Stamped SDK version: ${STAMPED}"
+
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: "10.30.1"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: 22
+        registry-url: https://npm.pkg.github.com
+        scope: "@hayasedb"
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
+
+    - name: Build
+      shell: bash
+      run: pnpm --filter @hayasedb/shared build && pnpm --filter @hayasedb/sdk build
+
+    - name: Publish
+      shell: bash
+      run: pnpm --filter @hayasedb/sdk publish --tag ${{ inputs.dist-tag }} --no-git-checks
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.registry-token }}

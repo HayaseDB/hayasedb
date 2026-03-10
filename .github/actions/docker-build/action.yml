@@ -1,0 +1,58 @@
+name: Docker Build & Push
+description: Build and push a Docker image to GHCR with caching and provenance
+
+inputs:
+  context:
+    description: Docker build context path (e.g., .)
+    required: true
+  dockerfile:
+    description: Path to Dockerfile (e.g., ./apps/api/Dockerfile)
+    required: false
+    default: ""
+  image:
+    description: Full image name (e.g., ghcr.io/hayasedb/api)
+    required: true
+  tags:
+    description: Comma-separated image tags
+    required: true
+  labels:
+    description: Image labels from metadata-action
+    required: false
+    default: ""
+  cache-scope:
+    description: GHA cache scope (e.g., api, web)
+    required: true
+  registry-password:
+    description: GITHUB_TOKEN for GHCR authentication
+    required: true
+  build-args:
+    description: Newline-separated list of build arguments
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.registry-password }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile || format('{0}/Dockerfile', inputs.context) }}
+        push: true
+        tags: ${{ inputs.tags }}
+        labels: ${{ inputs.labels }}
+        provenance: true
+        sbom: false
+        build-args: ${{ inputs.build-args }}
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,scope=${{ inputs.cache-scope }},mode=max
