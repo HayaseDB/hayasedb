@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+.idea
+.vscode
+node_modules
+**/node_modules
+**/dist
+**/.output
+**/.nuxt
+**/.nitro
+*.log

@@ -1,0 +1,15 @@
+{
+  "name": "@hayasedb/root",
+  "type": "module",
+  "private": true,
+  "author": "HayaseDB",
+  "license": "UNLICENSED",
+  "scripts": {
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
+    "lefthook": "^2.1.3"
+  }
+}

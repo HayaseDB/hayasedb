@@ -1,0 +1,146 @@
+includes:
+  api:
+    babfile: ./apps/api/babfiles/babfile.api.yaml
+  web:
+    babfile: ./apps/web/babfiles/babfile.web.yaml
+  shared:
+    babfile: ./packages/shared/babfiles/babfile.shared.yaml
+  sdk:
+    babfile: ./packages/sdk/babfiles/babfile.sdk.yaml
+
+tasks:
+  dev:
+    desc: Start full development environment (infra + api + web)
+    run:
+      - task: docker:infra:up
+        silent: true
+      - log: Starting dev servers...
+        level: info
+      - parallel:
+          - task: api:dev
+            label: api
+          - task: web:dev
+            label: web
+        mode: grouped
+
+  check:
+    desc: Run pre-commit checks across all packages
+    run:
+      - parallel:
+          - task: shared:check
+            label: shared
+          - task: sdk:check
+            label: sdk
+          - task: api:check
+            label: api
+          - task: web:check
+            label: web
+        mode: grouped
+
+  lefthook:install:
+    desc: Install lefthook git hooks
+    run:
+      - cmd: npx lefthook install
+
+  lefthook:uninstall:
+    desc: Uninstall lefthook git hooks
+    run:
+      - cmd: npx lefthook uninstall
+
+  docker:infra:up:
+    desc: Start infrastructure only (postgres + minio + mailpit + redis)
+    run:
+      - cmd: docker compose up -d postgres minio mailpit redis
+
+  docker:up:
+    desc: Start all services
+    run:
+      - cmd: docker compose up -d
+
+  docker:up:build:
+    desc: Start all services with local build (no pull)
+    run:
+      - cmd: docker compose build
+      - cmd: docker compose up -d
+
+  docker:down:
+    desc: Stop all services
+    run:
+      - cmd: docker compose down
+
+  docker:destroy:
+    desc: Stop all services and remove volumes
+    run:
+      - prompt: confirm
+        type: confirm
+        message: "This will remove all data. Continue?"
+        default: false
+      - cmd: docker compose down -v
+
+  docker:logs:
+    desc: Show logs from all services
+    run:
+      - cmd: docker compose logs -f
+        silent: true
+
+  docker:status:
+    desc: Show running services
+    run:
+      - cmd: docker compose ps
+        silent: true
+
+  deps:
+    desc: Install all workspace dependencies
+    run:
+      - cmd: pnpm install
+
+  bump:
+    desc: Bump version in all packages
+    run:
+      - cmd: |
+          echo "Current versions:"
+          echo "  api:    $(node -p "require('./apps/api/package.json').version")"
+          echo "  web:    $(node -p "require('./apps/web/package.json').version")"
+          echo "  shared: $(node -p "require('./packages/shared/package.json').version")"
+          echo "  sdk:    $(node -p "require('./packages/sdk/package.json').version")"
+          echo ""
+          echo "Auto-bump default: $(node -p "const v=require('./apps/api/package.json').version.split('.');v[2]=+v[2]+1;v.join('.')")"
+        silent: true
+
+      - prompt: version
+        type: input
+        message: "New version (press Enter for auto-bump):"
+        default: ""
+        placeholder: "x.y.z"
+
+      - cmd: |
+          VERSION="${{ version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(node -p "const v=require('./apps/api/package.json').version.split('.');v[2]=+v[2]+1;v.join('.')")
+          fi
+          node -e "
+            const fs = require('fs');
+            [
+              './apps/api/package.json',
+              './apps/web/package.json',
+              './packages/shared/package.json',
+              './packages/sdk/package.json'
+            ].forEach(f => {
+              const pkg = JSON.parse(fs.readFileSync(f,'utf8'));
+              pkg.version = '$VERSION';
+              fs.writeFileSync(f, JSON.stringify(pkg, null, 2) + '\n');
+            });
+            console.log('Bumped to ' + '$VERSION');
+          "
+        silent: true
+
+      - prompt: commit
+        type: confirm
+        message: "Commit version bump?"
+        default: true
+
+      - cmd: |
+          FINAL=$(node -p "require('./apps/api/package.json').version")
+          git add apps/api/package.json apps/web/package.json packages/shared/package.json packages/sdk/package.json && git commit --no-verify -m "chore: bump version $FINAL"
+        silent: true
+        when: ${{ commit }}

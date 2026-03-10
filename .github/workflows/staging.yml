@@ -1,0 +1,99 @@
+name: Staging
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: staging
+  cancel-in-progress: true
+
+jobs:
+  test:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/test.yml
+
+  build:
+    name: Build (${{ matrix.package }})
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: api
+            app-dir: apps/api
+            image: ghcr.io/hayasedb/hayasedb-api
+          - package: web
+            app-dir: apps/web
+            image: ghcr.io/hayasedb/hayasedb-web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            ${{ matrix.app-dir }}
+            packages/shared
+            packages/sdk
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            .github
+
+      - name: Stamp dev version
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          VERSION=$(jq -r '.version' ${{ matrix.app-dir }}/package.json)
+          jq --arg v "${VERSION}-${SHORT_SHA}" '.version = $v' ${{ matrix.app-dir }}/package.json > tmp.json && mv tmp.json ${{ matrix.app-dir }}/package.json
+          echo "Stamped version: ${VERSION}-${SHORT_SHA}"
+
+      - name: Generate Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ matrix.image }}
+          tags: type=raw,value=dev
+
+      - name: Build and push
+        uses: ./.github/actions/docker-build
+        with:
+          context: .
+          dockerfile: ./${{ matrix.app-dir }}/Dockerfile
+          image: ${{ matrix.image }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-scope: ${{ matrix.package }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Compute expected version
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' apps/api/package.json)
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "expected=${VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy
+        uses: ./.github/actions/deploy-portainer
+        with:
+          webhook-url: ${{ secrets.PORTAINER_STAGING_WEBHOOK_URL }}
+          environment: staging
+          api-url: ${{ vars.STAGING_API_URL }}
+          expected-version: ${{ steps.version.outputs.expected }}

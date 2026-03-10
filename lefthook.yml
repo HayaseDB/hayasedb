@@ -1,0 +1,35 @@
+output:
+  - summary
+  - success
+  - failure
+
+pre-commit:
+  parallel: true
+  commands:
+    api-check:
+      glob: "apps/api/**/*"
+      run: bab api:check
+      stage_fixed: true
+    web-check:
+      glob: "apps/web/**/*"
+      run: bab web:check
+      stage_fixed: true
+    shared-check:
+      glob: "packages/shared/**/*"
+      run: bab shared:check
+      stage_fixed: true
+    sdk-check:
+      glob: "packages/sdk/**/*"
+      run: bab sdk:check
+      stage_fixed: true
+
+commit-msg:
+  commands:
+    commitlint:
+      run: |
+        HEADER=$(head -1 {1})
+        if ! npx --no -- commitlint --edit {1} 2>/dev/null; then
+          echo "Invalid: \"$HEADER\""
+          echo "Expected: <type>(scope): description  (e.g. feat(api): add login)"
+          exit 1
+        fi

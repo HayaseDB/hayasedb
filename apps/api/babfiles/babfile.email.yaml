@@ -1,0 +1,7 @@
+dir: ..
+
+tasks:
+  preview:
+    desc: Start React Email preview server
+    run:
+      - cmd: pnpm email:dev
