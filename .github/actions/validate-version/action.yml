@@ -1,0 +1,27 @@
+name: Validate Version
+description: Verify that the git tag version matches the version in package.json
+
+inputs:
+  package:
+    description: Package name for display (e.g., api, web)
+    required: true
+  path:
+    description: Path to package.json (e.g., apps/api/package.json)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Validate ${{ inputs.package }} version
+      shell: bash
+      run: |
+        TAG_VERSION="${GITHUB_REF_NAME#v}"
+        PACKAGE_VERSION=$(jq -r '.version' "${{ inputs.path }}")
+
+        echo "Release tag: v$TAG_VERSION"
+        echo "${{ inputs.package }}: $PACKAGE_VERSION"
+
+        if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+          echo "::error::Version mismatch in ${{ inputs.package }}! Expected $TAG_VERSION, got $PACKAGE_VERSION"
+          exit 1
+        fi

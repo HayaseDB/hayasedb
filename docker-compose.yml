@@ -6,214 +6,182 @@ networks:
 volumes:
   postgres_data:
   minio_data:
+  pgadmin_data:
+  redis_data:
 
 services:
   postgres:
     image: postgres:17-alpine
-    networks:
-      - internal
-    hostname: postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${API_DATABASE_NAME:-hayasedb}
-      POSTGRES_USER: ${API_DATABASE_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${API_DATABASE_PASSWORD:?API_DATABASE_PASSWORD is required}
+      POSTGRES_DB: ${API_DATABASE_NAME}
+      POSTGRES_USER: ${API_DATABASE_USER}
+      POSTGRES_PASSWORD: ${API_DATABASE_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${API_DATABASE_USERNAME:-postgres} -d ${API_DATABASE_NAME:-hayasedb}"]
-      interval: 5s
-      timeout: 3s
+      test: ["CMD-SHELL", "pg_isready -U ${API_DATABASE_USER} -d ${API_DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 5s
-    stop_grace_period: 10s
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      update_config:
-        parallelism: 1
-        failure_action: rollback
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - internal
+      - public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.rule=Host(`${PGADMIN_DOMAIN}`)"
+      - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${APP_STACK_NAME}-pgadmin.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/misc/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   minio:
     image: minio/minio:latest
-    networks:
-      public:
-      internal:
-    hostname: minio
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${API_MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${API_MINIO_SECRET_KEY:?API_MINIO_SECRET_KEY is required}
+      MINIO_ROOT_USER: ${API_MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${API_MINIO_PASSWORD}
     volumes:
       - minio_data:/data
+    networks:
+      - internal
+      - public
+    labels:
+      - "traefik.enable=true"
+      # MinIO Console
+      - "traefik.http.routers.${APP_STACK_NAME}-minio.rule=Host(`${MINIO_DOMAIN}`)"
+      - "traefik.http.routers.${APP_STACK_NAME}-minio.entrypoints=websecure"
+      - "traefik.http.routers.${APP_STACK_NAME}-minio.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${APP_STACK_NAME}-minio.loadbalancer.server.port=9001"
+      # MinIO CDN (S3 API)
+      - "traefik.http.routers.${APP_STACK_NAME}-cdn.rule=Host(`${CDN_DOMAIN}`)"
+      - "traefik.http.routers.${APP_STACK_NAME}-cdn.entrypoints=websecure"
+      - "traefik.http.routers.${APP_STACK_NAME}-cdn.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${APP_STACK_NAME}-cdn.loadbalancer.server.port=9000"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    stop_grace_period: 10s
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      update_config:
-        parallelism: 1
-        delay: 5s
-        failure_action: rollback
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.rule=Host(`${API_MINIO_CONSOLE_DOMAIN:-localhost}`)"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.entrypoints=web"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-console.service=hayasedb-${APP_ENV:-default}-minio-console"
-        - "traefik.http.services.hayasedb-${APP_ENV:-default}-minio-console.loadbalancer.server.port=9001"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.rule=Host(`${API_CDN_DOMAIN:-storage.localhost}`)"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.entrypoints=web"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-minio-api.service=hayasedb-${APP_ENV:-default}-minio-api"
-        - "traefik.http.services.hayasedb-${APP_ENV:-default}-minio-api.loadbalancer.server.port=9000"
-
-  web:
-    image: ghcr.io/hayasedb/hayasedb-web:${WEB_IMAGE_TAG:-latest}
-    networks:
-      public:
-      internal:
-    environment:
-      NODE_ENV: production
-      WEB_API_URL: ${WEB_API_URL:-http://api:3000}
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 20s
-    stop_grace_period: 10s
-    deploy:
-      mode: replicated
-      replicas: 1
-      update_config:
-        parallelism: 1
-        delay: 10s
-        monitor: 30s
-        failure_action: rollback
-        order: start-first
-        max_failure_ratio: 0
-      rollback_config:
-        parallelism: 1
-        delay: 5s
-        monitor: 10s
-        failure_action: pause
-        order: stop-first
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-web.rule=Host(`${WEB_DOMAIN:-localhost}`)"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-web.entrypoints=web"
-        - "traefik.http.services.hayasedb-${APP_ENV:-default}-web.loadbalancer.server.port=3000"
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
     image: ghcr.io/hayasedb/hayasedb-api:${API_IMAGE_TAG:-latest}
-    networks:
-      public:
-      internal:
+    restart: unless-stopped
     environment:
-      API_PORT: 3000
-      API_ENV: ${APP_ENV:-production}
-      API_SWAGGER_ENABLED: ${API_SWAGGER_ENABLED:-false}
-      API_SWAGGER_PATH: ${API_SWAGGER_PATH:-docs}
-      API_DATABASE_HOST: postgres
-      API_DATABASE_PORT: 5432
-      API_DATABASE_NAME: ${API_DATABASE_NAME:-hayasedb}
-      API_DATABASE_USERNAME: ${API_DATABASE_USERNAME:-postgres}
-      API_DATABASE_PASSWORD: ${API_DATABASE_PASSWORD:?API_DATABASE_PASSWORD is required}
-      API_DATABASE_SYNCHRONIZE: "false"
-      API_DATABASE_LOGGING: ${API_DATABASE_LOGGING:-false}
-      API_MINIO_HOST: minio
-      API_MINIO_PORT: 9000
-      API_MINIO_ACCESS_KEY: ${API_MINIO_ACCESS_KEY:-minioadmin}
-      API_MINIO_SECRET_KEY: ${API_MINIO_SECRET_KEY:?API_MINIO_SECRET_KEY is required}
-      API_CDN_URL: ${API_CDN_URL:-}
-      API_JWT_SECRET: ${API_JWT_SECRET:?API_JWT_SECRET is required}
-      API_JWT_EXPIRES_IN: ${API_JWT_EXPIRES_IN:-1h}
-      API_JWT_REFRESH_SECRET: ${API_JWT_REFRESH_SECRET:?API_JWT_REFRESH_SECRET is required}
-      API_JWT_REFRESH_EXPIRES_IN: ${API_JWT_REFRESH_EXPIRES_IN:-7d}
-      API_WEB_URL: ${API_WEB_URL:-}
-      API_MAIL_PROVIDER: ${API_MAIL_PROVIDER:-smtp}
-      API_MAIL_FROM_NAME: ${API_MAIL_FROM_NAME:-HayaseDB}
-      API_MAIL_FROM_ADDRESS: ${API_MAIL_FROM_ADDRESS:?API_MAIL_FROM_ADDRESS is required}
-      API_MAIL_VERIFY_CONNECTION: ${API_MAIL_VERIFY_CONNECTION:-false}
-      API_SMTP_HOST: ${API_SMTP_HOST:-}
-      API_SMTP_PORT: ${API_SMTP_PORT:-587}
-      API_SMTP_SECURE: ${API_SMTP_SECURE:-false}
-      API_SMTP_USER: ${API_SMTP_USER:-}
-      API_SMTP_PASS: ${API_SMTP_PASS:-}
-      API_RESEND_API_KEY: ${API_RESEND_API_KEY:-}
+      API_PORT: ${API_PORT}
+      API_LOG_LEVEL: ${API_LOG_LEVEL}
+      API_WEB_URL: ${API_WEB_URL}
+      API_BASE_URL: ${API_BASE_URL}
+      API_ENVIRONMENT: ${API_ENVIRONMENT}
+      API_DATABASE_HOST: ${API_DATABASE_HOST}
+      API_DATABASE_PORT: ${API_DATABASE_PORT}
+      API_DATABASE_NAME: ${API_DATABASE_NAME}
+      API_DATABASE_USER: ${API_DATABASE_USER}
+      API_DATABASE_PASSWORD: ${API_DATABASE_PASSWORD}
+      API_DATABASE_SYNCHRONIZE: ${API_DATABASE_SYNCHRONIZE}
+      API_DATABASE_LOGGING: ${API_DATABASE_LOGGING}
+      API_STORAGE_PROVIDER: ${API_STORAGE_PROVIDER}
+      API_STORAGE_BUCKET: ${API_STORAGE_BUCKET}
+      API_CDN_URL: ${API_CDN_URL}
+      API_MINIO_HOST: ${API_MINIO_HOST}
+      API_MINIO_PORT: ${API_MINIO_PORT}
+      API_MINIO_USER: ${API_MINIO_USER}
+      API_MINIO_PASSWORD: ${API_MINIO_PASSWORD}
+      API_MINIO_USE_SSL: ${API_MINIO_USE_SSL}
+      API_REDIS_HOST: ${API_REDIS_HOST}
+      API_REDIS_PORT: ${API_REDIS_PORT}
+      API_REDIS_DB: ${API_REDIS_DB}
+      API_JWT_SECRET: ${API_JWT_SECRET}
+      API_JWT_EXPIRES_IN: ${API_JWT_EXPIRES_IN}
+      API_JWT_REFRESH_SECRET: ${API_JWT_REFRESH_SECRET}
+      API_JWT_REFRESH_EXPIRES_IN: ${API_JWT_REFRESH_EXPIRES_IN}
+      API_MAIL_PROVIDER: ${API_MAIL_PROVIDER}
+      API_MAIL_FROM_NAME: ${API_MAIL_FROM_NAME}
+      API_MAIL_FROM_ADDRESS: ${API_MAIL_FROM_ADDRESS}
+      API_MAIL_VERIFY_CONNECTION: ${API_MAIL_VERIFY_CONNECTION}
+      API_MAIL_SMTP_HOST: ${API_MAIL_SMTP_HOST}
+      API_MAIL_SMTP_PORT: ${API_MAIL_SMTP_PORT}
+      API_MAIL_SMTP_SECURE: ${API_MAIL_SMTP_SECURE}
+      API_MAIL_SMTP_USER: ${API_MAIL_SMTP_USER}
+      API_MAIL_SMTP_PASS: ${API_MAIL_SMTP_PASS}
+      API_MAIL_QUEUE_ENABLED: ${API_MAIL_QUEUE_ENABLED}
+      API_SWAGGER_ENABLED: ${API_SWAGGER_ENABLED}
+      API_SWAGGER_PATH: ${API_SWAGGER_PATH}
+    networks:
+      - internal
+      - public
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${APP_STACK_NAME}-api.rule=Host(`${API_DOMAIN}`)"
+      - "traefik.http.routers.${APP_STACK_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${APP_STACK_NAME}-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${APP_STACK_NAME}-api.loadbalancer.server.port=${API_PORT}"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health/ready').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"]
-      interval: 10s
+      test: ["CMD", "wget", "-qO-", "http://localhost:${API_PORT}/health/liveness"]
+      interval: 30s
       timeout: 5s
       retries: 3
       start_period: 30s
-    stop_grace_period: 30s
-    deploy:
-      mode: replicated
-      replicas: 1
-      update_config:
-        parallelism: 1
-        delay: 10s
-        monitor: 45s
-        failure_action: rollback
-        order: start-first
-        max_failure_ratio: 0
-      rollback_config:
-        parallelism: 1
-        delay: 5s
-        monitor: 10s
-        failure_action: pause
-        order: stop-first
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-api.rule=Host(`${API_DOMAIN:-localhost}`)"
-        - "traefik.http.routers.hayasedb-${APP_ENV:-default}-api.entrypoints=web"
-        - "traefik.http.services.hayasedb-${APP_ENV:-default}-api.loadbalancer.server.port=3000"
+
+  web:
+    image: ghcr.io/hayasedb/hayasedb-web:${WEB_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      WEB_API_URL: ${WEB_API_URL}
+    networks:
+      - internal
+      - public
+    depends_on:
+      api:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${APP_STACK_NAME}-web.rule=Host(`${WEB_DOMAIN}`)"
+      - "traefik.http.routers.${APP_STACK_NAME}-web.entrypoints=websecure"
+      - "traefik.http.routers.${APP_STACK_NAME}-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${APP_STACK_NAME}-web.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

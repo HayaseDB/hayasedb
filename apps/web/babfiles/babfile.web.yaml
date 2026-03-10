@@ -1,0 +1,59 @@
+dir: ..
+
+tasks:
+  dev:
+    desc: Start Nuxt development server
+    run:
+      - cmd: pnpm dev
+
+  build:
+    desc: Build for production
+    run:
+      - cmd: pnpm build
+
+  generate:
+    desc: Pre-render to static HTML
+    run:
+      - cmd: pnpm generate
+
+  preview:
+    desc: Preview production build
+    run:
+      - cmd: pnpm preview
+
+  lint:
+    desc: Lint code
+    run:
+      - cmd: pnpm lint
+
+  lint:fix:
+    desc: Lint and fix code
+    run:
+      - cmd: pnpm lint:fix --max-warnings 0
+
+  format:
+    desc: Format code with Prettier
+    run:
+      - cmd: pnpm format
+
+  format:check:
+    desc: Check code formatting
+    run:
+      - cmd: pnpm format:check
+
+  typecheck:
+    desc: Type check code
+    run:
+      - cmd: pnpm typecheck
+
+  check:
+    desc: Pre-commit check (fix then verify)
+    run:
+      - task: format
+        silent: true
+      - task: lint:fix
+        silent: true
+      - task: typecheck
+        silent: true
+      - log: All checks passed
+        level: info

@@ -1,0 +1,77 @@
+name: Test
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            apps/api
+            packages/shared
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            .github
+
+      - name: Lint, test & build
+        uses: ./.github/actions/test-package
+        with:
+          package-dir: apps/api
+          has-tests: "true"
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            apps/web
+            packages/shared
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            .github
+
+      - name: Lint, test & build
+        uses: ./.github/actions/test-package
+        with:
+          package-dir: apps/web
+
+  sdk:
+    name: SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            packages/sdk
+            packages/shared
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            .github
+
+      - name: Lint, test & build
+        uses: ./.github/actions/test-package
+        with:
+          package-dir: packages/sdk

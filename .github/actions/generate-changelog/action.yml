@@ -1,0 +1,49 @@
+name: Generate Changelog
+description: Build changelog from commits and update the GitHub release
+
+inputs:
+  tag-name:
+    description: Release tag name (e.g., v0.1.0)
+    required: true
+  release-body:
+    description: Original release body text
+    required: false
+    default: ""
+  config-path:
+    description: Path to changelog config file
+    required: false
+    default: ".github/changelog-config.json"
+  github-token:
+    description: GitHub token for API access
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Build changelog
+      id: changelog
+      uses: mikepenz/release-changelog-builder-action@v6
+      with:
+        mode: "COMMIT"
+        toTag: ${{ inputs.tag-name }}
+        configuration: ${{ inputs.config-path }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+
+    - name: Update release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ inputs.tag-name }}
+        body: |
+          ${{ inputs.release-body }}
+
+          ## Changelog
+
+          ${{ steps.changelog.outputs.changelog }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
