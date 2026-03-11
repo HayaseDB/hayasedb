@@ -39,8 +39,7 @@ services:
       - internal
       - public
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.rule=Host(`${PGADMIN_DOMAIN}`)"
@@ -137,31 +136,29 @@ services:
       - API_MAIL_SMTP_SECURE
       - API_MAIL_SMTP_USER
       - API_MAIL_SMTP_PASS
+      - API_MAIL_RESEND_KEY
       - API_MAIL_QUEUE_ENABLED
+      - API_MAIL_QUEUE_MAX_RETRIES
+      - API_MAIL_QUEUE_INITIAL_DELAY
+      - API_MAIL_QUEUE_RATE_LIMIT_MAX
+      - API_MAIL_QUEUE_CONCURRENCY
+      - API_QUEUE_DEFAULT_RETRIES
+      - API_QUEUE_DEFAULT_BACKOFF_DELAY
       - API_SWAGGER_ENABLED
       - API_SWAGGER_PATH
     networks:
       - internal
       - public
     depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - minio
+      - redis
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_STACK_NAME}-api.rule=Host(`${API_DOMAIN}`)"
       - "traefik.http.routers.${APP_STACK_NAME}-api.entrypoints=websecure"
       - "traefik.http.routers.${APP_STACK_NAME}-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.${APP_STACK_NAME}-api.loadbalancer.server.port=${API_PORT}"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:${API_PORT}/health/liveness"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
 
   web:
     image: ghcr.io/hayasedb/web:${WEB_IMAGE_TAG:-latest}
@@ -172,16 +169,10 @@ services:
       - internal
       - public
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_STACK_NAME}-web.rule=Host(`${WEB_DOMAIN}`)"
       - "traefik.http.routers.${APP_STACK_NAME}-web.entrypoints=websecure"
       - "traefik.http.routers.${APP_STACK_NAME}-web.tls.certresolver=letsencrypt"
       - "traefik.http.services.${APP_STACK_NAME}-web.loadbalancer.server.port=3000"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3

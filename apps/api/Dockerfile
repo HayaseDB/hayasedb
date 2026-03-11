@@ -28,7 +28,7 @@ RUN pnpm --filter @hayasedb/api deploy --prod /app/deploy
 
 FROM node:${NODE_VERSION}-alpine AS production
 
-RUN apk add --no-cache tini wget
+RUN apk add --no-cache tini
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
@@ -46,9 +46,6 @@ ENV API_PORT=3000
 USER nestjs
 
 EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health/liveness || exit 1
 
 LABEL org.opencontainers.image.source="https://github.com/HayaseDB/hayasedb" \
       org.opencontainers.image.description="HayaseDB API Server" \

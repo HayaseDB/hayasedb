@@ -29,7 +29,7 @@ RUN pnpm --filter @hayasedb/web build
 
 FROM node:${NODE_VERSION}-alpine AS production
 
-RUN apk add --no-cache tini wget
+RUN apk add --no-cache tini
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nuxt
@@ -45,9 +45,6 @@ ENV PORT=3000
 USER nuxt
 
 EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 LABEL org.opencontainers.image.source="https://github.com/HayaseDB/hayasedb" \
       org.opencontainers.image.description="HayaseDB Web Frontend" \
