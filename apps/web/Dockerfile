@@ -40,7 +40,7 @@ COPY --from=build --chown=nuxt:nodejs /app/apps/web/.output ./
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV WEB_PORT=3000
 
 USER nuxt
 

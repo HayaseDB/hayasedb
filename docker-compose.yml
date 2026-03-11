@@ -43,8 +43,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.rule=Host(`${PGADMIN_DOMAIN}`)"
-      - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.entrypoints=websecure"
-      - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.entrypoints=web"
+      - "traefik.http.routers.${APP_STACK_NAME}-pgadmin.service=${APP_STACK_NAME}-pgadmin"
       - "traefik.http.services.${APP_STACK_NAME}-pgadmin.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/misc/ping"]
@@ -68,13 +68,13 @@ services:
       - "traefik.enable=true"
       # MinIO Console
       - "traefik.http.routers.${APP_STACK_NAME}-minio.rule=Host(`${MINIO_DOMAIN}`)"
-      - "traefik.http.routers.${APP_STACK_NAME}-minio.entrypoints=websecure"
-      - "traefik.http.routers.${APP_STACK_NAME}-minio.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${APP_STACK_NAME}-minio.entrypoints=web"
+      - "traefik.http.routers.${APP_STACK_NAME}-minio.service=${APP_STACK_NAME}-minio"
       - "traefik.http.services.${APP_STACK_NAME}-minio.loadbalancer.server.port=9001"
       # MinIO CDN (S3 API)
       - "traefik.http.routers.${APP_STACK_NAME}-cdn.rule=Host(`${CDN_DOMAIN}`)"
-      - "traefik.http.routers.${APP_STACK_NAME}-cdn.entrypoints=websecure"
-      - "traefik.http.routers.${APP_STACK_NAME}-cdn.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${APP_STACK_NAME}-cdn.entrypoints=web"
+      - "traefik.http.routers.${APP_STACK_NAME}-cdn.service=${APP_STACK_NAME}-cdn"
       - "traefik.http.services.${APP_STACK_NAME}-cdn.loadbalancer.server.port=9000"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
@@ -100,7 +100,6 @@ services:
     image: ghcr.io/hayasedb/api:${API_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
-      - API_PORT
       - API_LOG_LEVEL
       - API_WEB_URL
       - API_BASE_URL
@@ -156,9 +155,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_STACK_NAME}-api.rule=Host(`${API_DOMAIN}`)"
-      - "traefik.http.routers.${APP_STACK_NAME}-api.entrypoints=websecure"
-      - "traefik.http.routers.${APP_STACK_NAME}-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${APP_STACK_NAME}-api.loadbalancer.server.port=${API_PORT}"
+      - "traefik.http.routers.${APP_STACK_NAME}-api.entrypoints=web"
+      - "traefik.http.routers.${APP_STACK_NAME}-api.service=${APP_STACK_NAME}-api"
+      - "traefik.http.services.${APP_STACK_NAME}-api.loadbalancer.server.port=3000"
 
   web:
     image: ghcr.io/hayasedb/web:${WEB_IMAGE_TAG:-latest}
@@ -173,6 +172,6 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_STACK_NAME}-web.rule=Host(`${WEB_DOMAIN}`)"
-      - "traefik.http.routers.${APP_STACK_NAME}-web.entrypoints=websecure"
-      - "traefik.http.routers.${APP_STACK_NAME}-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${APP_STACK_NAME}-web.entrypoints=web"
+      - "traefik.http.routers.${APP_STACK_NAME}-web.service=${APP_STACK_NAME}-web"
       - "traefik.http.services.${APP_STACK_NAME}-web.loadbalancer.server.port=3000"

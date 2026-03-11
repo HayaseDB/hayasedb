@@ -3,5 +3,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  devServer: {
+    port: Number(process.env.WEB_PORT) || 3001,
+  },
+
   modules: ['@nuxt/eslint'],
 })
