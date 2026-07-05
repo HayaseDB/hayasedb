@@ -3,20 +3,25 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write
     outputs:
-      released: ${{ steps.detect.outputs.released }}
-      version: ${{ steps.detect.outputs.version }}
+      released: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,36 +38,34 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Create version PR
+      - name: Version or tag release
+        id: changesets
         uses: changesets/action@v1
         with:
           version: bun run version
+          publish: bun run tag
           commit: 'chore: release'
           title: 'chore: release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Detect release
-        id: detect
+      - name: Resolve release version
+        id: version
         run: |
           version="$(node -p "require('./apps/api/package.json').version")"
-          previous="$(git show HEAD~1:apps/api/package.json 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version" 2>/dev/null || echo "")"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          if [ "$version" != "$previous" ]; then
-            echo "released=true" >> "$GITHUB_OUTPUT"
-            echo "Released version ${version} (was ${previous:-none})"
-          else
-            echo "released=false" >> "$GITHUB_OUTPUT"
-            echo "No version change (${version}); nothing to release"
-          fi
+          echo "Release version: ${version}"
 
   images:
     needs: version
     if: needs.version.outputs.released == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -81,7 +84,9 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest
         with:
           images: ghcr.io/hayasedb/hayasedb-${{ matrix.app }}
           tags: |
@@ -89,6 +94,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push
+        id: push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -96,14 +102,24 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          provenance: false
+          annotations: ${{ steps.meta.outputs.annotations }}
+          sbom: true
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ghcr.io/hayasedb/hayasedb-${{ matrix.app }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
   deploy:
     needs: [version, images]
     if: needs.version.outputs.released == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production
     permissions:
       contents: read
     steps:
