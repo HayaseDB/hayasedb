@@ -1,0 +1,12 @@
+dist/
+.output/
+.nuxt/
+.turbo/
+.data/
+node_modules/
+bun.lock
+packages/db/drizzle/
+**/*.min.*
+.git/
+.changeset/*.md
+CHANGELOG.md

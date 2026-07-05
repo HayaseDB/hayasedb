@@ -1,0 +1,42 @@
+{
+  "name": "@hayasedb/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start -b swc -w",
+    "build": "nest build -b swc",
+    "start": "node dist/src/main",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@hayasedb/auth": "workspace:*",
+    "@hayasedb/config": "workspace:*",
+    "@hayasedb/contract": "workspace:*",
+    "@hayasedb/core": "workspace:*",
+    "@hayasedb/db": "workspace:*",
+    "@nestjs/common": "11.1.27",
+    "@nestjs/core": "11.1.27",
+    "@nestjs/platform-express": "11.1.27",
+    "@orpc/nest": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@scalar/nestjs-api-reference": "1.2.8",
+    "@thallesp/nestjs-better-auth": "2.6.1",
+    "better-auth": "catalog:",
+    "drizzle-orm": "catalog:",
+    "postgres": "catalog:",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@hayasedb/config": "workspace:*",
+    "@nestjs/cli": "^11.0.23",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.15.43",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "typescript": "catalog:"
+  }
+}

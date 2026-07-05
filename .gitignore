@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.output/
+.nuxt/
+.turbo/
+.env
+.env.*
+!.env.example
+*.log
+coverage/
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

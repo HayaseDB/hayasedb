@@ -1,0 +1,32 @@
+{
+  "name": "@hayasedb/admin",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
+    "lint": "eslint .",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@hayasedb/auth": "workspace:*",
+    "@hayasedb/contract": "workspace:*",
+    "@hayasedb/ui": "workspace:*",
+    "@nuxt/ui": "4.9.0",
+    "@orpc/client": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "better-auth": "catalog:",
+    "nuxt": "^4.4.8",
+    "tailwindcss": "^4.3.2",
+    "vue": "^3.5.38",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@hayasedb/config": "workspace:*",
+    "vue-tsc": "^2.2.0"
+  }
+}

@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.output
+**/.nuxt
+**/.turbo
+**/.data
+**/coverage
+.git
+.github
+.vscode
+.idea
+**/*.log
+.env
+.env.*
+!.env.example
+README.md
