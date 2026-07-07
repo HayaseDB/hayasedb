@@ -1,8 +1,8 @@
-import type { SocialProvider } from '~/composables/useAuthActions'
+import type { SocialProvider } from '#ui-layer/composables/useAuthActions'
 
 const providerConfig: Record<SocialProvider, { label: string; icon: string }> =
   {
-    github: { label: 'Continue with GitHub', icon: 'i-lucide-github' },
+    github: { label: 'Continue with GitHub', icon: 'i-simple-icons-github' },
   }
 
 export function useSocialProviders(

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import * as z from 'zod'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-import type { SocialProvider } from '~/composables/useAuthActions'
+import type { SocialProvider } from '#ui-layer/composables/useAuthActions'
+import { loginSchema, type LoginSchema } from '#ui-layer/utils/authSchema'
 
 const props = withDefaults(
   defineProps<{
@@ -21,12 +21,6 @@ const props = withDefaults(
 const { loading, signInEmail } = useAuthActions()
 useAuthError()
 
-const schema = z.object({
-  email: z.email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters'),
-})
-type Schema = z.output<typeof schema>
-
 const fields: AuthFormField[] = [
   {
     name: 'email',
@@ -34,6 +28,8 @@ const fields: AuthFormField[] = [
     label: 'Email',
     placeholder: 'Enter your email',
     required: true,
+    defaultValue: '',
+    autocomplete: 'email',
   },
   {
     name: 'password',
@@ -41,19 +37,21 @@ const fields: AuthFormField[] = [
     label: 'Password',
     placeholder: 'Enter your password',
     required: true,
+    defaultValue: '',
+    autocomplete: 'current-password',
   },
 ]
 
 const providers = useSocialProviders(() => props.providers)
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
   await signInEmail(event.data, { requireAdmin: props.requireAdmin })
 }
 </script>
 
 <template>
   <UAuthForm
-    :schema="schema"
+    :schema="loginSchema"
     :fields="fields"
     :providers="providers"
     :title="title"

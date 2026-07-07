@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import * as z from 'zod'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-import type { SocialProvider } from '../composables/useAuthActions'
+import type { SocialProvider } from '#ui-layer/composables/useAuthActions'
+import { registerSchema, type RegisterSchema } from '#ui-layer/utils/authSchema'
 
 const props = withDefaults(
   defineProps<{
@@ -18,13 +18,6 @@ const props = withDefaults(
 
 const { loading, signUpEmail } = useAuthActions()
 
-const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters'),
-})
-type Schema = z.output<typeof schema>
-
 const fields: AuthFormField[] = [
   {
     name: 'name',
@@ -32,6 +25,8 @@ const fields: AuthFormField[] = [
     label: 'Name',
     placeholder: 'Enter your name',
     required: true,
+    defaultValue: '',
+    autocomplete: 'name',
   },
   {
     name: 'email',
@@ -39,6 +34,8 @@ const fields: AuthFormField[] = [
     label: 'Email',
     placeholder: 'Enter your email',
     required: true,
+    defaultValue: '',
+    autocomplete: 'email',
   },
   {
     name: 'password',
@@ -46,19 +43,21 @@ const fields: AuthFormField[] = [
     label: 'Password',
     placeholder: 'Enter your password',
     required: true,
+    defaultValue: '',
+    autocomplete: 'new-password',
   },
 ]
 
 const providers = useSocialProviders(() => props.providers)
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<RegisterSchema>) {
   await signUpEmail(event.data)
 }
 </script>
 
 <template>
   <UAuthForm
-    :schema="schema"
+    :schema="registerSchema"
     :fields="fields"
     :providers="providers"
     :title="title"

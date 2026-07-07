@@ -17,6 +17,7 @@
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/ui": "workspace:*",
     "@iconify-json/lucide": "^1.2.116",
+    "@iconify-json/simple-icons": "^1.2.0",
     "@nuxt/ui": "4.9.0",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
