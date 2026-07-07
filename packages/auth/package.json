@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "@hayasedb/db": "workspace:*",
-    "better-auth": "catalog:"
+    "better-auth": "catalog:",
+    "zod": "catalog:"
   },
   "peerDependencies": {
     "vue": "^3.5.0"

@@ -1,33 +1,38 @@
 import 'reflect-metadata'
-import 'dotenv/config'
 import { Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { apiReference } from '@scalar/nestjs-api-reference'
 import { runMigrations } from '@hayasedb/db'
 import { AppModule } from './app.module'
-import { validate } from './config/env.schema'
+import type { Env } from './config/env.schema'
 import { DocsService } from './modules/docs/docs.service'
 
 async function bootstrap() {
-  const env = validate(process.env)
-
-  await runMigrations(env.DATABASE_URL)
-
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   })
+  const config = app.get<ConfigService<Env, true>>(ConfigService)
+
+  await runMigrations(config.get('DATABASE_URL', { infer: true }))
+
   app.enableShutdownHooks()
   app.enableCors({
-    origin: env.AUTH_TRUSTED_ORIGINS,
+    origin: config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
     credentials: true,
   })
 
   const spec = await app.get(DocsService).getSpec()
   app.use('/docs', apiReference({ content: spec }))
 
-  await app.listen(env.API_PORT, env.API_HOST)
-  Logger.log(`listening on http://${env.API_HOST}:${env.API_PORT}`, 'Bootstrap')
+  const host = config.get('API_HOST', { infer: true })
+  const port = config.get('API_PORT', { infer: true })
+  await app.listen(port, host)
+  Logger.log(`listening on http://${host}:${port}`, 'Bootstrap')
 }
 
-void bootstrap()
+bootstrap().catch((error) => {
+  Logger.error(error, 'Bootstrap')
+  process.exit(1)
+})

@@ -1,10 +1,6 @@
 {
   "extends": "@hayasedb/config/tsconfig/nest.json",
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "types": ["node", "reflect-metadata"],
     "outDir": "dist",
     "rootDir": "src"

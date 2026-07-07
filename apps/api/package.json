@@ -25,7 +25,6 @@
     "@scalar/nestjs-api-reference": "1.2.8",
     "@thallesp/nestjs-better-auth": "2.6.1",
     "better-auth": "catalog:",
-    "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "postgres": "catalog:",
     "reflect-metadata": "^0.2.2",

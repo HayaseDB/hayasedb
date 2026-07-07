@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import { Module } from '@nestjs/common'
 import { ConfigModule as NestConfigModule } from '@nestjs/config'
 import { validate } from './env.schema'
@@ -8,6 +9,7 @@ import { validate } from './env.schema'
       isGlobal: true,
       cache: true,
       validate,
+      envFilePath: resolve(process.cwd(), '../../.env'),
     }),
   ],
 })

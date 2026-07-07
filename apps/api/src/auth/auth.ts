@@ -1,12 +1,14 @@
-import 'dotenv/config'
+import type { ConfigService } from '@nestjs/config'
 import { createAuth } from '@hayasedb/auth'
-import { validate } from '../config/env.schema'
+import type { Env } from '../config/env.schema'
 
-const env = validate(process.env)
+export type Auth = ReturnType<typeof createAuth>
 
-export const auth = createAuth({
-  databaseUrl: env.DATABASE_URL,
-  secret: env.AUTH_SECRET,
-  baseURL: env.AUTH_BASE_URL,
-  trustedOrigins: env.AUTH_TRUSTED_ORIGINS,
-})
+export function authFactory(config: ConfigService<Env, true>): Auth {
+  return createAuth({
+    databaseUrl: config.get('DATABASE_URL', { infer: true }),
+    secret: config.get('AUTH_SECRET', { infer: true }),
+    baseURL: config.get('AUTH_BASE_URL', { infer: true }),
+    trustedOrigins: config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
+  })
+}
