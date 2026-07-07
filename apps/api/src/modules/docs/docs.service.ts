@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { contract } from '@hayasedb/contract'
-import { APP_CONFIG, type AppEnv } from '../../config/config.constants'
+import type { Env } from '../../config/env.schema'
 
 @Injectable()
 export class DocsService {
@@ -12,7 +13,7 @@ export class DocsService {
 
   private spec?: Promise<Record<string, unknown>>
 
-  constructor(@Inject(APP_CONFIG) private readonly env: AppEnv) {}
+  constructor(private readonly config: ConfigService<Env, true>) {}
 
   /**
    * Generates the OpenAPI spec from the shared oRPC contract. The contract is
@@ -27,7 +28,7 @@ export class DocsService {
     const spec = await this.generator.generate(contract, {
       base: {
         info: { title: 'HayaseDB API', version: '0.0.0' },
-        servers: [{ url: this.env.API_PUBLIC_URL }],
+        servers: [{ url: this.config.get('API_PUBLIC_URL', { infer: true }) }],
       },
     })
     return spec as unknown as Record<string, unknown>

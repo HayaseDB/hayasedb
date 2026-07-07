@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["env", "tsdown.config.ts", "tsdown/preset.ts"]
+  "include": ["tsdown/preset.ts", "eslint"]
 }

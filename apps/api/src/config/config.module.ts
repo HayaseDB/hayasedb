@@ -1,15 +1,14 @@
-import { Global, Module, type Provider } from '@nestjs/common'
-import { loadEnv } from '@hayasedb/config/env'
-import { APP_CONFIG } from './config.constants'
+import { Module } from '@nestjs/common'
+import { ConfigModule as NestConfigModule } from '@nestjs/config'
+import { validate } from './env.schema'
 
-const configProvider: Provider = {
-  provide: APP_CONFIG,
-  useFactory: () => loadEnv(),
-}
-
-@Global()
 @Module({
-  providers: [configProvider],
-  exports: [APP_CONFIG],
+  imports: [
+    NestConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate,
+    }),
+  ],
 })
 export class ConfigModule {}

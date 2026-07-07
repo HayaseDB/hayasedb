@@ -1,15 +1,16 @@
 import 'reflect-metadata'
+import 'dotenv/config'
 import { Logger } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { apiReference } from '@scalar/nestjs-api-reference'
-import { loadEnv } from '@hayasedb/config/env'
 import { runMigrations } from '@hayasedb/db'
 import { AppModule } from './app.module'
+import { validate } from './config/env.schema'
 import { DocsService } from './modules/docs/docs.service'
 
 async function bootstrap() {
-  const env = loadEnv()
+  const env = validate(process.env)
 
   await runMigrations(env.DATABASE_URL)
 
@@ -18,7 +19,7 @@ async function bootstrap() {
   })
   app.enableShutdownHooks()
   app.enableCors({
-    origin: env.AUTH_TRUSTED_ORIGINS_LIST,
+    origin: env.AUTH_TRUSTED_ORIGINS,
     credentials: true,
   })
 

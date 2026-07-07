@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   ssr: true,
 
   extends: ['../../packages/ui'],
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@nuxt/eslint'],
 
   runtimeConfig: {
     public: {

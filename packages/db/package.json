@@ -33,6 +33,7 @@
   "devDependencies": {
     "@hayasedb/config": "workspace:*",
     "@types/node": "^22.10.0",
+    "dotenv": "catalog:",
     "drizzle-kit": "catalog:",
     "tsdown": "catalog:",
     "tsx": "catalog:",

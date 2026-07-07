@@ -8,32 +8,20 @@
     "./tsconfig/nest.json": "./tsconfig/nest.json",
     "./tsconfig/nuxt.json": "./tsconfig/nuxt.json",
     "./tsconfig/package.json": "./tsconfig/package.json",
-    "./eslint": "./eslint/index.js",
-    "./tsdown": "./tsdown/preset.ts",
-    "./env": {
-      "types": "./env/index.ts",
-      "default": "./dist/index.mjs"
-    }
+    "./eslint": "./eslint/index.ts",
+    "./tsdown": "./tsdown/preset.ts"
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch --no-clean",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint ."
   },
-  "dependencies": {
-    "zod": "catalog:"
-  },
   "devDependencies": {
+    "@eslint/js": "^9.0.0 || ^10.0.0",
     "@types/node": "^22.10.0",
-    "tsdown": "catalog:",
-    "typescript": "catalog:",
     "eslint": "^9.0.0 || ^10.0.0",
     "eslint-config-prettier": "10.1.8",
-    "typescript-eslint": "^8.62.1",
-    "@eslint/js": "^9.0.0 || ^10.0.0"
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.62.1"
   }
 }

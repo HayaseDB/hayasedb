@@ -4,18 +4,20 @@ import {
   type OnApplicationShutdown,
   type Provider,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { schema } from '@hayasedb/db'
-import { APP_CONFIG, type AppEnv } from '../config/config.constants'
+import type { Env } from '../config/env.schema'
 import { DATABASE_CLIENT, DRIZZLE } from './database.constants'
 
 type PostgresClient = ReturnType<typeof postgres>
 
 export const clientProvider: Provider = {
   provide: DATABASE_CLIENT,
-  inject: [APP_CONFIG],
-  useFactory: (env: AppEnv): PostgresClient => postgres(env.DATABASE_URL),
+  inject: [ConfigService],
+  useFactory: (config: ConfigService<Env, true>): PostgresClient =>
+    postgres(config.get('DATABASE_URL', { infer: true })),
 }
 
 export const drizzleProvider: Provider = {
