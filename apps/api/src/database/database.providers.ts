@@ -1,36 +1,53 @@
 import {
   Inject,
   Injectable,
+  Logger,
   type OnApplicationShutdown,
   type Provider,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { schema } from '@hayasedb/db'
+import { type DbClient, type Database, createDb } from '@hayasedb/db'
 import type { Env } from '../config/env.schema'
-import { DATABASE_CLIENT, DRIZZLE } from './database.constants'
+import {
+  DATABASE_CLIENT,
+  DATABASE_CONNECTION,
+  DRIZZLE,
+} from './database.constants'
 
-type PostgresClient = ReturnType<typeof postgres>
+type Connection = { db: Database; client: DbClient }
 
-export const clientProvider: Provider = {
-  provide: DATABASE_CLIENT,
+const connectionProvider: Provider = {
+  provide: DATABASE_CONNECTION,
   inject: [ConfigService],
-  useFactory: (config: ConfigService<Env, true>): PostgresClient =>
-    postgres(config.get('DATABASE_URL', { infer: true })),
+  useFactory: (config: ConfigService<Env, true>): Connection => {
+    const logger = new Logger('Database')
+    return createDb(config.get('DATABASE_URL', { infer: true }), {
+      onError: (error) => logger.error(error.message, error.stack),
+    })
+  },
 }
 
-export const drizzleProvider: Provider = {
+const drizzleProvider: Provider = {
   provide: DRIZZLE,
-  inject: [DATABASE_CLIENT],
-  useFactory: (client: PostgresClient) => drizzle(client, { schema }),
+  inject: [DATABASE_CONNECTION],
+  useFactory: (connection: Connection): Database => connection.db,
 }
+
+const clientProvider: Provider = {
+  provide: DATABASE_CLIENT,
+  inject: [DATABASE_CONNECTION],
+  useFactory: (connection: Connection): DbClient => connection.client,
+}
+
+export const databaseProviders = [
+  connectionProvider,
+  drizzleProvider,
+  clientProvider,
+]
 
 @Injectable()
 export class DatabaseLifecycle implements OnApplicationShutdown {
-  constructor(
-    @Inject(DATABASE_CLIENT) private readonly client: PostgresClient,
-  ) {}
+  constructor(@Inject(DATABASE_CLIENT) private readonly client: DbClient) {}
 
   async onApplicationShutdown(): Promise<void> {
     await this.client.end()

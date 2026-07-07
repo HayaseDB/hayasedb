@@ -20,6 +20,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint ."
   },
+  "dependencies": {
+    "ioredis": "catalog:"
+  },
   "devDependencies": {
     "@hayasedb/config": "workspace:*",
     "tsdown": "catalog:",

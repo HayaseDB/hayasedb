@@ -17,10 +17,13 @@ async function bootstrap() {
 
   await runMigrations(config.get('DATABASE_URL', { infer: true }))
 
+  app.setGlobalPrefix('api')
   app.enableShutdownHooks()
   app.enableCors({
     origin: config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 
   const spec = await app.get(DocsService).getSpec()

@@ -8,7 +8,18 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: 'http://localhost:3000',
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000',
+    },
+  },
+
+  nitro: {
+    routeRules: {
+      '/api/auth/**': {
+        proxy: `${process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/auth/**`,
+      },
+      '/api/**': {
+        proxy: `${process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/**`,
+      },
     },
   },
 
@@ -18,8 +29,10 @@ export default defineNuxtConfig({
 
   vite: {
     server: {
+      strictPort: true,
       hmr: {
         port: 24680,
+        clientPort: 24680,
       },
     },
     optimizeDeps: {
@@ -28,6 +41,8 @@ export default defineNuxtConfig({
         '@orpc/client',
         '@orpc/openapi/extensions/route',
         '@orpc/openapi/fetch',
+        'better-auth/client/plugins',
+        'better-auth/vue',
         'zod',
       ],
     },

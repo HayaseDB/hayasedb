@@ -8,6 +8,13 @@
       "when": 1783084092820,
       "tag": "0000_glossy_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783416929846,
+      "tag": "0001_bumpy_praxagora",
+      "breakpoints": true
     }
   ]
 }

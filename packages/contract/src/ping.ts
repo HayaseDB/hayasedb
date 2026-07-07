@@ -4,7 +4,12 @@ import '@orpc/openapi/extensions/route'
 import * as z from 'zod'
 
 export const pingContract = oc
-  .route({ method: 'GET', path: '/ping' })
+  .route({
+    method: 'GET',
+    path: '/ping',
+    tags: ['System'],
+    summary: 'Health check',
+  })
   .input(z.object({ message: z.string().optional() }))
   .output(
     z.object({

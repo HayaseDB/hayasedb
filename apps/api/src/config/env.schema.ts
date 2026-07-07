@@ -24,6 +24,9 @@ export const envSchema = z.object({
         .filter(Boolean),
     ),
 
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+
   S3_ENDPOINT: z.string().url().default('http://localhost:3900'),
   S3_REGION: z.string().default('garage'),
   S3_ACCESS_KEY: z.string().min(1),

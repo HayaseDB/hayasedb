@@ -1,38 +1,79 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { admin } from 'better-auth/plugins'
-import { createDb } from '@hayasedb/db'
+import { admin, openAPI } from 'better-auth/plugins'
+import type { SecondaryStorage } from '@hayasedb/core'
+import type { Database } from '@hayasedb/db'
+
+export interface GithubProviderOptions {
+  clientId: string
+  clientSecret: string
+}
 
 export interface AuthOptions {
-  databaseUrl: string
+  db: Database
   secret: string
   baseURL: string
   trustedOrigins?: string[]
+  secondaryStorage?: SecondaryStorage
+  productionMode?: boolean
+  github?: GithubProviderOptions
+  errorCallbackURL?: string
 }
 
 export function createAuth(opts: AuthOptions) {
-  const { db } = createDb(opts.databaseUrl)
+  const production = opts.productionMode ?? false
 
   return betterAuth({
     baseURL: opts.baseURL,
     secret: opts.secret,
     trustedOrigins: opts.trustedOrigins ?? [],
-    database: drizzleAdapter(db, { provider: 'pg' }),
+    database: drizzleAdapter(opts.db, { provider: 'pg' }),
+    secondaryStorage: opts.secondaryStorage,
+    socialProviders: opts.github
+      ? {
+          github: {
+            clientId: opts.github.clientId,
+            clientSecret: opts.github.clientSecret,
+          },
+        }
+      : undefined,
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: true,
+      requireEmailVerification: false,
+      minPasswordLength: 8,
+      maxPasswordLength: 128,
+      autoSignIn: true,
     },
-    user: {
-      additionalFields: {
-        trustTier: {
-          type: 'string',
-          required: false,
-          defaultValue: 'contributor',
-          input: false,
-        },
+    account: {
+      accountLinking: {
+        enabled: true,
+        allowDifferentEmails: false,
+        trustedProviders: opts.github ? ['github'] : [],
       },
     },
-    plugins: [admin()],
+    session: {
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
+      freshAge: 60 * 60 * 24,
+      storeSessionInDatabase: true,
+      cookieCache: {
+        enabled: true,
+        maxAge: 60 * 5,
+      },
+    },
+    rateLimit: {
+      enabled: true,
+      window: 10,
+      max: 100,
+      storage: opts.secondaryStorage ? 'secondary-storage' : 'memory',
+    },
+    advanced: {
+      useSecureCookies: production,
+    },
+    onAPIError: opts.errorCallbackURL
+      ? { errorURL: opts.errorCallbackURL }
+      : undefined,
+    plugins: [admin(), openAPI({ disableDefaultReference: true })],
   })
 }
 

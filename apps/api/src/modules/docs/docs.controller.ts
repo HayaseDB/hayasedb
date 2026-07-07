@@ -8,7 +8,7 @@ export class DocsController {
 
   @AllowAnonymous()
   @Get('openapi.json')
-  openapi(): Promise<Record<string, unknown>> {
+  openapi() {
     return this.docsService.getSpec()
   }
 }

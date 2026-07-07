@@ -20,16 +20,16 @@
       "drizzle-kit": "0.31.10",
       "postgres": "3.4.9",
       "better-auth": "1.6.23",
+      "ioredis": "5.11.1",
       "@orpc/contract": "2.0.0-beta.11",
       "@orpc/server": "2.0.0-beta.11",
       "@orpc/client": "2.0.0-beta.11",
       "@orpc/nest": "2.0.0-beta.11",
       "@orpc/openapi": "2.0.0-beta.11",
       "@orpc/zod": "2.0.0-beta.11",
-      "@orpc/tanstack-query": "2.0.0-beta.11",
       "tsdown": "0.22.3",
       "tsx": "4.23.0",
-      "dotenv": "17.2.3"
+      "dotenv": "17.4.2"
     }
   },
   "scripts": {
@@ -64,6 +64,6 @@
     "jiti": "^2.4.2",
     "prettier": "3.9.4",
     "prettier-plugin-tailwindcss": "0.8.0",
-    "turbo": "^2.10.3"
+    "turbo": "^2.10.4"
   }
 }

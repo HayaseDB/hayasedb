@@ -26,6 +26,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@hayasedb/core": "workspace:*",
     "@hayasedb/db": "workspace:*",
     "better-auth": "catalog:",
     "zod": "catalog:"
@@ -39,7 +40,7 @@
     }
   },
   "devDependencies": {
-    "@better-auth/cli": "1.4.21",
+    "@better-auth/cli": "1.4.22",
     "@hayasedb/config": "workspace:*",
     "@types/node": "^22.10.0",
     "dotenv": "catalog:",
