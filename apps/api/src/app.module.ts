@@ -3,44 +3,43 @@ import { ConfigService } from '@nestjs/config'
 import { REQUEST } from '@nestjs/core'
 import { ORPCModule } from '@orpc/nest'
 import { AuthModule } from '@thallesp/nestjs-better-auth'
-import type { Redis } from '@hayasedb/core'
 import type { Database } from '@hayasedb/db'
+import type { Mailer } from '@hayasedb/mail'
 import type { Request } from 'express'
 import { authFactory } from './auth/auth'
 import { ConfigModule } from './config/config.module'
 import type { Env } from './config/env.schema'
 import { DatabaseModule } from './database/database.module'
 import { DRIZZLE } from './database/database.constants'
-import { DocsModule } from './modules/docs/docs.module'
-import { MeModule } from './modules/me/me.module'
-import { PingModule } from './modules/ping/ping.module'
+import { MailModule } from './mail/mail.module'
+import { MAILER } from './mail/mail.constants'
+import { SystemModule } from './modules/system/system.module'
 import type { ORPCContext } from './orpc/context'
 import { RedisModule } from './redis/redis.module'
 import { REDIS } from './redis/redis.constants'
+import type { Redis } from './redis/redis.factory'
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
     RedisModule,
+    MailModule,
     ORPCModule.forRootAsync({
       useFactory: (request: Request): { context: ORPCContext } => ({
-        context: {
-          request,
-          session: request.session,
-          user: request.user,
-        },
+        context: { request },
       }),
       inject: [REQUEST],
     }),
     AuthModule.forRootAsync({
-      inject: [ConfigService, DRIZZLE, REDIS],
+      inject: [ConfigService, DRIZZLE, REDIS, MAILER],
       useFactory: (
         config: ConfigService<Env, true>,
         db: Database,
         redis: Redis,
+        mailer: Mailer,
       ) => ({
-        auth: authFactory(config, db, redis),
+        auth: authFactory(config, db, redis, mailer),
         disableTrustedOriginsCors: true,
         bodyParser: {
           json: { limit: '2mb' },
@@ -49,9 +48,7 @@ import { REDIS } from './redis/redis.constants'
         },
       }),
     }),
-    DocsModule,
-    MeModule,
-    PingModule,
+    SystemModule,
   ],
 })
 export class AppModule {}

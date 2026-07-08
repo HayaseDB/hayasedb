@@ -10,7 +10,6 @@
     "POSTGRES_USER",
     "POSTGRES_PASSWORD",
     "POSTGRES_DB",
-    "REDIS_URL",
     "REDIS_HOST",
     "REDIS_PORT",
     "API_HOST",
@@ -29,7 +28,19 @@
     "S3_BUCKET_ORIGINAL",
     "NUXT_PUBLIC_API_URL",
     "WEB_PORT",
-    "ADMIN_PORT"
+    "ADMIN_PORT",
+    "MAIL_DRIVER",
+    "MAIL_FROM",
+    "APP_NAME",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_SECURE",
+    "SMTP_USER",
+    "SMTP_PASS",
+    "RESEND_API_KEY",
+    "MAILPIT_UI_PORT",
+    "DISCORD_CLIENT_ID",
+    "DISCORD_CLIENT_SECRET"
   ],
   "tasks": {
     "build": {

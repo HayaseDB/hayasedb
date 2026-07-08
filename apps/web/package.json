@@ -15,6 +15,7 @@
   "dependencies": {
     "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
+    "@hayasedb/nuxt": "workspace:*",
     "@hayasedb/ui": "workspace:*",
     "@iconify-json/lucide": "^1.2.116",
     "@iconify-json/simple-icons": "^1.2.0",

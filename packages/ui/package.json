@@ -10,17 +10,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
     "@iconify-json/lucide": "^1.2.116",
     "@iconify-json/simple-icons": "^1.2.0",
     "@nuxt/ui": "4.9.0",
-    "@orpc/client": "catalog:",
-    "@orpc/contract": "catalog:",
-    "@orpc/openapi": "catalog:",
-    "better-auth": "catalog:",
-    "tailwindcss": "^4.3.2",
-    "zod": "catalog:"
+    "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
     "@hayasedb/config": "workspace:*",

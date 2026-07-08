@@ -1,25 +1,30 @@
 <script setup lang="ts">
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-import type { SocialProvider } from '#ui-layer/composables/useAuthActions'
-import { loginSchema, type LoginSchema } from '#ui-layer/utils/authSchema'
+import {
+  loginSchema,
+  type LoginSchema,
+  type SocialProvider,
+} from '@hayasedb/contract'
 
 const props = withDefaults(
   defineProps<{
     providers?: SocialProvider[]
-    requireAdmin?: boolean
+    loading?: boolean
     title?: string
     submitLabel?: string
   }>(),
   {
     providers: () => [],
-    requireAdmin: false,
+    loading: false,
     title: 'Sign in',
     submitLabel: 'Sign in',
   },
 )
 
-const { loading, signInEmail } = useAuthActions()
-useAuthError()
+const emit = defineEmits<{
+  submit: [data: LoginSchema]
+  social: [provider: SocialProvider]
+}>()
 
 const fields: AuthFormField[] = [
   {
@@ -42,10 +47,13 @@ const fields: AuthFormField[] = [
   },
 ]
 
-const providers = useSocialProviders(() => props.providers)
+const providers = useSocialProviders(
+  () => props.providers,
+  (provider) => emit('social', provider),
+)
 
-async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
-  await signInEmail(event.data, { requireAdmin: props.requireAdmin })
+function onSubmit(event: FormSubmitEvent<LoginSchema>) {
+  emit('submit', event.data)
 }
 </script>
 

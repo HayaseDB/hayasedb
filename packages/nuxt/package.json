@@ -1,0 +1,29 @@
+{
+  "name": "@hayasedb/nuxt",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "prepare": "nuxi prepare",
+    "typecheck": "nuxi typecheck",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@hayasedb/auth": "workspace:*",
+    "@hayasedb/contract": "workspace:*",
+    "@nuxt/ui": "4.9.0",
+    "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "better-auth": "catalog:"
+  },
+  "devDependencies": {
+    "@hayasedb/config": "workspace:*",
+    "@nuxt/eslint": "^1.9.0",
+    "eslint": "^9.0.0 || ^10.0.0",
+    "nuxt": "^4.4.8",
+    "typescript": "catalog:",
+    "vue-tsc": "catalog:"
+  }
+}

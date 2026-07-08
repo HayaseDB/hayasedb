@@ -31,6 +31,19 @@ services:
       timeout: 5s
       retries: 10
 
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '${SMTP_PORT:-1025}:1025'
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+    networks: [internal]
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O-', 'http://localhost:8025/readyz']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   garage:
     image: dxflrs/garage:v2.1.0
     restart: unless-stopped
@@ -56,7 +69,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: '${REDIS_PORT:-6379}'
       API_HOST: 0.0.0.0
       API_PORT: '3000'
       API_PUBLIC_URL: https://${API_DOMAIN}
@@ -69,6 +83,9 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-media-public}
       S3_BUCKET_ORIGINAL: ${S3_BUCKET_ORIGINAL:-media-original}
+      MAIL_DRIVER: ${MAIL_DRIVER:-resend}
+      MAIL_FROM: ${MAIL_FROM}
+      RESEND_API_KEY: ${RESEND_API_KEY-}
     networks: [traefik-public, internal]
     deploy:
       replicas: 2

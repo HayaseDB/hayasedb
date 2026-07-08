@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: true,
 
-  extends: ['../../packages/ui'],
+  extends: ['../../packages/nuxt', '../../packages/ui'],
   modules: ['@nuxt/ui', '@nuxt/eslint'],
 
   runtimeConfig: {

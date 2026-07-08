@@ -29,7 +29,17 @@
       "@orpc/zod": "2.0.0-beta.11",
       "tsdown": "0.22.3",
       "tsx": "4.23.0",
-      "dotenv": "17.4.2"
+      "dotenv": "17.4.2",
+      "@react-email/components": "1.0.12",
+      "@react-email/render": "2.0.10",
+      "@react-email/ui": "6.6.8",
+      "react-email": "6.6.8",
+      "react": "19.2.7",
+      "react-dom": "19.2.7",
+      "@types/react": "19.2.17",
+      "nodemailer": "9.0.3",
+      "@types/nodemailer": "8.0.1",
+      "resend": "6.17.1"
     }
   },
   "scripts": {

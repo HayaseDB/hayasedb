@@ -1,24 +1,22 @@
 <script setup lang="ts">
-const { data: session } = await useAppSession()
+defineProps<{
+  email?: string | null
+}>()
 
-const auth = useAuth()
-const router = useRouter()
-
-async function signOut() {
-  await auth.signOut()
-  await router.push('/login')
-}
+defineEmits<{
+  signOut: []
+}>()
 </script>
 
 <template>
-  <div v-if="session?.user" class="flex items-center gap-3">
-    <span class="text-muted text-sm">{{ session.user.email }}</span>
+  <div v-if="email" class="flex items-center gap-3">
+    <span class="text-muted text-sm">{{ email }}</span>
     <UButton
       color="neutral"
       variant="subtle"
       size="sm"
       icon="i-lucide-log-out"
-      @click="signOut"
+      @click="$emit('signOut')"
     >
       Sign out
     </UButton>

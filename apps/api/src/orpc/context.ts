@@ -13,6 +13,4 @@ declare module 'express' {
 
 export interface ORPCContext {
   request: Request
-  session: Session | null
-  user: Session['user'] | null
 }

@@ -1,0 +1,42 @@
+{
+  "name": "@hayasedb/mail",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch --no-clean",
+    "email": "email dev --dir ./emails --port 3005",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@react-email/components": "catalog:",
+    "@react-email/render": "catalog:",
+    "nodemailer": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "resend": "catalog:"
+  },
+  "devDependencies": {
+    "@hayasedb/config": "workspace:*",
+    "@react-email/ui": "catalog:",
+    "@types/node": "^22.10.0",
+    "@types/nodemailer": "catalog:",
+    "@types/react": "catalog:",
+    "react-email": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}

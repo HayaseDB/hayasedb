@@ -1,12 +1,20 @@
 <script setup lang="ts">
-const { data: me } = await useAsyncData('me', () => useApiClient().me())
+const { data: session } = await useAppSession()
+const me = computed(() => session.value?.user ?? null)
+const auth = useAuth()
+const router = useRouter()
+
+async function signOut() {
+  await auth.signOut()
+  await router.push('/login')
+}
 </script>
 
 <template>
   <UContainer class="py-10">
     <div class="mb-6 flex items-center justify-between">
       <h1 class="text-xl font-semibold">HayaseDB</h1>
-      <UserMenu />
+      <UserMenu :email="session?.user?.email" @sign-out="signOut" />
     </div>
 
     <UCard>
