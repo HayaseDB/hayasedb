@@ -16,6 +16,31 @@ export interface SignUpEmailInput {
   password: string
 }
 
+export interface AccountUser {
+  id: string
+  name: string
+  email: string
+  emailVerified: boolean
+  image?: string | null
+  role?: string | null
+  createdAt: string | Date
+  updatedAt: string | Date
+}
+
+export interface AccountSessionRow {
+  id: string
+  token: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt: string | Date
+  expiresAt: string | Date
+}
+
+export interface AccountLinkedRow {
+  providerId: string
+  accountId: string
+}
+
 function requiredString(label: string) {
   return z.string({
     error: (issue) =>
@@ -69,7 +94,29 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   })
 
+export const updateProfileSchema = z.object({
+  name: nameSchema,
+})
+
+export const changeEmailSchema = z.object({
+  email: emailSchema,
+})
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: currentPasswordSchema,
+    newPassword: newPasswordSchema,
+    confirmPassword: requiredString('Password confirmation'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    error: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
 export type LoginSchema = z.output<typeof loginSchema>
 export type RegisterSchema = z.output<typeof registerSchema>
 export type ForgotPasswordSchema = z.output<typeof forgotPasswordSchema>
 export type ResetPasswordSchema = z.output<typeof resetPasswordSchema>
+export type UpdateProfileSchema = z.output<typeof updateProfileSchema>
+export type ChangeEmailSchema = z.output<typeof changeEmailSchema>
+export type ChangePasswordSchema = z.output<typeof changePasswordSchema>

@@ -13,6 +13,7 @@ import { DatabaseModule } from './database/database.module'
 import { DRIZZLE } from './database/database.constants'
 import { MailModule } from './mail/mail.module'
 import { MAILER } from './mail/mail.constants'
+import { AccountModule } from './modules/account/account.module'
 import { SystemModule } from './modules/system/system.module'
 import type { ORPCContext } from './orpc/context'
 import { RedisModule } from './redis/redis.module'
@@ -49,6 +50,7 @@ import type { Redis } from './redis/redis.factory'
       }),
     }),
     SystemModule,
+    AccountModule,
   ],
 })
 export class AppModule {}

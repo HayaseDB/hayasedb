@@ -25,7 +25,7 @@ export function useAuthActions() {
       if (error || !data) {
         toast.add({
           title: 'Sign in failed',
-          description: error?.message ?? 'Unknown error',
+          description: error?.message ?? 'Please try again.',
           color: 'error',
         })
         return false
@@ -54,17 +54,22 @@ export function useAuthActions() {
   async function signUpEmail(input: SignUpEmailInput): Promise<boolean> {
     loading.value = true
     try {
-      const { error } = await auth.signUp.email(input)
+      const { data, error } = await auth.signUp.email(input)
 
-      if (error) {
+      if (error || !data) {
         toast.add({
           title: 'Sign up failed',
-          description: error.message,
+          description: error?.message ?? 'Please try again.',
           color: 'error',
         })
         return false
       }
 
+      toast.add({
+        title: 'Check your inbox',
+        description: `We sent a verification link to ${input.email}.`,
+        color: 'info',
+      })
       await router.push(redirectTarget())
       return true
     } finally {

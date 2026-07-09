@@ -24,7 +24,7 @@ export function authFactory(
   return createAuth({
     db,
     secret: config.get('AUTH_SECRET', { infer: true }),
-    baseURL: config.get('AUTH_BASE_URL', { infer: true }),
+    baseURL: config.get('API_PUBLIC_URL', { infer: true }),
     frontendBaseURL: webOrigin,
     trustedOrigins: config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
     secondaryStorage: makeRedisSecondaryStorage(redis),

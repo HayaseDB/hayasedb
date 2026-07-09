@@ -17,7 +17,7 @@ function buildMailConfig(config: ConfigService<Env, true>): MailConfig {
     return {
       driver: 'resend',
       from,
-      resendApiKey: config.get('RESEND_API_KEY', { infer: true }),
+      resendApiKey: config.get('MAIL_RESEND_API_KEY', { infer: true }),
     }
   }
 
@@ -25,11 +25,11 @@ function buildMailConfig(config: ConfigService<Env, true>): MailConfig {
     driver: 'smtp',
     from,
     smtp: {
-      host: config.get('SMTP_HOST', { infer: true }),
-      port: config.get('SMTP_PORT', { infer: true }),
-      secure: config.get('SMTP_SECURE', { infer: true }),
-      user: config.get('SMTP_USER', { infer: true }),
-      pass: config.get('SMTP_PASS', { infer: true }),
+      host: config.get('MAIL_SMTP_HOST', { infer: true }),
+      port: config.get('MAIL_SMTP_PORT', { infer: true }),
+      secure: config.get('MAIL_SMTP_SECURE', { infer: true }),
+      user: config.get('MAIL_SMTP_USER', { infer: true }),
+      pass: config.get('MAIL_SMTP_PASS', { infer: true }),
     },
   }
 }

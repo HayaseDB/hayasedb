@@ -3,8 +3,10 @@ import type { RegisterSchema, SocialProvider } from '@hayasedb/contract'
 
 const { loading, signUpEmail, signInSocial } = useAuthActions()
 
-function onSubmit(data: RegisterSchema) {
-  void signUpEmail(data)
+const formKey = ref(0)
+
+async function onSubmit(data: RegisterSchema) {
+  if (await signUpEmail(data)) formKey.value++
 }
 
 function onSocial(provider: SocialProvider) {
@@ -15,6 +17,7 @@ function onSocial(provider: SocialProvider) {
 <template>
   <AuthCard>
     <AuthRegisterForm
+      :key="formKey"
       :providers="['github', 'discord']"
       :loading="loading"
       @submit="onSubmit"

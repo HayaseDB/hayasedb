@@ -35,7 +35,7 @@ services:
     image: axllent/mailpit:latest
     restart: unless-stopped
     ports:
-      - '${SMTP_PORT:-1025}:1025'
+      - '${MAIL_SMTP_PORT:-1025}:1025'
       - '${MAILPIT_UI_PORT:-8025}:8025'
     networks: [internal]
     healthcheck:
@@ -44,20 +44,38 @@ services:
       timeout: 5s
       retries: 10
 
-  garage:
-    image: dxflrs/garage:v2.1.0
+  minio:
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
     restart: unless-stopped
+    command: server /data --console-address ":9001"
     environment:
-      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
-      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-}
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     ports:
-      - '${S3_PORT:-3900}:3900'
-      - '${S3_ADMIN_PORT:-3903}:3903'
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
     volumes:
-      - garage-meta:/var/lib/garage/meta
-      - garage-data:/var/lib/garage/data
-      - ./garage.toml:/etc/garage.toml:ro
-    networks: [internal]
+      - minio-data:/data
+    networks: [traefik-public, internal]
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.http.routers.hayasedb-minio.rule=Host(`${MINIO_DOMAIN}`)
+        - traefik.http.routers.hayasedb-minio.entrypoints=websecure
+        - traefik.http.routers.hayasedb-minio.tls.certresolver=le
+        - traefik.http.routers.hayasedb-minio.service=hayasedb-minio
+        - traefik.http.services.hayasedb-minio.loadbalancer.server.port=9000
+        - traefik.http.routers.hayasedb-minio-console.rule=Host(`${MINIO_CONSOLE_DOMAIN}`)
+        - traefik.http.routers.hayasedb-minio-console.entrypoints=websecure
+        - traefik.http.routers.hayasedb-minio-console.tls.certresolver=le
+        - traefik.http.routers.hayasedb-minio-console.service=hayasedb-minio-console
+        - traefik.http.services.hayasedb-minio-console.loadbalancer.server.port=9001
 
   api:
     image: ghcr.io/hayasedb/hayasedb-api:${TAG:-latest}
@@ -75,17 +93,20 @@ services:
       API_PORT: '3000'
       API_PUBLIC_URL: https://${API_DOMAIN}
       AUTH_SECRET: ${AUTH_SECRET}
-      AUTH_BASE_URL: https://${API_DOMAIN}
       AUTH_TRUSTED_ORIGINS: https://${WEB_DOMAIN},https://${ADMIN_DOMAIN}
-      S3_ENDPOINT: http://garage:3900
-      S3_REGION: garage
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
-      S3_SECRET_KEY: ${S3_SECRET_KEY}
-      S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-media-public}
-      S3_BUCKET_ORIGINAL: ${S3_BUCKET_ORIGINAL:-media-original}
-      MAIL_DRIVER: ${MAIL_DRIVER:-resend}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: '9000'
+      MINIO_USE_SSL: 'false'
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET:-media}
+      MINIO_PUBLIC_URL: https://${MINIO_DOMAIN}
+      MAIL_DRIVER: ${MAIL_DRIVER:-smtp}
       MAIL_FROM: ${MAIL_FROM}
-      RESEND_API_KEY: ${RESEND_API_KEY-}
+      MAIL_RESEND_API_KEY: ${MAIL_RESEND_API_KEY-}
+    depends_on:
+      minio:
+        condition: service_healthy
     networks: [traefik-public, internal]
     deploy:
       replicas: 2
@@ -112,7 +133,7 @@ services:
       NODE_ENV: production
       NITRO_PORT: '3001'
       NITRO_HOST: 0.0.0.0
-      NUXT_PUBLIC_API_URL: https://${API_DOMAIN}
+      NUXT_API_URL: https://${API_DOMAIN}
     networks: [traefik-public, internal]
     deploy:
       replicas: 2
@@ -139,7 +160,7 @@ services:
       NODE_ENV: production
       NITRO_PORT: '3002'
       NITRO_HOST: 0.0.0.0
-      NUXT_PUBLIC_API_URL: https://${API_DOMAIN}
+      NUXT_API_URL: https://${API_DOMAIN}
     networks: [traefik-public, internal]
     deploy:
       replicas: 1
@@ -156,12 +177,10 @@ services:
         - traefik.http.services.hayasedb-admin.loadbalancer.server.port=3002
 
 networks:
-  traefik-public:
-    external: true
+  traefik-public: {}
   internal: {}
 
 volumes:
   pgdata: {}
   redisdata: {}
-  garage-meta: {}
-  garage-data: {}
+  minio-data: {}

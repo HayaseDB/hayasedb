@@ -14,3 +14,9 @@ declare module 'express' {
 export interface ORPCContext {
   request: Request
 }
+
+declare module '@orpc/server' {
+  interface DefaultInitialContext {
+    request: ORPCContext['request']
+  }
+}

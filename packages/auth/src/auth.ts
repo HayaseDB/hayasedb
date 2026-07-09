@@ -79,7 +79,7 @@ export function createAuth(opts: AuthOptions) {
       : undefined,
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: Boolean(mailer),
+      requireEmailVerification: false,
       minPasswordLength: PASSWORD_MIN,
       maxPasswordLength: PASSWORD_MAX,
       autoSignIn: true,

@@ -57,6 +57,7 @@
     "check": "turbo run lint typecheck test && bun run format:check",
     "check:fix": "bun run format && bun run lint:fix",
     "clean": "turbo run clean && rm -rf node_modules",
+    "clean:cache": "rm -rf .turbo node_modules/.cache && find apps packages -maxdepth 2 \\( -name '.turbo' -o -name '.nuxt' -o -name '.output' -o -name '.nitro' -o -name 'dist' -o -name '.cache' \\) -prune -exec rm -rf {} +",
     "db:generate": "turbo run db:generate --filter=@hayasedb/db",
     "db:migrate": "turbo run db:migrate --filter=@hayasedb/db",
     "db:studio": "bun --filter @hayasedb/db db:studio",
@@ -68,10 +69,10 @@
   },
   "devDependencies": {
     "@changesets/cli": "2.31.0",
-    "eslint": "^10.0.0",
+    "eslint": "^10.6.0",
     "eslint-config-prettier": "10.1.8",
     "fkill-cli": "9.0.0",
-    "jiti": "^2.4.2",
+    "jiti": "^2.7.0",
     "prettier": "3.9.4",
     "prettier-plugin-tailwindcss": "0.8.0",
     "turbo": "^2.10.4"

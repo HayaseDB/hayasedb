@@ -27,9 +27,12 @@
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "ioredis": "catalog:",
+    "nestjs-minio-client": "2.2.0",
     "postgres": "catalog:",
     "reflect-metadata": "^0.2.2",
     "rxjs": "7.8.2",
+    "sharp": "0.35.3",
+    "ulid": "3.0.2",
     "zod": "catalog:"
   },
   "devDependencies": {

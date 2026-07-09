@@ -1,10 +1,20 @@
 import type { SocialProvider } from '@hayasedb/contract'
 
-const providerConfig: Record<SocialProvider, { label: string; icon: string }> =
-  {
-    github: { label: 'Continue with GitHub', icon: 'i-simple-icons-github' },
-    discord: { label: 'Continue with Discord', icon: 'i-simple-icons-discord' },
-  }
+export const providerConfig: Record<
+  SocialProvider,
+  { name: string; label: string; icon: string }
+> = {
+  github: {
+    name: 'GitHub',
+    label: 'Continue with GitHub',
+    icon: 'i-simple-icons-github',
+  },
+  discord: {
+    name: 'Discord',
+    label: 'Continue with Discord',
+    icon: 'i-simple-icons-discord',
+  },
+}
 
 export function useSocialProviders(
   providers: MaybeRefOrGetter<SocialProvider[]>,

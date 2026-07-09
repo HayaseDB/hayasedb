@@ -5,6 +5,11 @@ const layerDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/eslint'],
+
+  runtimeConfig: {
+    apiUrl: 'http://localhost:3000',
+  },
+
   eslint: {
     config: {
       typescript: true,
@@ -16,7 +21,6 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
-        '@hayasedb/contract',
         '@orpc/client',
         '@orpc/openapi/extensions/route',
         '@orpc/openapi/fetch',
@@ -24,6 +28,7 @@ export default defineNuxtConfig({
         'better-auth/vue',
         'zod',
       ],
+      exclude: ['@hayasedb/contract'],
     },
   },
 })
