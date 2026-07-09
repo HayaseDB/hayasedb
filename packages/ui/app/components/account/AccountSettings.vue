@@ -20,7 +20,6 @@ withDefaults(
     verified?: boolean
     resending?: boolean
     resendCooldown?: number
-    pendingEmail?: string | null
     onUpdateProfile?: (data: UpdateProfileSchema) => unknown | Promise<unknown>
     onUploadAvatar?: (file: File) => unknown | Promise<unknown>
     onChangeEmail?: (data: ChangeEmailSchema) => unknown | Promise<unknown>
@@ -46,7 +45,6 @@ withDefaults(
     verified: false,
     resending: false,
     resendCooldown: 0,
-    pendingEmail: null,
     onUpdateProfile: undefined,
     onUploadAvatar: undefined,
     onChangeEmail: undefined,
@@ -84,11 +82,7 @@ withDefaults(
             :on-upload-avatar="onUploadAvatar"
           />
           <USeparator class="my-6" />
-          <AccountEmailForm
-            :user="user"
-            :pending-email="pendingEmail"
-            :on-submit="onChangeEmail"
-          />
+          <AccountEmailForm :user="user" :on-submit="onChangeEmail" />
         </fieldset>
       </UPageCard>
     </section>

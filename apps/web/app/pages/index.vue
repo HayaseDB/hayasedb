@@ -53,7 +53,6 @@ const {
 } = useAccountActions()
 
 const router = useRouter()
-const pendingEmail = ref<string | null>(null)
 const verified = computed(() => Boolean(user.value?.emailVerified))
 
 const resending = ref(false)
@@ -68,13 +67,6 @@ async function onResend() {
     resending.value = false
   }
 }
-
-watch(
-  () => user.value?.email,
-  (email) => {
-    if (email && email === pendingEmail.value) pendingEmail.value = null
-  },
-)
 
 async function signOut() {
   await auth.signOut()
@@ -95,7 +87,6 @@ async function onUploadAvatar(file: File) {
 
 async function onChangeEmail(data: ChangeEmailSchema) {
   const ok = await changeEmail(data)
-  pendingEmail.value = ok ? data.email : null
   return ok
 }
 
@@ -152,7 +143,6 @@ async function onUnlinkAccount(payload: {
         :verified="verified"
         :resending="resending"
         :resend-cooldown="resendCooldown.remaining.value"
-        :pending-email="pendingEmail"
         :on-update-profile="onUpdateProfile"
         :on-upload-avatar="onUploadAvatar"
         :on-change-email="onChangeEmail"

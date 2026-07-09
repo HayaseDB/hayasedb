@@ -28,7 +28,7 @@ const dbEnv = z.object({
 })
 
 const authEnv = z.object({
-  AUTH_SECRET: z.string().min(1),
+  AUTH_SECRET: z.string().min(32),
   AUTH_TRUSTED_ORIGINS: csv('http://localhost:3001,http://localhost:3002'),
 
   GITHUB_CLIENT_ID: z.string().optional(),

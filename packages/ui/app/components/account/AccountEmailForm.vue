@@ -9,12 +9,10 @@ import {
 const props = withDefaults(
   defineProps<{
     user?: AccountUser | null
-    pendingEmail?: string | null
     onSubmit?: (data: ChangeEmailSchema) => unknown | Promise<unknown>
   }>(),
   {
     user: null,
-    pendingEmail: null,
     onSubmit: undefined,
   },
 )
@@ -55,15 +53,6 @@ async function handleSubmit(event: FormSubmitEvent<ChangeEmailSchema>) {
         class="flex flex-col gap-4"
         @submit="handleSubmit"
       >
-        <UAlert
-          v-if="pendingEmail"
-          color="info"
-          variant="subtle"
-          icon="i-lucide-mail-check"
-          title="Confirm your new email"
-          :description="`A confirmation link was sent to ${pendingEmail}. Your email stays ${user?.email ?? 'unchanged'} until you click it.`"
-        />
-
         <UFormField name="email" label="Email" required>
           <UInput
             v-model="state.email"
