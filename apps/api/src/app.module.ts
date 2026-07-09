@@ -19,6 +19,8 @@ import type { ORPCContext } from './orpc/context'
 import { RedisModule } from './redis/redis.module'
 import { REDIS } from './redis/redis.constants'
 import type { Redis } from './redis/redis.factory'
+import { StorageModule } from './storage/storage.module'
+import { StorageService } from './storage/storage.service'
 
 @Module({
   imports: [
@@ -33,14 +35,16 @@ import type { Redis } from './redis/redis.factory'
       inject: [REQUEST],
     }),
     AuthModule.forRootAsync({
-      inject: [ConfigService, DRIZZLE, REDIS, MAILER],
+      imports: [StorageModule],
+      inject: [ConfigService, DRIZZLE, REDIS, MAILER, StorageService],
       useFactory: (
         config: ConfigService<Env, true>,
         db: Database,
         redis: Redis,
         mailer: Mailer,
+        storage: StorageService,
       ) => ({
-        auth: authFactory(config, db, redis, mailer),
+        auth: authFactory(config, db, redis, mailer, storage),
         disableTrustedOriginsCors: true,
         bodyParser: {
           json: { limit: '2mb' },

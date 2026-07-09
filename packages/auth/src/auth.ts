@@ -41,6 +41,7 @@ export interface AuthOptions {
   discord?: DiscordProviderOptions
   errorCallbackURL?: string
   mailer?: AuthMailer
+  onDeleteUser?: (user: { id: string; email: string }) => Promise<void> | void
 }
 
 export function createAuth(opts: AuthOptions) {
@@ -115,6 +116,14 @@ export function createAuth(opts: AuthOptions) {
                 newEmail,
                 frontendLink('/auth/change-email', token),
               )
+          : undefined,
+      },
+      deleteUser: {
+        enabled: true,
+        beforeDelete: opts.onDeleteUser
+          ? async (user: { id: string; email: string }) => {
+              await opts.onDeleteUser!({ id: user.id, email: user.email })
+            }
           : undefined,
       },
     },

@@ -50,9 +50,10 @@ const {
   revokeOtherSessions,
   linkSocial,
   unlinkAccount,
+  signOut,
+  deleteAccount,
 } = useAccountActions()
 
-const router = useRouter()
 const verified = computed(() => Boolean(user.value?.emailVerified))
 
 const resending = ref(false)
@@ -68,9 +69,8 @@ async function onResend() {
   }
 }
 
-async function signOut() {
-  await auth.signOut()
-  await router.push('/login')
+async function onDeleteAccount() {
+  await deleteAccount()
 }
 
 async function onUpdateProfile(data: UpdateProfileSchema) {
@@ -152,6 +152,8 @@ async function onUnlinkAccount(payload: {
         :on-revoke-other-sessions="onRevokeOtherSessions"
         :on-link-account="onLinkAccount"
         :on-unlink-account="onUnlinkAccount"
+        :on-sign-out="signOut"
+        :on-delete-account="onDeleteAccount"
       />
     </div>
   </UContainer>

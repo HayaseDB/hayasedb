@@ -34,6 +34,8 @@ withDefaults(
       providerId: string
       accountId: string
     }) => unknown
+    onSignOut?: () => unknown
+    onDeleteAccount?: () => unknown
   }>(),
   {
     user: null,
@@ -54,6 +56,8 @@ withDefaults(
     onRevokeOtherSessions: undefined,
     onLinkAccount: undefined,
     onUnlinkAccount: undefined,
+    onSignOut: undefined,
+    onDeleteAccount: undefined,
   },
 )
 </script>
@@ -115,6 +119,23 @@ withDefaults(
             :on-unlink="onUnlinkAccount"
           />
         </fieldset>
+      </UPageCard>
+    </section>
+
+    <section class="flex flex-col gap-4">
+      <div>
+        <h2 class="text-error text-base font-semibold">Danger zone</h2>
+        <p class="text-muted text-sm">
+          Sign out of this session or permanently delete your account.
+        </p>
+      </div>
+
+      <UPageCard variant="subtle">
+        <AccountDangerZone
+          :loading="loading"
+          :on-sign-out="onSignOut"
+          :on-delete-account="onDeleteAccount"
+        />
       </UPageCard>
     </section>
   </div>

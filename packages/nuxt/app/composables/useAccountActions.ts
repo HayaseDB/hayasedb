@@ -214,6 +214,37 @@ export function useAccountActions() {
     })
   }
 
+  async function signOut(): Promise<void> {
+    await auth.signOut()
+    await router.push('/login')
+  }
+
+  async function deleteAccount(): Promise<boolean> {
+    loading.value = true
+    try {
+      const { error } = await auth.deleteUser({})
+
+      if (error) {
+        toast.add({
+          title: 'Could not delete account',
+          description: error.message ?? 'Please try again.',
+          color: 'error',
+        })
+        return false
+      }
+
+      toast.add({
+        title: 'Account deleted',
+        description: 'Your account and data have been permanently removed.',
+        color: 'success',
+      })
+      await router.push('/login')
+      return true
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading,
     updateProfile,
@@ -225,5 +256,7 @@ export function useAccountActions() {
     revokeOtherSessions,
     linkSocial,
     unlinkAccount,
+    signOut,
+    deleteAccount,
   }
 }
