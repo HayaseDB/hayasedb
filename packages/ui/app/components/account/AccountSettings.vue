@@ -27,6 +27,14 @@ withDefaults(
     onChangePassword?: (
       data: ChangePasswordSchema,
     ) => unknown | Promise<unknown>
+    onResend?: () => unknown
+    onRevokeSession?: (token: string) => unknown
+    onRevokeOtherSessions?: () => unknown
+    onLinkAccount?: (provider: SocialProvider) => unknown
+    onUnlinkAccount?: (payload: {
+      providerId: string
+      accountId: string
+    }) => unknown
   }>(),
   {
     user: null,
@@ -43,16 +51,13 @@ withDefaults(
     onUploadAvatar: undefined,
     onChangeEmail: undefined,
     onChangePassword: undefined,
+    onResend: undefined,
+    onRevokeSession: undefined,
+    onRevokeOtherSessions: undefined,
+    onLinkAccount: undefined,
+    onUnlinkAccount: undefined,
   },
 )
-
-const emit = defineEmits<{
-  resend: []
-  'revoke-session': [token: string]
-  'revoke-other-sessions': []
-  'link-account': [provider: SocialProvider]
-  'unlink-account': [payload: { providerId: string; accountId: string }]
-}>()
 </script>
 
 <template>
@@ -61,7 +66,7 @@ const emit = defineEmits<{
       :user="user"
       :resending="resending"
       :cooldown="resendCooldown"
-      @resend="emit('resend')"
+      :on-resend="onResend"
     />
 
     <section class="flex flex-col gap-4">
@@ -104,16 +109,16 @@ const emit = defineEmits<{
             :sessions="sessions"
             :current-token="currentToken"
             :loading="loading"
-            @revoke="emit('revoke-session', $event)"
-            @revoke-others="emit('revoke-other-sessions')"
+            :on-revoke="onRevokeSession"
+            :on-revoke-others="onRevokeOtherSessions"
           />
           <USeparator class="my-6" />
           <AccountLinkedAccounts
             :accounts="accounts"
             :available-providers="availableProviders"
             :loading="loading"
-            @link="emit('link-account', $event)"
-            @unlink="emit('unlink-account', $event)"
+            :on-link="onLinkAccount"
+            :on-unlink="onUnlinkAccount"
           />
         </fieldset>
       </UPageCard>

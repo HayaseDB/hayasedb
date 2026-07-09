@@ -1,32 +1,40 @@
 <script setup lang="ts">
-import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { AuthFormField } from '@nuxt/ui'
 import {
-  loginSchema,
-  type LoginSchema,
+  registerSchema,
+  type RegisterSchema,
   type SocialProvider,
 } from '@hayasedb/contract'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     providers?: SocialProvider[]
     loading?: boolean
     title?: string
     submitLabel?: string
+    onSubmit?: (data: RegisterSchema) => unknown | Promise<unknown>
+    onSocial?: (provider: SocialProvider) => unknown
   }>(),
   {
     providers: () => [],
     loading: false,
-    title: 'Sign in',
-    submitLabel: 'Sign in',
+    title: 'Create account',
+    submitLabel: 'Create account',
+    onSubmit: undefined,
+    onSocial: undefined,
   },
 )
 
-const emit = defineEmits<{
-  submit: [data: LoginSchema]
-  social: [provider: SocialProvider]
-}>()
-
 const fields: AuthFormField[] = [
+  {
+    name: 'name',
+    type: 'text',
+    label: 'Name',
+    placeholder: 'Enter your name',
+    required: true,
+    defaultValue: '',
+    autocomplete: 'name',
+  },
   {
     name: 'email',
     type: 'email',
@@ -43,33 +51,24 @@ const fields: AuthFormField[] = [
     placeholder: 'Enter your password',
     required: true,
     defaultValue: '',
-    autocomplete: 'current-password',
+    autocomplete: 'new-password',
   },
 ]
-
-const providers = useSocialProviders(
-  () => props.providers,
-  (provider) => emit('social', provider),
-)
-
-function onSubmit(event: FormSubmitEvent<LoginSchema>) {
-  emit('submit', event.data)
-}
 </script>
 
 <template>
-  <UAuthForm
-    :schema="loginSchema"
+  <AuthFormBase
+    :schema="registerSchema"
     :fields="fields"
     :providers="providers"
+    :loading="loading"
     :title="title"
-    :submit="{ label: submitLabel, loading }"
-    @submit="onSubmit"
+    :submit-label="submitLabel"
+    :on-submit="onSubmit"
+    :on-social="onSocial"
   >
     <template v-if="$slots.footer" #footer>
-      <span class="text-muted text-sm">
-        <slot name="footer" />
-      </span>
+      <slot name="footer" />
     </template>
-  </UAuthForm>
+  </AuthFormBase>
 </template>

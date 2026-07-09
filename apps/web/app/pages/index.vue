@@ -131,7 +131,7 @@ async function onUnlinkAccount(payload: {
   <UContainer class="py-10">
     <div class="mb-8 flex items-center justify-between">
       <h1 class="text-xl font-semibold">HayaseDB</h1>
-      <UserMenu :email="user?.email" @sign-out="signOut" />
+      <UserMenu :email="user?.email" :on-sign-out="signOut" />
     </div>
 
     <div class="mx-auto flex max-w-4xl flex-col gap-8">
@@ -157,11 +157,11 @@ async function onUnlinkAccount(payload: {
         :on-upload-avatar="onUploadAvatar"
         :on-change-email="onChangeEmail"
         :on-change-password="onChangePassword"
-        @resend="onResend"
-        @revoke-session="onRevokeSession"
-        @revoke-other-sessions="onRevokeOtherSessions"
-        @link-account="onLinkAccount"
-        @unlink-account="onUnlinkAccount"
+        :on-resend="onResend"
+        :on-revoke-session="onRevokeSession"
+        :on-revoke-other-sessions="onRevokeOtherSessions"
+        :on-link-account="onLinkAccount"
+        :on-unlink-account="onUnlinkAccount"
       />
     </div>
   </UContainer>

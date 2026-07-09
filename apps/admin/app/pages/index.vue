@@ -14,7 +14,7 @@ async function signOut() {
   <UContainer class="py-10">
     <div class="mb-6 flex items-center justify-between">
       <h1 class="text-xl font-semibold">Admin console</h1>
-      <UserMenu :email="session?.user?.email" @sign-out="signOut" />
+      <UserMenu :email="session?.user?.email" :on-sign-out="signOut" />
     </div>
 
     <UCard>

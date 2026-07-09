@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { AuthFormField } from '@nuxt/ui'
 import {
   resetPasswordSchema,
   type ResetPasswordSchema,
@@ -10,17 +10,15 @@ withDefaults(
     loading?: boolean
     title?: string
     submitLabel?: string
+    onSubmit?: (data: ResetPasswordSchema) => unknown | Promise<unknown>
   }>(),
   {
     loading: false,
     title: 'Set a new password',
     submitLabel: 'Update password',
+    onSubmit: undefined,
   },
 )
-
-const emit = defineEmits<{
-  submit: [data: ResetPasswordSchema]
-}>()
 
 const fields: AuthFormField[] = [
   {
@@ -42,24 +40,19 @@ const fields: AuthFormField[] = [
     autocomplete: 'new-password',
   },
 ]
-
-function onSubmit(event: FormSubmitEvent<ResetPasswordSchema>) {
-  emit('submit', event.data)
-}
 </script>
 
 <template>
-  <UAuthForm
+  <AuthFormBase
     :schema="resetPasswordSchema"
     :fields="fields"
+    :loading="loading"
     :title="title"
-    :submit="{ label: submitLabel, loading }"
-    @submit="onSubmit"
+    :submit-label="submitLabel"
+    :on-submit="onSubmit"
   >
     <template v-if="$slots.footer" #footer>
-      <span class="text-muted text-sm">
-        <slot name="footer" />
-      </span>
+      <slot name="footer" />
     </template>
-  </UAuthForm>
+  </AuthFormBase>
 </template>

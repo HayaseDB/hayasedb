@@ -6,17 +6,15 @@ const props = withDefaults(
     user?: AccountUser | null
     resending?: boolean
     cooldown?: number
+    onResend?: () => unknown
   }>(),
   {
     user: null,
     resending: false,
     cooldown: 0,
+    onResend: undefined,
   },
 )
-
-defineEmits<{
-  resend: []
-}>()
 
 const createdAt = computed(() => {
   if (!props.user?.createdAt) return null
@@ -69,7 +67,7 @@ const resendLabel = computed(() =>
           variant: 'solid',
           loading: resending,
           disabled: cooldown > 0,
-          onClick: () => $emit('resend'),
+          onClick: () => void props.onResend?.(),
         },
       ]"
     />

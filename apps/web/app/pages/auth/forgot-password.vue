@@ -21,7 +21,7 @@ async function onSubmit(data: ForgotPasswordSchema) {
       <UButton to="/login" label="Back to sign in" variant="subtle" block />
     </div>
 
-    <AuthForgotPasswordForm v-else :loading="loading" @submit="onSubmit">
+    <AuthForgotPasswordForm v-else :loading="loading" :on-submit="onSubmit">
       <template #footer>
         Remembered it?
         <ULink to="/login" class="text-primary">Sign in</ULink>

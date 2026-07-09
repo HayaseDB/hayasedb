@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { AuthFormField } from '@nuxt/ui'
 import {
   forgotPasswordSchema,
   type ForgotPasswordSchema,
@@ -10,17 +10,15 @@ withDefaults(
     loading?: boolean
     title?: string
     submitLabel?: string
+    onSubmit?: (data: ForgotPasswordSchema) => unknown | Promise<unknown>
   }>(),
   {
     loading: false,
     title: 'Forgot password',
     submitLabel: 'Send reset link',
+    onSubmit: undefined,
   },
 )
-
-const emit = defineEmits<{
-  submit: [data: ForgotPasswordSchema]
-}>()
 
 const fields: AuthFormField[] = [
   {
@@ -33,24 +31,19 @@ const fields: AuthFormField[] = [
     autocomplete: 'email',
   },
 ]
-
-function onSubmit(event: FormSubmitEvent<ForgotPasswordSchema>) {
-  emit('submit', event.data)
-}
 </script>
 
 <template>
-  <UAuthForm
+  <AuthFormBase
     :schema="forgotPasswordSchema"
     :fields="fields"
+    :loading="loading"
     :title="title"
-    :submit="{ label: submitLabel, loading }"
-    @submit="onSubmit"
+    :submit-label="submitLabel"
+    :on-submit="onSubmit"
   >
     <template v-if="$slots.footer" #footer>
-      <span class="text-muted text-sm">
-        <slot name="footer" />
-      </span>
+      <slot name="footer" />
     </template>
-  </UAuthForm>
+  </AuthFormBase>
 </template>

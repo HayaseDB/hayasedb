@@ -18,8 +18,8 @@ function onSocial(provider: SocialProvider) {
     <AuthLoginForm
       :providers="['github', 'discord']"
       :loading="loading"
-      @submit="onSubmit"
-      @social="onSocial"
+      :on-submit="onSubmit"
+      :on-social="onSocial"
     >
       <template #footer>
         No account?

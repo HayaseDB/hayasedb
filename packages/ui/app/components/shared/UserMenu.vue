@@ -1,11 +1,16 @@
 <script setup lang="ts">
-defineProps<{
-  email?: string | null
-}>()
-
-defineEmits<{
-  signOut: []
-}>()
+withDefaults(
+  defineProps<{
+    email?: string | null
+    signInTo?: string
+    onSignOut?: () => unknown
+  }>(),
+  {
+    email: null,
+    signInTo: '/login',
+    onSignOut: undefined,
+  },
+)
 </script>
 
 <template>
@@ -16,12 +21,12 @@ defineEmits<{
       variant="subtle"
       size="sm"
       icon="i-lucide-log-out"
-      @click="$emit('signOut')"
+      @click="() => void onSignOut?.()"
     >
       Sign out
     </UButton>
   </div>
-  <UButton v-else to="/login" color="neutral" variant="subtle" size="sm">
+  <UButton v-else :to="signInTo" color="neutral" variant="subtle" size="sm">
     Sign in
   </UButton>
 </template>

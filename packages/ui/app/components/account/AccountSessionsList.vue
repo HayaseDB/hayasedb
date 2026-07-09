@@ -6,18 +6,17 @@ const props = withDefaults(
     sessions?: AccountSessionRow[]
     currentToken?: string | null
     loading?: boolean
+    onRevoke?: (token: string) => unknown
+    onRevokeOthers?: () => unknown
   }>(),
   {
     sessions: () => [],
     currentToken: null,
     loading: false,
+    onRevoke: undefined,
+    onRevokeOthers: undefined,
   },
 )
-
-const emit = defineEmits<{
-  revoke: [token: string]
-  'revoke-others': []
-}>()
 
 const hasOthers = computed(() =>
   props.sessions.some(
@@ -43,38 +42,11 @@ function askRevokeOthers() {
 
 function onConfirm() {
   if (revokingOthers.value) {
-    emit('revoke-others')
+    props.onRevokeOthers?.()
   } else if (pendingToken.value) {
-    emit('revoke', pendingToken.value)
+    props.onRevoke?.(pendingToken.value)
   }
   confirmOpen.value = false
-}
-
-function describeDevice(userAgent?: string | null): string {
-  if (!userAgent) return 'Unknown device'
-  const browser = /Edg/.test(userAgent)
-    ? 'Edge'
-    : /OPR|Opera/.test(userAgent)
-      ? 'Opera'
-      : /Chrome/.test(userAgent)
-        ? 'Chrome'
-        : /Firefox/.test(userAgent)
-          ? 'Firefox'
-          : /Safari/.test(userAgent)
-            ? 'Safari'
-            : 'Browser'
-  const os = /Windows/.test(userAgent)
-    ? 'Windows'
-    : /Mac OS|Macintosh/.test(userAgent)
-      ? 'macOS'
-      : /Android/.test(userAgent)
-        ? 'Android'
-        : /iPhone|iPad|iOS/.test(userAgent)
-          ? 'iOS'
-          : /Linux/.test(userAgent)
-            ? 'Linux'
-            : 'Unknown OS'
-  return `${browser} on ${os}`
 }
 </script>
 
@@ -148,7 +120,7 @@ function describeDevice(userAgent?: string | null): string {
       <p v-else class="text-muted text-sm">No active sessions.</p>
     </div>
 
-    <AccountConfirmModal
+    <ConfirmModal
       v-model:open="confirmOpen"
       :title="
         revokingOthers ? 'Sign out other devices?' : 'Revoke this session?'

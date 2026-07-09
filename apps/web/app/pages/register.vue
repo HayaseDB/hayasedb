@@ -20,8 +20,8 @@ function onSocial(provider: SocialProvider) {
       :key="formKey"
       :providers="['github', 'discord']"
       :loading="loading"
-      @submit="onSubmit"
-      @social="onSocial"
+      :on-submit="onSubmit"
+      :on-social="onSocial"
     >
       <template #footer>
         Already have an account?

@@ -31,7 +31,7 @@ async function onSubmit(data: ResetPasswordSchema) {
       />
     </div>
 
-    <AuthResetPasswordForm v-else :loading="loading" @submit="onSubmit">
+    <AuthResetPasswordForm v-else :loading="loading" :on-submit="onSubmit">
       <template #footer>
         Back to
         <ULink to="/login" class="text-primary">sign in</ULink>

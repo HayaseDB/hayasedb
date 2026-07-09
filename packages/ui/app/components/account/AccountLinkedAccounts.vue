@@ -1,24 +1,22 @@
 <script setup lang="ts">
 import type { AccountLinkedRow, SocialProvider } from '@hayasedb/contract'
-import { providerConfig } from '#ui-layer/composables/useSocialProviders'
 
 const props = withDefaults(
   defineProps<{
     accounts?: AccountLinkedRow[]
     availableProviders?: SocialProvider[]
     loading?: boolean
+    onLink?: (provider: SocialProvider) => unknown
+    onUnlink?: (payload: { providerId: string; accountId: string }) => unknown
   }>(),
   {
     accounts: () => [],
     availableProviders: () => [],
     loading: false,
+    onLink: undefined,
+    onUnlink: undefined,
   },
 )
-
-const emit = defineEmits<{
-  link: [provider: SocialProvider]
-  unlink: [payload: { providerId: string; accountId: string }]
-}>()
 
 type LinkedSocial = AccountLinkedRow & { providerId: SocialProvider }
 
@@ -57,7 +55,7 @@ function askUnlink(providerId: string, accountId: string) {
 }
 
 function onConfirm() {
-  if (pending.value) emit('unlink', pending.value)
+  if (pending.value) props.onUnlink?.(pending.value)
   confirmOpen.value = false
 }
 </script>
@@ -105,7 +103,7 @@ function onConfirm() {
               icon="i-lucide-link"
               label="Connect"
               :disabled="loading"
-              @click="emit('link', row.provider)"
+              @click="() => void onLink?.(row.provider)"
             />
           </div>
         </template>
@@ -116,7 +114,7 @@ function onConfirm() {
       </div>
     </div>
 
-    <AccountConfirmModal
+    <ConfirmModal
       v-model:open="confirmOpen"
       title="Unlink this account?"
       description="You'll no longer be able to sign in with this provider."

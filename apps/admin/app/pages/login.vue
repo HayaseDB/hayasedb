@@ -18,8 +18,8 @@ function onSocial(provider: SocialProvider) {
     <AuthLoginForm
       title="Admin sign in"
       :loading="loading"
-      @submit="onSubmit"
-      @social="onSocial"
+      :on-submit="onSubmit"
+      :on-social="onSocial"
     />
   </AuthCard>
 </template>
