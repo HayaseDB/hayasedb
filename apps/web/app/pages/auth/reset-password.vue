@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ResetPasswordSchema } from '@hayasedb/contract'
 
+definePageMeta({ layout: false })
+
 const route = useRoute()
 const { loading, resetPassword } = useAuthActions()
 

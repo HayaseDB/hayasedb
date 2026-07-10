@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { LoginSchema, SocialProvider } from '@hayasedb/contract'
 
+definePageMeta({ layout: false })
+
 const { loading, signInEmail, signInSocial } = useAuthActions()
 useAuthError()
 

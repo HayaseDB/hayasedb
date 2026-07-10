@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ForgotPasswordSchema } from '@hayasedb/contract'
 
+definePageMeta({ layout: false })
+
 const { loading, requestPasswordReset } = useAuthActions()
 
 const sent = ref(false)

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { RegisterSchema, SocialProvider } from '@hayasedb/contract'
 
+definePageMeta({ layout: false })
+
 const { loading, signUpEmail, signInSocial } = useAuthActions()
 
 const formKey = ref(0)

@@ -1,32 +1,63 @@
 <script setup lang="ts">
-withDefaults(
+import type { AccountUser } from '@hayasedb/contract'
+import type { DropdownMenuItem } from '@nuxt/ui'
+
+const props = withDefaults(
   defineProps<{
-    email?: string | null
+    user?: AccountUser | null
     signInTo?: string
     onSignOut?: () => unknown
   }>(),
   {
-    email: null,
+    user: null,
     signInTo: '/login',
     onSignOut: undefined,
   },
 )
+
+const items = computed<DropdownMenuItem[][]>(() => [
+  [
+    {
+      label: props.user?.name ?? '',
+      type: 'label',
+      slot: 'account',
+    },
+  ],
+  [{ label: 'Settings', icon: 'i-lucide-settings', to: '/settings' }],
+  [
+    {
+      label: 'Sign out',
+      icon: 'i-lucide-log-out',
+      color: 'error',
+      onSelect: () => void props.onSignOut?.(),
+    },
+  ],
+])
 </script>
 
 <template>
-  <div v-if="email" class="flex items-center gap-3">
-    <span class="text-muted text-sm">{{ email }}</span>
+  <UDropdownMenu
+    v-if="user"
+    :items="items"
+    :ui="{ content: 'w-56' }"
+    :content="{ align: 'end' }"
+  >
     <UButton
       color="neutral"
-      variant="subtle"
-      size="sm"
-      icon="i-lucide-log-out"
-      @click="() => void onSignOut?.()"
+      variant="ghost"
+      class="rounded-full p-0"
+      :aria-label="user.name"
     >
-      Sign out
+      <UAvatar :src="user.image ?? undefined" :alt="user.name" size="md" />
     </UButton>
-  </div>
-  <UButton v-else :to="signInTo" color="neutral" variant="subtle" size="sm">
-    Sign in
+
+    <template #account-label>
+      <p class="text-highlighted truncate font-medium">{{ user.name }}</p>
+      <p class="text-muted truncate text-xs font-normal">{{ user.email }}</p>
+    </template>
+  </UDropdownMenu>
+
+  <UButton v-else :to="signInTo" color="primary" variant="solid" size="sm">
+    Login
   </UButton>
 </template>

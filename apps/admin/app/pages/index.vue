@@ -1,25 +1,27 @@
 <script setup lang="ts">
 const { data: session } = await useAppSession()
-const me = computed(() => session.value?.user ?? null)
-const auth = useAuth()
-const router = useRouter()
-
-async function signOut() {
-  await auth.signOut()
-  await router.push('/login')
-}
+const user = computed(() => session.value?.user ?? null)
 </script>
 
 <template>
-  <UContainer class="py-10">
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-xl font-semibold">Admin console</h1>
-      <UserMenu :email="session?.user?.email" :on-sign-out="signOut" />
-    </div>
+  <UDashboardPanel id="admin-home">
+    <template #header>
+      <UDashboardNavbar title="Overview">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <UCard>
-      <template #header>Signed in as</template>
-      <pre class="text-sm">{{ me }}</pre>
-    </UCard>
-  </UContainer>
+    <template #body>
+      <div class="flex flex-col gap-1">
+        <h2 class="text-highlighted text-xl font-semibold">
+          Welcome back{{ user?.name ? `, ${user.name}` : '' }}
+        </h2>
+        <p class="text-muted text-sm">
+          The administration console. Sections will appear here.
+        </p>
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>
