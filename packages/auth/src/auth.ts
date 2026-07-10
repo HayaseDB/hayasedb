@@ -152,6 +152,9 @@ export function createAuth(opts: AuthOptions) {
     },
     advanced: {
       useSecureCookies: production,
+      ipAddress: {
+        ipAddressHeaders: ['x-forwarded-for'],
+      },
     },
     onAPIError: opts.errorCallbackURL
       ? { errorURL: opts.errorCallbackURL }

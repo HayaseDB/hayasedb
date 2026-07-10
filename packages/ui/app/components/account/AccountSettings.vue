@@ -5,11 +5,12 @@ import type {
   AccountUser,
   ChangeEmailSchema,
   ChangePasswordSchema,
+  SetPasswordSchema,
   SocialProvider,
   UpdateProfileSchema,
 } from '@hayasedb/contract'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     user?: AccountUser | null
     sessions?: AccountSessionRow[]
@@ -26,6 +27,7 @@ withDefaults(
     onChangePassword?: (
       data: ChangePasswordSchema,
     ) => unknown | Promise<unknown>
+    onSetPassword?: (data: SetPasswordSchema) => unknown | Promise<unknown>
     onResend?: () => unknown
     onRevokeSession?: (token: string) => unknown
     onRevokeOtherSessions?: () => unknown
@@ -51,6 +53,7 @@ withDefaults(
     onUploadAvatar: undefined,
     onChangeEmail: undefined,
     onChangePassword: undefined,
+    onSetPassword: undefined,
     onResend: undefined,
     onRevokeSession: undefined,
     onRevokeOtherSessions: undefined,
@@ -59,6 +62,13 @@ withDefaults(
     onSignOut: undefined,
     onDeleteAccount: undefined,
   },
+)
+
+const hasPassword = computed(
+  () =>
+    props.accounts?.some(
+      (account: AccountLinkedRow) => account.providerId === 'credential',
+    ) ?? false,
 )
 </script>
 
@@ -101,7 +111,11 @@ withDefaults(
 
       <UPageCard variant="subtle">
         <fieldset :disabled="!verified" class="contents">
-          <AccountPasswordForm :on-submit="onChangePassword" />
+          <AccountPasswordForm
+            :has-password="hasPassword"
+            :on-submit="onChangePassword"
+            :on-set-password="onSetPassword"
+          />
           <USeparator class="my-6" />
           <AccountSessionsList
             :sessions="sessions"

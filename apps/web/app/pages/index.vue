@@ -2,6 +2,7 @@
 import type {
   ChangeEmailSchema,
   ChangePasswordSchema,
+  SetPasswordSchema,
   SocialProvider,
   UpdateProfileSchema,
 } from '@hayasedb/contract'
@@ -45,6 +46,7 @@ const {
   uploadAvatar,
   changeEmail,
   changePassword,
+  setPassword,
   resendVerification,
   revokeSession,
   revokeOtherSessions,
@@ -93,6 +95,12 @@ async function onChangeEmail(data: ChangeEmailSchema) {
 async function onChangePassword(data: ChangePasswordSchema) {
   const ok = await changePassword(data)
   if (ok) await refreshSessions()
+  return ok
+}
+
+async function onSetPassword(data: SetPasswordSchema) {
+  const ok = await setPassword(data)
+  if (ok) await refreshAccounts()
   return ok
 }
 
@@ -147,6 +155,7 @@ async function onUnlinkAccount(payload: {
         :on-upload-avatar="onUploadAvatar"
         :on-change-email="onChangeEmail"
         :on-change-password="onChangePassword"
+        :on-set-password="onSetPassword"
         :on-resend="onResend"
         :on-revoke-session="onRevokeSession"
         :on-revoke-other-sessions="onRevokeOtherSessions"

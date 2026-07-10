@@ -47,7 +47,7 @@ import { StorageService } from './storage/storage.service'
         auth: authFactory(config, db, redis, mailer, storage),
         disableTrustedOriginsCors: true,
         bodyParser: {
-          json: { limit: '2mb' },
+          json: { limit: '2mb', type: ['application/json', 'text/plain'] },
           urlencoded: { limit: '2mb', extended: true },
           rawBody: true,
         },

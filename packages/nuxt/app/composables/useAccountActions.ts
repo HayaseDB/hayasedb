@@ -1,6 +1,7 @@
 import type {
   ChangeEmailSchema,
   ChangePasswordSchema,
+  SetPasswordSchema,
   SocialProvider,
   UpdateProfileSchema,
 } from '@hayasedb/contract'
@@ -138,6 +139,30 @@ export function useAccountActions() {
     })
   }
 
+  async function setPassword(input: SetPasswordSchema): Promise<boolean> {
+    loading.value = true
+    try {
+      await api.account.setPassword({ newPassword: input.newPassword })
+
+      toast.add({
+        title: 'Password set',
+        description: 'You can now sign in with email and password.',
+        color: 'success',
+      })
+      return true
+    } catch (error) {
+      toast.add({
+        title: 'Could not set password',
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+        color: 'error',
+      })
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   function resendVerification(email: string): Promise<boolean> {
     return run({
       operation: () =>
@@ -251,6 +276,7 @@ export function useAccountActions() {
     uploadAvatar,
     changeEmail,
     changePassword,
+    setPassword,
     resendVerification,
     revokeSession,
     revokeOtherSessions,

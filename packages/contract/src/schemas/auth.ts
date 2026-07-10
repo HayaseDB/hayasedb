@@ -113,6 +113,16 @@ export const changePasswordSchema = z
     path: ['confirmPassword'],
   })
 
+export const setPasswordSchema = z
+  .object({
+    newPassword: newPasswordSchema,
+    confirmPassword: requiredString('Password confirmation'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    error: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
 export type LoginSchema = z.output<typeof loginSchema>
 export type RegisterSchema = z.output<typeof registerSchema>
 export type ForgotPasswordSchema = z.output<typeof forgotPasswordSchema>
@@ -120,3 +130,4 @@ export type ResetPasswordSchema = z.output<typeof resetPasswordSchema>
 export type UpdateProfileSchema = z.output<typeof updateProfileSchema>
 export type ChangeEmailSchema = z.output<typeof changeEmailSchema>
 export type ChangePasswordSchema = z.output<typeof changePasswordSchema>
+export type SetPasswordSchema = z.output<typeof setPasswordSchema>
