@@ -19,14 +19,19 @@ export function createAuthMiddleware(opts: AuthMiddlewareOptions = {}) {
 
     if (!isProtected) return
 
-    const { data } = await useAuth().getSession()
+    const { data: session } = await useAppSession()
 
-    if (!data?.session) {
+    if (!session.value?.session) {
       return navigateTo({ path: '/login', query: { redirect: to.fullPath } })
     }
 
-    if (opts.requireAdmin && (data.user.role !== 'admin' || data.user.banned)) {
-      return navigateTo('/login')
+    if (
+      opts.requireAdmin &&
+      (session.value.user.role !== 'admin' || session.value.user.banned)
+    ) {
+      return abortNavigation(
+        createError({ statusCode: 403, statusMessage: 'Access denied' }),
+      )
     }
   })
 }

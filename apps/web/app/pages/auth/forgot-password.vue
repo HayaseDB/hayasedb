@@ -3,6 +3,8 @@ import type { ForgotPasswordSchema } from '@hayasedb/contract'
 
 definePageMeta({ layout: false })
 
+useSeoMeta({ title: 'Forgot password' })
+
 const { loading, requestPasswordReset } = useAuthActions()
 
 const sent = ref(false)

@@ -3,6 +3,8 @@ import type { LoginSchema, SocialProvider } from '@hayasedb/contract'
 
 definePageMeta({ layout: false })
 
+useSeoMeta({ title: 'Sign in' })
+
 const { loading, signInEmail, signInSocial } = useAuthActions()
 useAuthError()
 

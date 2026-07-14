@@ -1,5 +1,5 @@
-import type { ApiClient } from '../utils/orpc'
-import { createApiClient } from '../utils/orpc'
+import type { ApiClient } from '~/utils/orpc'
+import { createApiClient } from '~/utils/orpc'
 
 declare module '#app' {
   interface NuxtApp {
@@ -8,7 +8,10 @@ declare module '#app' {
 }
 
 export default defineNuxtPlugin(() => {
-  const cookie = useRequestHeaders(['cookie']).cookie
+  const cookie = import.meta.server
+    ? useRequestHeaders(['cookie']).cookie
+    : undefined
+
   const api = createApiClient(
     useRequestURL().origin,
     cookie ? { cookie } : undefined,

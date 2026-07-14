@@ -19,6 +19,8 @@ if (error.value || !anime.value) {
   throw createError({ statusCode: 404, statusMessage: 'Anime not found' })
 }
 
+useSeoMeta({ title: () => anime.value?.slug ?? 'Anime' })
+
 const { genres } = useGenres()
 
 const crumbs = computed<BreadcrumbItem[]>(() => [

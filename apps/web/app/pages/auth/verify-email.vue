@@ -1,6 +1,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+useSeoMeta({ title: 'Verify email' })
+
 const route = useRoute()
 const router = useRouter()
 const { verifyEmail } = useAuthActions()

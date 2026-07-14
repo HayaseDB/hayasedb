@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
 
+useSeoMeta({ title: 'New anime' })
+
 const { genres } = useGenres()
 
 const crumbs: BreadcrumbItem[] = [

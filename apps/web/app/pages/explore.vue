@@ -4,6 +4,11 @@ import { ANIME_FORMATS, ANIME_STATUSES } from '@hayasedb/domain'
 const route = useRoute()
 const router = useRouter()
 
+useSeoMeta({
+  title: 'Explore',
+  description: 'Search and discover anime.',
+})
+
 function queryString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined
 }

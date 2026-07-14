@@ -7,6 +7,8 @@ type GenreListItem = Awaited<
   ReturnType<ApiClient['genre']['list']>
 >['items'][number]
 
+useSeoMeta({ title: 'Genres' })
+
 const { genres, pending, refresh } = useGenres()
 const actions = useGenreActions()
 

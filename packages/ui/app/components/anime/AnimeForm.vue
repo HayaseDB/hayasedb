@@ -303,7 +303,7 @@ const activeTab = ref('0')
                 >
                   <AnimeCoverImage
                     :src="m.url"
-                    alt="Gallery image"
+                    :alt="`Gallery image ${Number(index) + 1}`"
                     class="bg-default h-32 w-24 rounded"
                   />
                   <UIcon

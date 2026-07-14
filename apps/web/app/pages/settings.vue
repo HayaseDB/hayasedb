@@ -7,6 +7,7 @@ import type {
   UpdateProfileSchema,
 } from '@hayasedb/contract'
 
+useSeoMeta({ title: 'Settings' })
 useAuthError()
 
 const { data: session, refresh: refreshSession } = await useAppSession()
@@ -14,6 +15,8 @@ const user = computed(() => session.value?.user ?? null)
 const currentToken = computed(() => session.value?.session?.token ?? null)
 
 const auth = useAuth()
+
+const userId = computed(() => user.value?.id)
 
 const { data: sessions, refresh: refreshSessions } = await useAsyncData(
   'account-sessions',
@@ -25,7 +28,7 @@ const { data: sessions, refresh: refreshSessions } = await useAsyncData(
       return []
     }
   },
-  { watch: [user] },
+  { watch: [userId] },
 )
 const { data: accounts, refresh: refreshAccounts } = await useAsyncData(
   'account-accounts',
@@ -37,7 +40,7 @@ const { data: accounts, refresh: refreshAccounts } = await useAsyncData(
       return []
     }
   },
-  { watch: [user] },
+  { watch: [userId] },
 )
 
 const {

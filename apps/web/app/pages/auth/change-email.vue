@@ -1,6 +1,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+useSeoMeta({ title: 'Confirm email change' })
+
 const route = useRoute()
 const { loading, verifyEmail } = useAuthActions()
 

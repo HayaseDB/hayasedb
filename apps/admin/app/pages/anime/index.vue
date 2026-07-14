@@ -6,6 +6,8 @@ type AnimeListItem = Awaited<
   ReturnType<ApiClient['anime']['list']>
 >['items'][number]
 
+useSeoMeta({ title: 'Anime' })
+
 const {
   q,
   format,
@@ -67,7 +69,7 @@ const columns: TableColumn<AnimeListItem>[] = [
     cell: ({ row }) =>
       h(AnimeCoverImage, {
         src: row.original.coverUrl,
-        alt: row.original.slug,
+        alt: row.original.titleEnglish ?? undefined,
         class: 'aspect-[2/3] h-10 shrink-0 rounded',
       }),
   },

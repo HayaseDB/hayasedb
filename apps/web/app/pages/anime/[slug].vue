@@ -19,6 +19,7 @@ const dateFormatter = new Intl.DateTimeFormat('en', {
   year: 'numeric',
   month: 'short',
   day: 'numeric',
+  timeZone: 'UTC',
 })
 function formatDate(value?: string | null) {
   return value ? dateFormatter.format(new Date(value)) : null
@@ -37,12 +38,23 @@ const cover = computed(() => detail.value.media.find((m) => m.type === 'COVER'))
 const gallery = computed(() =>
   detail.value.media.filter((m) => m.type === 'GALLERY'),
 )
+
+useSeoMeta({
+  title: () => detail.value.titleEnglish,
+  description: () => detail.value.description ?? undefined,
+  ogTitle: () => detail.value.titleEnglish,
+  ogDescription: () => detail.value.description ?? undefined,
+  ogImage: () => cover.value?.url,
+})
 </script>
 
 <template>
   <div>
     <div v-if="banner" class="relative h-48 w-full sm:h-64">
-      <AnimeCoverImage :src="banner.url" :alt="detail.slug" />
+      <AnimeCoverImage
+        :src="banner.url"
+        :alt="`${detail.titleEnglish} banner`"
+      />
       <div
         class="from-default absolute inset-0 bg-gradient-to-t to-transparent"
       />
@@ -62,7 +74,7 @@ const gallery = computed(() =>
       <div class="flex flex-col gap-6 sm:flex-row">
         <AnimeCoverImage
           :src="cover?.url"
-          :alt="detail.slug"
+          :alt="`${detail.titleEnglish} cover`"
           class="aspect-[2/3] w-40 shrink-0 rounded-lg sm:w-48"
         />
 
@@ -116,10 +128,10 @@ const gallery = computed(() =>
         <h2 class="text-highlighted mb-3 text-lg font-semibold">Gallery</h2>
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <AnimeCoverImage
-            v-for="image in gallery"
+            v-for="(image, index) in gallery"
             :key="image.id"
             :src="image.url"
-            :alt="detail.slug"
+            :alt="`${detail.titleEnglish} gallery image ${index + 1}`"
             lazy
             class="aspect-video rounded-lg"
           />

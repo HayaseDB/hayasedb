@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useSeoMeta({ title: 'Overview' })
+
 const { data: session } = await useAppSession()
 const user = computed(() => session.value?.user ?? null)
 </script>

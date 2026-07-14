@@ -1,4 +1,8 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useSeoMeta({
+  description: 'The open anime database.',
+})
+</script>
 
 <template>
   <UContainer class="py-20" />

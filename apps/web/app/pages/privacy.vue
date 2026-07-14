@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useSeoMeta({ title: 'Privacy Policy' })
+</script>
 
 <template>
   <UContainer class="py-10">

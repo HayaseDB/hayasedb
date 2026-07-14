@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useSeoMeta({ title: 'Imprint' })
+</script>
 
 <template>
   <UContainer class="py-10">

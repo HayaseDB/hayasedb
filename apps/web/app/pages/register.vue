@@ -3,6 +3,8 @@ import type { RegisterSchema, SocialProvider } from '@hayasedb/contract'
 
 definePageMeta({ layout: false })
 
+useSeoMeta({ title: 'Create account' })
+
 const { loading, signUpEmail, signInSocial } = useAuthActions()
 
 const formKey = ref(0)

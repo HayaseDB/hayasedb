@@ -44,6 +44,7 @@ export function useAuthActions() {
         }
       }
 
+      await refreshNuxtData('app-session')
       await router.push(redirectTarget())
       return true
     } finally {
@@ -70,6 +71,7 @@ export function useAuthActions() {
         description: `We sent a verification link to ${input.email}.`,
         color: 'info',
       })
+      await refreshNuxtData('app-session')
       await router.push(redirectTarget())
       return true
     } finally {

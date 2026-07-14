@@ -20,7 +20,7 @@ defineProps<{
   <NuxtLink :to="to" class="group flex flex-col gap-2">
     <AnimeCoverImage
       :src="anime.coverUrl"
-      :alt="anime.slug"
+      :alt="anime.titleEnglish ?? undefined"
       lazy
       class="aspect-[2/3] rounded-lg"
     />

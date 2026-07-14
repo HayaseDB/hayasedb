@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useSeoMeta({ title: 'Users' })
+</script>
 
 <template>
   <UDashboardPanel id="admin-users">

@@ -3,6 +3,8 @@ import type { ResetPasswordSchema } from '@hayasedb/contract'
 
 definePageMeta({ layout: false })
 
+useSeoMeta({ title: 'Reset password' })
+
 const route = useRoute()
 const { loading, resetPassword } = useAuthActions()
 

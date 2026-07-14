@@ -37,6 +37,7 @@ export function useAccountActions() {
     })
     if (data?.user) return false
     await auth.signOut().catch(() => {})
+    await refreshNuxtData('app-session')
     toast.add({
       title: 'Session expired',
       description: 'Please sign in again to continue.',
@@ -241,6 +242,7 @@ export function useAccountActions() {
 
   async function signOut(): Promise<void> {
     await auth.signOut()
+    await refreshNuxtData('app-session')
     await router.push('/login')
   }
 
@@ -263,6 +265,7 @@ export function useAccountActions() {
         description: 'Your account and data have been permanently removed.',
         color: 'success',
       })
+      await refreshNuxtData('app-session')
       await router.push('/login')
       return true
     } finally {
