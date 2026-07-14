@@ -24,6 +24,7 @@
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@vueuse/core": "catalog:",
     "better-auth": "catalog:",
     "nuxt": "^4.4.8",
     "tailwindcss": "^4.3.2",

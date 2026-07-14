@@ -25,11 +25,12 @@ export default defineNuxtConfig({
         '@orpc/contract',
         '@orpc/openapi/extensions/route',
         '@orpc/openapi/fetch',
+        '@vueuse/core',
         'better-auth/client/plugins',
         'better-auth/vue',
         'zod',
       ],
-      exclude: ['@hayasedb/contract'],
+      exclude: ['@hayasedb/auth', '@hayasedb/contract', '@hayasedb/domain'],
     },
   },
 })
