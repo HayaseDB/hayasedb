@@ -1,59 +1,36 @@
 <script setup lang="ts">
-import { ANIME_FORMATS, ANIME_STATUSES } from '@hayasedb/domain'
-
-const route = useRoute()
-const router = useRouter()
-
-useSeoMeta({
-  title: 'Explore',
-  description: 'Search and discover anime.',
-})
-
-function queryString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined
-}
-
-function enumParam<T extends string>(
-  value: unknown,
-  allowed: readonly T[],
-): T | undefined {
-  return typeof value === 'string' &&
-    (allowed as readonly string[]).includes(value)
-    ? (value as T)
-    : undefined
-}
-
 const {
   q,
   format,
   status,
   genreId,
+  sortKey,
   page,
   pageSize,
+  pageTo,
+  hasFilters,
+  resetFilters,
   genres,
   items,
   total,
   pending,
-} = useAnimeList({
-  key: 'explore-anime',
-  initial: {
-    q: queryString(route.query.q),
-    format: enumParam(route.query.format, ANIME_FORMATS),
-    status: enumParam(route.query.status, ANIME_STATUSES),
-    genreId: queryString(route.query.genreId),
+} = useAnimeListQuery({ key: 'explore-anime' })
+
+useSeoMeta({
+  title: () => {
+    const base = q.value ? `“${q.value}” – Explore` : 'Explore'
+    return page.value > 1 ? `${base} – Page ${page.value}` : base
   },
+  description: 'Search and discover anime.',
 })
 
-watch([q, format, status, genreId], ([qv, fv, sv, gv]) => {
-  router.replace({
-    query: {
-      ...(qv ? { q: qv } : {}),
-      ...(fv ? { format: fv } : {}),
-      ...(sv ? { status: sv } : {}),
-      ...(gv ? { genreId: gv } : {}),
-    },
-  })
+watch(page, () => {
+  if (import.meta.client) window.scrollTo({ top: 0 })
 })
+
+const initialLoading = computed(() => pending.value && items.value.length === 0)
+const rangeStart = computed(() => (page.value - 1) * pageSize + 1)
+const rangeEnd = computed(() => Math.min(page.value * pageSize, total.value))
 </script>
 
 <template>
@@ -68,32 +45,69 @@ watch([q, format, status, genreId], ([qv, fv, sv, gv]) => {
       v-model:format="format"
       v-model:status="status"
       v-model:genre-id="genreId"
+      v-model:sort-key="sortKey"
       :genres="genres"
-      class="mb-6"
+      class="mb-4"
     />
 
     <div
-      v-if="pending && items.length === 0"
-      class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+      v-if="!initialLoading"
+      class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1"
     >
-      <USkeleton
-        v-for="n in 8"
-        :key="n"
-        class="aspect-[2/3] w-full rounded-lg"
+      <p class="text-muted text-sm">
+        {{ total }} {{ total === 1 ? 'title' : 'titles' }}
+      </p>
+      <UButton
+        v-if="hasFilters"
+        label="Reset filters"
+        icon="i-lucide-x"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        @click="resetFilters()"
       />
     </div>
 
     <div
-      v-else-if="items.length === 0"
-      class="text-muted flex flex-col items-center gap-2 py-20 text-center"
+      v-if="initialLoading"
+      class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-y-8 xl:grid-cols-6"
     >
-      <UIcon name="i-lucide-search-x" class="size-8" />
-      <p class="text-sm">No anime found.</p>
+      <div v-for="n in pageSize" :key="n" class="flex flex-col gap-2">
+        <USkeleton class="aspect-[2/3] w-full rounded-lg" />
+        <USkeleton class="h-4 w-3/4" />
+      </div>
     </div>
+
+    <UEmpty
+      v-else-if="items.length === 0"
+      variant="naked"
+      icon="i-lucide-search-x"
+      title="No anime found"
+      :description="
+        hasFilters
+          ? 'Try adjusting your search or filters.'
+          : 'Check back later — new titles are added regularly.'
+      "
+      :actions="
+        hasFilters
+          ? [
+              {
+                label: 'Reset filters',
+                color: 'neutral',
+                variant: 'outline',
+                onClick: () => {
+                  void resetFilters()
+                },
+              },
+            ]
+          : undefined
+      "
+      class="py-16"
+    />
 
     <div
       v-else
-      class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+      class="grid grid-cols-2 gap-x-4 gap-y-6 transition-opacity sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-y-8 xl:grid-cols-6"
       :class="{ 'opacity-60': pending }"
     >
       <AnimeCard
@@ -104,12 +118,18 @@ watch([q, format, status, genreId], ([qv, fv, sv, gv]) => {
       />
     </div>
 
-    <div v-if="total > pageSize" class="mt-8 flex justify-center">
+    <div v-if="total > pageSize" class="mt-10 flex flex-col items-center gap-3">
       <UPagination
-        v-model:page="page"
+        :page="page"
         :items-per-page="pageSize"
         :total="total"
+        :to="pageTo"
+        show-edges
+        :sibling-count="1"
       />
+      <p class="text-muted text-xs">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ total }}
+      </p>
     </div>
   </UContainer>
 </template>

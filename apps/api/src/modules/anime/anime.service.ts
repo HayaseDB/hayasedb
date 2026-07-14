@@ -75,10 +75,11 @@ export class AnimeService {
     const where = conditions.length > 0 ? and(...conditions) : undefined
 
     const direction = input.order === 'asc' ? asc : desc
+    const title = sql`lower(coalesce(${schema.anime.titleEnglish}, ${schema.anime.titleRomaji}, ${schema.anime.titleNative}, ${schema.anime.slug}))`
     const orderBy =
       input.sort === 'title'
-        ? direction(schema.anime.slug)
-        : direction(schema.anime.createdAt)
+        ? [direction(title), asc(schema.anime.id)]
+        : [direction(schema.anime.createdAt), asc(schema.anime.id)]
 
     const [[countRow], rows] = await Promise.all([
       this.db
@@ -99,7 +100,7 @@ export class AnimeService {
         })
         .from(schema.anime)
         .where(where)
-        .orderBy(orderBy)
+        .orderBy(...orderBy)
         .limit(input.limit)
         .offset(input.offset),
     ])

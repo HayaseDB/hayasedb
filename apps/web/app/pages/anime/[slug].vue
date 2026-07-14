@@ -15,29 +15,52 @@ if (error.value || !anime.value) {
 
 const detail = computed(() => anime.value!)
 
-const dateFormatter = new Intl.DateTimeFormat('en', {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-})
-function formatDate(value?: string | null) {
-  return value ? dateFormatter.format(new Date(value)) : null
-}
-const releaseRange = computed(() => {
-  const start = formatDate(detail.value.startDate)
-  const end = formatDate(detail.value.endDate)
-  if (start && end) return start === end ? start : `${start} – ${end}`
-  return start ?? end
-})
-
 const banner = computed(() =>
   detail.value.media.find((m) => m.type === 'BANNER'),
 )
 const cover = computed(() => detail.value.media.find((m) => m.type === 'COVER'))
-const gallery = computed(() =>
-  detail.value.media.filter((m) => m.type === 'GALLERY'),
+const galleryItems = computed(() =>
+  detail.value.media
+    .filter((m) => m.type === 'GALLERY')
+    .map((image, index) => ({
+      id: image.id,
+      url: image.url,
+      alt: `${detail.value.titleEnglish} gallery image ${index + 1}`,
+    })),
 )
+
+const genreItems = computed(() =>
+  detail.value.genres.map((genre) => ({
+    ...genre,
+    to: `/explore?genreId=${genre.id}`,
+  })),
+)
+
+const lightbox = useAnimeLightbox()
+
+function openCoverLightbox() {
+  if (!cover.value) return
+  lightbox.open({
+    items: [
+      {
+        id: cover.value.id,
+        url: cover.value.url,
+        alt: `${detail.value.titleEnglish} cover`,
+      },
+    ],
+  })
+}
+
+const descriptionExpanded = ref(false)
+const isLongDescription = computed(
+  () => (detail.value.description?.length ?? 0) > 400,
+)
+watch(slug, () => {
+  descriptionExpanded.value = false
+})
+function toggleDescription() {
+  descriptionExpanded.value = !descriptionExpanded.value
+}
 
 useSeoMeta({
   title: () => detail.value.titleEnglish,
@@ -50,7 +73,7 @@ useSeoMeta({
 
 <template>
   <div>
-    <div v-if="banner" class="relative h-48 w-full sm:h-64">
+    <div v-if="banner" class="relative h-56 w-full sm:h-72 lg:h-80">
       <AnimeCoverImage
         :src="banner.url"
         :alt="`${detail.titleEnglish} banner`"
@@ -60,7 +83,7 @@ useSeoMeta({
       />
     </div>
 
-    <UContainer class="py-10" :class="{ 'relative -mt-24': banner }">
+    <UContainer class="py-10" :class="{ 'relative -mt-24 sm:-mt-28': banner }">
       <UButton
         to="/explore"
         variant="link"
@@ -71,16 +94,31 @@ useSeoMeta({
         Back to explore
       </UButton>
 
-      <div class="flex flex-col gap-6 sm:flex-row">
-        <AnimeCoverImage
-          :src="cover?.url"
-          :alt="`${detail.titleEnglish} cover`"
-          class="aspect-[2/3] w-40 shrink-0 rounded-lg sm:w-48"
-        />
+      <div class="flex flex-col gap-6 sm:flex-row sm:items-start lg:gap-8">
+        <div class="w-40 shrink-0 sm:w-48 lg:w-56">
+          <button
+            type="button"
+            :disabled="!cover"
+            class="ring-default block aspect-[2/3] w-full overflow-hidden rounded-lg shadow-lg ring-1"
+            :class="{ 'cursor-zoom-in': cover }"
+            :aria-label="`Open ${detail.titleEnglish} cover in fullscreen`"
+            @click="openCoverLightbox()"
+          >
+            <AnimeCoverImage
+              :src="cover?.url"
+              :alt="`${detail.titleEnglish} cover`"
+            />
+          </button>
+          <AnimeDetailsPanel
+            class="mt-4 hidden sm:flex"
+            :anime="detail"
+            :genres="genreItems"
+          />
+        </div>
 
-        <div class="flex flex-col gap-3">
+        <div class="min-w-0 flex-1">
           <div class="flex flex-col gap-1">
-            <h1 class="text-highlighted text-2xl font-semibold">
+            <h1 class="text-highlighted text-2xl font-semibold lg:text-3xl">
               {{ detail.titleEnglish }}
             </h1>
             <p v-if="detail.titleNative" class="text-muted text-sm">
@@ -88,53 +126,43 @@ useSeoMeta({
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <AnimeBadges
-              :format="detail.format"
-              :status="detail.status"
-              size="md"
-            />
-            <span
-              v-if="releaseRange"
-              class="text-muted inline-flex items-center gap-1 text-sm"
+          <div class="mt-4">
+            <p
+              v-if="detail.description"
+              class="text-toned max-w-3xl text-sm leading-relaxed"
+              :class="{
+                'line-clamp-6': isLongDescription && !descriptionExpanded,
+              }"
             >
-              <UIcon name="i-lucide-calendar" class="size-4" />
-              {{ releaseRange }}
-            </span>
-          </div>
-
-          <div v-if="detail.genres.length" class="flex flex-wrap gap-2">
-            <UBadge
-              v-for="genre in detail.genres"
-              :key="genre.id"
-              :label="genre.name"
-              :to="`/explore?genreId=${genre.id}`"
+              {{ detail.description }}
+            </p>
+            <p v-else class="text-muted text-sm">No description yet.</p>
+            <UButton
+              v-if="isLongDescription"
+              :label="descriptionExpanded ? 'Show less' : 'Show more'"
+              :trailing-icon="
+                descriptionExpanded
+                  ? 'i-lucide-chevron-up'
+                  : 'i-lucide-chevron-down'
+              "
               color="neutral"
-              variant="soft"
+              variant="link"
+              size="sm"
+              class="mt-1 -ml-2.5"
+              @click="toggleDescription()"
             />
           </div>
 
-          <p
-            v-if="detail.description"
-            class="text-toned mt-2 max-w-2xl text-sm leading-relaxed"
-          >
-            {{ detail.description }}
-          </p>
-          <p v-else class="text-muted text-sm">No description yet.</p>
-        </div>
-      </div>
-
-      <div v-if="gallery.length" class="mt-10">
-        <h2 class="text-highlighted mb-3 text-lg font-semibold">Gallery</h2>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          <AnimeCoverImage
-            v-for="(image, index) in gallery"
-            :key="image.id"
-            :src="image.url"
-            :alt="`${detail.titleEnglish} gallery image ${index + 1}`"
-            lazy
-            class="aspect-video rounded-lg"
+          <AnimeDetailsPanel
+            class="mt-6 flex sm:hidden"
+            :anime="detail"
+            :genres="genreItems"
           />
+
+          <div v-if="galleryItems.length" class="mt-8 max-w-3xl">
+            <h2 class="text-highlighted mb-4 text-lg font-semibold">Gallery</h2>
+            <AnimeGallery :items="galleryItems" />
+          </div>
         </div>
       </div>
     </UContainer>
