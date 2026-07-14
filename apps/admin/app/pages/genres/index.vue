@@ -144,12 +144,7 @@ const columns: TableColumn<GenreListItem>[] = [
           :columns="columns"
           :loading="pending"
           class="border-default flex-1 rounded-lg border"
-          :ui="{
-            base: 'table-fixed',
-            thead: 'bg-elevated/50',
-            tbody: '[&>tr:last-child>td]:border-b-0',
-            td: 'empty:p-0',
-          }"
+          :ui="TABLE_UI"
         >
           <template #empty>
             <div

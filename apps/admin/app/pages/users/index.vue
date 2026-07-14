@@ -105,15 +105,14 @@ const columns: TableColumn<AdminUser>[] = [
     accessorKey: 'name',
     enableHiding: false,
     header: () =>
-      h(UButton, {
-        label: 'User',
-        color: 'neutral',
-        variant: 'ghost',
-        size: 'sm',
-        class: '-mx-2',
-        trailingIcon: sortIcon('name'),
-        onClick: () => toggleSort('name'),
-      }),
+      h(
+        UButton,
+        tableSortHeaderProps({
+          label: 'User',
+          icon: sortIcon('name'),
+          onClick: () => toggleSort('name'),
+        }),
+      ),
     cell: ({ row }) =>
       h('div', { class: 'flex min-w-0 items-center gap-3' }, [
         h(UAvatar, {
@@ -180,15 +179,14 @@ const columns: TableColumn<AdminUser>[] = [
     accessorKey: 'createdAt',
     meta: { class: { th: 'w-36', td: 'w-36' } },
     header: () =>
-      h(UButton, {
-        label: 'Joined',
-        color: 'neutral',
-        variant: 'ghost',
-        size: 'sm',
-        class: '-mx-2',
-        trailingIcon: sortIcon('createdAt'),
-        onClick: () => toggleSort('createdAt'),
-      }),
+      h(
+        UButton,
+        tableSortHeaderProps({
+          label: 'Joined',
+          icon: sortIcon('createdAt'),
+          onClick: () => toggleSort('createdAt'),
+        }),
+      ),
     cell: ({ row }) =>
       h(
         'span',
@@ -340,12 +338,7 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
           :columns="columns"
           :loading="pending"
           class="border-default flex-1 rounded-lg border"
-          :ui="{
-            base: 'table-fixed',
-            thead: 'bg-elevated/50',
-            tbody: '[&>tr:last-child>td]:border-b-0',
-            td: 'empty:p-0',
-          }"
+          :ui="TABLE_UI"
         >
           <template #empty>
             <div

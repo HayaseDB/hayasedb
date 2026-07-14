@@ -24,8 +24,8 @@ withDefaults(
       v-if="animeStatusLabel(status)"
       :label="animeStatusLabel(status)!"
       :size="size"
-      color="neutral"
-      variant="outline"
+      :color="animeStatusColor(status)"
+      variant="subtle"
     />
   </div>
 </template>

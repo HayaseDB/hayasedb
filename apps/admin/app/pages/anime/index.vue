@@ -61,9 +61,9 @@ function askDelete(item: AnimeListItem) {
 }
 
 const UButton = resolveComponent('UButton')
+const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const AnimeCoverImage = resolveComponent('AnimeCoverImage')
-const AnimeBadges = resolveComponent('AnimeBadges')
 
 const columns: TableColumn<AnimeListItem>[] = [
   {
@@ -82,15 +82,14 @@ const columns: TableColumn<AnimeListItem>[] = [
     id: 'title',
     accessorKey: 'titleRomaji',
     header: () =>
-      h(UButton, {
-        label: 'Title',
-        color: 'neutral',
-        variant: 'ghost',
-        size: 'sm',
-        class: '-mx-2',
-        trailingIcon: titleSortIcon.value,
-        onClick: toggleTitleSort,
-      }),
+      h(
+        UButton,
+        tableSortHeaderProps({
+          label: 'Title',
+          icon: titleSortIcon.value,
+          onClick: toggleTitleSort,
+        }),
+      ),
     cell: ({ row }) =>
       h('div', { class: 'flex min-w-0 flex-col' }, [
         h(
@@ -109,12 +108,27 @@ const columns: TableColumn<AnimeListItem>[] = [
     id: 'format',
     accessorKey: 'format',
     header: 'Format',
-    meta: { class: { th: 'w-44', td: 'w-44' } },
-    cell: ({ row }) =>
-      h(AnimeBadges, {
-        format: row.original.format,
-        status: row.original.status,
-      }),
+    meta: { class: { th: 'w-24', td: 'w-24' } },
+    cell: ({ row }) => {
+      const label = animeFormatLabel(row.original.format)
+      if (!label) return null
+      return h('span', { class: 'text-sm' }, label)
+    },
+  },
+  {
+    id: 'status',
+    accessorKey: 'status',
+    header: 'Status',
+    meta: { class: { th: 'w-36', td: 'w-36' } },
+    cell: ({ row }) => {
+      const label = animeStatusLabel(row.original.status)
+      if (!label) return null
+      return h(UBadge, {
+        label,
+        color: animeStatusColor(row.original.status),
+        variant: 'subtle',
+      })
+    },
   },
   {
     id: 'genres',
@@ -124,7 +138,7 @@ const columns: TableColumn<AnimeListItem>[] = [
     cell: ({ row }) =>
       h(
         'span',
-        { class: 'text-muted line-clamp-1 text-xs' },
+        { class: 'text-muted line-clamp-1 text-sm' },
         row.original.genres.join(', '),
       ),
   },
@@ -169,6 +183,7 @@ const columns: TableColumn<AnimeListItem>[] = [
 const hideableColumns = [
   { id: 'title', label: 'Title' },
   { id: 'format', label: 'Format' },
+  { id: 'status', label: 'Status' },
   { id: 'genres', label: 'Genres' },
 ]
 const columnVisibility = ref<Record<string, boolean>>({})
@@ -240,12 +255,7 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
           :columns="columns"
           :loading="pending"
           class="border-default flex-1 rounded-lg border"
-          :ui="{
-            base: 'table-fixed',
-            thead: 'bg-elevated/50',
-            tbody: '[&>tr:last-child>td]:border-b-0',
-            td: 'empty:p-0',
-          }"
+          :ui="TABLE_UI"
         >
           <template #empty>
             <div

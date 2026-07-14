@@ -25,6 +25,17 @@ export const ANIME_STATUS_LABELS: Record<AnimeStatus, string> = {
   HIATUS: 'Hiatus',
 }
 
+export const ANIME_STATUS_COLORS: Record<
+  AnimeStatus,
+  'success' | 'info' | 'warning' | 'error' | 'neutral'
+> = {
+  FINISHED: 'neutral',
+  RELEASING: 'success',
+  NOT_YET_RELEASED: 'info',
+  CANCELLED: 'error',
+  HIATUS: 'warning',
+}
+
 export const ANIME_MEDIA_TYPE_LABELS: Record<AnimeMediaType, string> = {
   COVER: 'Cover',
   BANNER: 'Banner',
@@ -41,6 +52,12 @@ export function animeStatusLabel(
   value: AnimeStatus | null | undefined,
 ): string | null {
   return value ? ANIME_STATUS_LABELS[value] : null
+}
+
+export function animeStatusColor(
+  value: AnimeStatus | null | undefined,
+): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
+  return value ? ANIME_STATUS_COLORS[value] : 'neutral'
 }
 
 export const animeFormatOptions = ANIME_FORMATS.map((value) => ({
