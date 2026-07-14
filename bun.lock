@@ -21,6 +21,7 @@
       "dependencies": {
         "@hayasedb/auth": "workspace:*",
         "@hayasedb/contract": "workspace:*",
+        "@hayasedb/domain": "workspace:*",
         "@hayasedb/nuxt": "workspace:*",
         "@hayasedb/ui": "workspace:*",
         "@iconify-json/lucide": "^1.2.116",
@@ -51,6 +52,7 @@
         "@hayasedb/auth": "workspace:*",
         "@hayasedb/contract": "workspace:*",
         "@hayasedb/db": "workspace:*",
+        "@hayasedb/domain": "workspace:*",
         "@hayasedb/mail": "workspace:*",
         "@nestjs/common": "11.1.27",
         "@nestjs/config": "^4.0.2",
@@ -63,6 +65,7 @@
         "@scalar/nestjs-api-reference": "1.2.8",
         "@thallesp/nestjs-better-auth": "2.7.0",
         "better-auth": "catalog:",
+        "blurhash": "catalog:",
         "drizzle-orm": "catalog:",
         "ioredis": "catalog:",
         "nestjs-minio-client": "2.2.0",
@@ -89,6 +92,7 @@
       "dependencies": {
         "@hayasedb/auth": "workspace:*",
         "@hayasedb/contract": "workspace:*",
+        "@hayasedb/domain": "workspace:*",
         "@hayasedb/nuxt": "workspace:*",
         "@hayasedb/ui": "workspace:*",
         "@iconify-json/lucide": "^1.2.116",
@@ -161,6 +165,7 @@
       "name": "@hayasedb/contract",
       "version": "0.0.0",
       "dependencies": {
+        "@hayasedb/domain": "workspace:*",
         "@orpc/contract": "catalog:",
         "@orpc/openapi": "catalog:",
         "zod": "catalog:",
@@ -175,6 +180,7 @@
       "name": "@hayasedb/db",
       "version": "0.0.0",
       "dependencies": {
+        "@hayasedb/domain": "workspace:*",
         "drizzle-orm": "catalog:",
         "postgres": "catalog:",
       },
@@ -185,6 +191,15 @@
         "drizzle-kit": "catalog:",
         "tsdown": "catalog:",
         "tsx": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/domain": {
+      "name": "@hayasedb/domain",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@hayasedb/config": "workspace:*",
+        "tsdown": "catalog:",
         "typescript": "catalog:",
       },
     },
@@ -216,10 +231,12 @@
       "dependencies": {
         "@hayasedb/auth": "workspace:*",
         "@hayasedb/contract": "workspace:*",
+        "@hayasedb/domain": "workspace:*",
         "@nuxt/ui": "4.9.0",
         "@orpc/client": "catalog:",
         "@orpc/contract": "catalog:",
         "@orpc/openapi": "catalog:",
+        "@vueuse/core": "catalog:",
         "better-auth": "catalog:",
       },
       "devDependencies": {
@@ -236,6 +253,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@hayasedb/contract": "workspace:*",
+        "@hayasedb/domain": "workspace:*",
         "@iconify-json/lucide": "^1.2.116",
         "@iconify-json/simple-icons": "^1.2.0",
         "@nuxt/ui": "4.9.0",
@@ -263,7 +281,9 @@
     "@react-email/ui": "6.6.8",
     "@types/nodemailer": "8.0.1",
     "@types/react": "19.2.17",
+    "@vueuse/core": "14.3.0",
     "better-auth": "1.6.23",
+    "blurhash": "2.0.5",
     "dotenv": "17.4.2",
     "drizzle-kit": "0.31.10",
     "drizzle-orm": "0.45.2",
@@ -582,6 +602,8 @@
     "@hayasedb/contract": ["@hayasedb/contract@workspace:packages/contract"],
 
     "@hayasedb/db": ["@hayasedb/db@workspace:packages/db"],
+
+    "@hayasedb/domain": ["@hayasedb/domain@workspace:packages/domain"],
 
     "@hayasedb/mail": ["@hayasedb/mail@workspace:packages/mail"],
 
@@ -1820,6 +1842,8 @@
     "bl": ["bl@4.1.0", "", { "dependencies": { "buffer": "^5.5.0", "inherits": "^2.0.4", "readable-stream": "^3.4.0" } }, "sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w=="],
 
     "block-stream2": ["block-stream2@2.1.0", "", { "dependencies": { "readable-stream": "^3.4.0" } }, "sha512-suhjmLI57Ewpmq00qaygS8UgEq2ly2PCItenIyhMqVjo4t4pGzqMvfgJuX8iWTeSDdfSSqS6j38fL4ToNL7Pfg=="],
+
+    "blurhash": ["blurhash@2.0.5", "", {}, "sha512-cRygWd7kGBQO3VEhPiTgq4Wc43ctsM+o46urrmPOiuAe+07fzlSB9OJVdpgDL0jPqXUVQ9ht7aq7kxOeJHRK+w=="],
 
     "body-parser": ["body-parser@2.3.0", "", { "dependencies": { "bytes": "^3.1.2", "content-type": "^2.0.0", "debug": "^4.4.3", "http-errors": "^2.0.1", "iconv-lite": "^0.7.2", "on-finished": "^2.4.1", "qs": "^6.15.2", "raw-body": "^3.0.2", "type-is": "^2.1.0" } }, "sha512-2cGmJupaNgg+QUwVLAucDuWuoMZ6EX9iHDRswZ5lsNYEmwPaRknMPCLZz07yTzVq/83p4o/wzbDZbBrTvGGTIw=="],
 

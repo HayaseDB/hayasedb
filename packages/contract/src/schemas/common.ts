@@ -1,6 +1,6 @@
 import * as z from 'zod'
 
-export const idSchema = z.string()
+export const idSchema = z.uuid()
 
 export const timestampsSchema = z.object({
   createdAt: z.date(),
@@ -8,8 +8,8 @@ export const timestampsSchema = z.object({
 })
 
 export const paginationInputSchema = z.object({
-  limit: z.number().int().min(1).max(100).default(20),
-  offset: z.number().int().min(0).default(0),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
 })
 
 export const paginationMetaSchema = z.object({

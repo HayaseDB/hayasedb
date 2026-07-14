@@ -26,16 +26,5 @@ export default defineNuxtConfig({
     server: {
       strictPort: true,
     },
-    optimizeDeps: {
-      include: [
-        '@orpc/client',
-        '@orpc/openapi/extensions/route',
-        '@orpc/openapi/fetch',
-        'better-auth/client/plugins',
-        'better-auth/vue',
-        'zod',
-      ],
-      exclude: ['@hayasedb/contract'],
-    },
   },
 })

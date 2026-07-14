@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import type { AccountUser } from '@hayasedb/contract'
 
-const { data: session } = await useAppSession()
-const user = computed(() => session.value?.user ?? null)
-const { signOut } = useAccountActions()
+withDefaults(
+  defineProps<{
+    user?: AccountUser | null
+    onSignOut?: () => unknown
+  }>(),
+  { user: null, onSignOut: undefined },
+)
 
 const links: NavigationMenuItem[] = [
   { label: 'Home', to: '/' },
@@ -23,7 +28,7 @@ const links: NavigationMenuItem[] = [
     <UNavigationMenu :items="links" />
 
     <template #right>
-      <UserMenu :user="user" :on-sign-out="signOut" />
+      <UserMenu :user="user" :on-sign-out="onSignOut" />
     </template>
 
     <template #body>

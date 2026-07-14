@@ -12,10 +12,12 @@
   "dependencies": {
     "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
+    "@hayasedb/domain": "workspace:*",
     "@nuxt/ui": "4.9.0",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@vueuse/core": "catalog:",
     "better-auth": "catalog:"
   },
   "devDependencies": {

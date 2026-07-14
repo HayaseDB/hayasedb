@@ -22,6 +22,7 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: [
         '@orpc/client',
+        '@orpc/contract',
         '@orpc/openapi/extensions/route',
         '@orpc/openapi/fetch',
         'better-auth/client/plugins',

@@ -22,6 +22,13 @@
       "when": 1783537642109,
       "tag": "0002_worthless_jasper_sitwell",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784013644022,
+      "tag": "0003_flashy_sunspot",
+      "breakpoints": true
     }
   ]
 }

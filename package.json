@@ -39,7 +39,9 @@
       "@types/react": "19.2.17",
       "nodemailer": "9.0.3",
       "@types/nodemailer": "8.0.1",
-      "resend": "6.17.1"
+      "resend": "6.17.1",
+      "blurhash": "2.0.5",
+      "@vueuse/core": "14.3.0"
     }
   },
   "scripts": {

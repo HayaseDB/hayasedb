@@ -21,7 +21,7 @@ export class AccountController {
   uploadAvatar() {
     return implement(contract.account.uploadAvatar).handler(
       async ({ input, context, errors }) => {
-        const userId = requireVerifiedUser(context, errors)
+        const userId = requireVerifiedUser(context)
 
         const headers = fromNodeHeaders(context.request.headers)
 
@@ -50,7 +50,7 @@ export class AccountController {
   setPassword() {
     return implement(contract.account.setPassword).handler(
       async ({ input, context, errors }) => {
-        const userId = requireVerifiedUser(context, errors)
+        const userId = requireVerifiedUser(context)
 
         const headers = fromNodeHeaders(context.request.headers)
 
