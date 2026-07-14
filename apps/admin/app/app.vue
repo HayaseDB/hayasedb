@@ -9,7 +9,7 @@ useHead({
 
 <template>
   <UApp :locale="en">
-    <NuxtLoadingIndicator />
+    <NuxtLoadingIndicator color="var(--ui-primary)" :height="2" />
     <NuxtRouteAnnouncer />
     <NuxtLayout>
       <NuxtPage />

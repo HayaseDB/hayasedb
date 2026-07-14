@@ -1,4 +1,8 @@
 export default defineEventHandler((event) => {
   const { apiUrl } = useRuntimeConfig(event)
-  return proxyRequest(event, apiUrl + event.path)
+  const clientIp = getRequestIP(event, { xForwardedFor: true })
+
+  return proxyRequest(event, apiUrl + event.path, {
+    headers: clientIp ? { 'x-forwarded-for': clientIp } : undefined,
+  })
 })

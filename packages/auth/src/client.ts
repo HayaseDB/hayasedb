@@ -13,13 +13,17 @@ export type AppAuthClient = ReturnType<
   typeof createAuthClient<typeof clientConfig>
 >
 
+export interface AppAuthClientOptions {
+  baseURL?: string
+  fetchOptions?: FetchOptions
+}
+
 export function createAppAuthClient(
-  baseURL: string,
-  fetchOptions?: FetchOptions,
+  options: AppAuthClientOptions = {},
 ): AppAuthClient {
   return createAuthClient({
     ...clientConfig,
-    baseURL,
-    fetchOptions: { credentials: 'include', ...fetchOptions },
+    baseURL: options.baseURL,
+    fetchOptions: { credentials: 'include', ...options.fetchOptions },
   }) as AppAuthClient
 }

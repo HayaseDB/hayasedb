@@ -26,8 +26,11 @@ export function makeRedisSecondaryStorage(client: Redis): SecondaryStorage {
       ),
     delete: (key) => client.del(key).then(() => undefined),
     increment: async (key, ttl) => {
-      const count = await client.incr(key)
-      if (count === 1) await client.expire(key, ttl)
+      const [[, count]] = (await client
+        .multi()
+        .incr(key)
+        .expire(key, ttl, 'NX')
+        .exec()) as [[null, number], [null, number]]
       return count
     },
     getAndDelete: (key) => client.getdel(key),

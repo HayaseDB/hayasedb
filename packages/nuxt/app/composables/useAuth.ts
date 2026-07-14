@@ -1,8 +1,5 @@
-import { createAppAuthClient } from '@hayasedb/auth/client'
+import type { AppAuthClient } from '@hayasedb/auth'
 
-export function useAuth() {
-  const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-  const baseURL = `${useRequestURL().origin}/api/auth`
-
-  return createAppAuthClient(baseURL, { headers })
+export function useAuth(): AppAuthClient {
+  return useNuxtApp().$auth
 }
