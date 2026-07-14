@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LazyConfirmModal } from '#components'
+
 const props = withDefaults(
   defineProps<{
     loading?: boolean
@@ -12,15 +14,17 @@ const props = withDefaults(
   },
 )
 
-const confirmOpen = ref(false)
+const overlay = useOverlay()
+const confirmModal = overlay.create(LazyConfirmModal)
 
 function askDelete() {
-  confirmOpen.value = true
-}
-
-function onConfirm() {
-  props.onDeleteAccount?.()
-  confirmOpen.value = false
+  confirmModal.open({
+    title: 'Delete your account?',
+    description:
+      'This permanently deletes your account and all associated data. This action cannot be undone.',
+    confirmLabel: 'Delete account',
+    onConfirm: () => props.onDeleteAccount?.(),
+  })
 }
 </script>
 
@@ -65,14 +69,5 @@ function onConfirm() {
         />
       </div>
     </div>
-
-    <ConfirmModal
-      v-model:open="confirmOpen"
-      title="Delete your account?"
-      description="This permanently deletes your account and all associated data. This action cannot be undone."
-      confirm-label="Delete account"
-      :loading="loading"
-      @confirm="onConfirm"
-    />
   </div>
 </template>

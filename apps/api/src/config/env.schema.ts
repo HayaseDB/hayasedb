@@ -29,7 +29,12 @@ const dbEnv = z.object({
 
 const authEnv = z.object({
   AUTH_SECRET: z.string().min(32),
-  AUTH_TRUSTED_ORIGINS: csv('http://localhost:3001,http://localhost:3002'),
+  AUTH_TRUSTED_ORIGINS: csv(
+    'http://localhost:3001,http://localhost:3002,http://127.0.0.1:3001',
+  ),
+  AUTH_TRUSTED_PROXIES: csv(
+    '127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16',
+  ),
 
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),

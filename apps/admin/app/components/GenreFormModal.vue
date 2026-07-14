@@ -6,35 +6,35 @@ import {
   type Genre,
 } from '@hayasedb/contract'
 
-const open = defineModel<boolean>('open', { default: false })
-
 const props = defineProps<{
   genre?: Genre | null
   onSubmit: (data: CreateGenreInput) => Promise<boolean>
 }>()
 
-const state = reactive<CreateGenreInput>({ name: '' })
+const emit = defineEmits<{ close: [boolean] }>()
 
-watch(open, (value) => {
-  if (value) state.name = props.genre?.name ?? ''
-})
-
-function close() {
-  open.value = false
-}
+const form = useTemplateRef('form')
+const saving = ref(false)
+const state = reactive<CreateGenreInput>({ name: props.genre?.name ?? '' })
 
 async function handleSubmit(event: FormSubmitEvent<CreateGenreInput>) {
-  if (await props.onSubmit(event.data)) close()
+  saving.value = true
+  try {
+    if (await props.onSubmit(event.data)) emit('close', true)
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="genre ? 'Edit genre' : 'New genre'">
+  <UModal :title="genre ? 'Edit genre' : 'New genre'" :dismissible="!saving">
     <template #body>
       <UForm
-        v-slot="{ loading }"
+        ref="form"
         :schema="createGenreInputSchema"
         :state="state"
+        :validate-on="['input', 'change']"
         class="flex flex-col gap-4"
         @submit="handleSubmit"
       >
@@ -46,21 +46,24 @@ async function handleSubmit(event: FormSubmitEvent<CreateGenreInput>) {
             autofocus
           />
         </UFormField>
-        <div class="flex justify-end gap-2">
-          <UButton
-            label="Cancel"
-            color="neutral"
-            variant="ghost"
-            @click="close"
-          />
-          <UButton
-            type="submit"
-            :label="genre ? 'Save' : 'Create'"
-            color="primary"
-            :loading="loading"
-          />
-        </div>
       </UForm>
+    </template>
+    <template #footer>
+      <div class="flex w-full justify-end gap-2">
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          :disabled="saving"
+          @click="emit('close', false)"
+        />
+        <UButton
+          :label="genre ? 'Save' : 'Create'"
+          color="primary"
+          :loading="saving"
+          @click="form?.submit()"
+        />
+      </div>
     </template>
   </UModal>
 </template>

@@ -35,6 +35,7 @@ export interface AuthOptions {
   baseURL: string
   frontendBaseURL?: string
   trustedOrigins?: string[]
+  trustedProxies?: string[]
   secondaryStorage?: SecondaryStorage
   productionMode?: boolean
   github?: GithubProviderOptions
@@ -154,6 +155,7 @@ export function createAuth(opts: AuthOptions) {
       useSecureCookies: production,
       ipAddress: {
         ipAddressHeaders: ['x-forwarded-for'],
+        trustedProxies: opts.trustedProxies,
       },
     },
     onAPIError: opts.errorCallbackURL

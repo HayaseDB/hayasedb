@@ -33,6 +33,7 @@ export function authFactory(
     baseURL: config.get('API_PUBLIC_URL', { infer: true }),
     frontendBaseURL: webOrigin,
     trustedOrigins: config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
+    trustedProxies: config.get('AUTH_TRUSTED_PROXIES', { infer: true }),
     secondaryStorage: makeRedisSecondaryStorage(redis),
     productionMode: config.get('NODE_ENV', { infer: true }) === 'production',
     errorCallbackURL: webOrigin ? `${webOrigin}/login` : undefined,

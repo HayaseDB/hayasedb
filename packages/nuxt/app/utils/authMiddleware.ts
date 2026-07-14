@@ -29,9 +29,12 @@ export function createAuthMiddleware(opts: AuthMiddlewareOptions = {}) {
       opts.requireAdmin &&
       (session.value.user.role !== 'admin' || session.value.user.banned)
     ) {
-      return abortNavigation(
-        createError({ statusCode: 403, statusMessage: 'Access denied' }),
-      )
+      const denied = createError({
+        statusCode: 403,
+        statusMessage: 'Access denied',
+      })
+      if (import.meta.client) showError(denied)
+      return abortNavigation(denied)
     }
   })
 }

@@ -13,6 +13,14 @@ export type AppAuthClient = ReturnType<
   typeof createAuthClient<typeof clientConfig>
 >
 
+export type AdminUser = NonNullable<
+  Awaited<ReturnType<AppAuthClient['admin']['listUsers']>>['data']
+>['users'][number]
+
+export type AdminUserSession = NonNullable<
+  Awaited<ReturnType<AppAuthClient['admin']['listUserSessions']>>['data']
+>['sessions'][number]
+
 export interface AppAuthClientOptions {
   baseURL?: string
   fetchOptions?: FetchOptions

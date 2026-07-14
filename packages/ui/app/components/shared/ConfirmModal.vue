@@ -1,40 +1,42 @@
 <script setup lang="ts">
-withDefaults(
+const props = withDefaults(
   defineProps<{
-    open?: boolean
     title?: string
     description?: string
     confirmLabel?: string
     confirmColor?: 'error' | 'primary' | 'warning' | 'neutral'
-    loading?: boolean
+    onConfirm?: () => unknown | Promise<unknown>
   }>(),
   {
-    open: false,
     title: 'Are you sure?',
     description: '',
     confirmLabel: 'Confirm',
     confirmColor: 'error',
-    loading: false,
+    onConfirm: undefined,
   },
 )
 
-const emit = defineEmits<{
-  confirm: []
-  'update:open': [value: boolean]
-}>()
+const emit = defineEmits<{ close: [boolean] }>()
 
-function close() {
-  emit('update:open', false)
+const loading = ref(false)
+
+async function confirm() {
+  if (loading.value) return
+  if (!props.onConfirm) {
+    emit('close', true)
+    return
+  }
+  loading.value = true
+  try {
+    if ((await props.onConfirm()) !== false) emit('close', true)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <template>
-  <UModal
-    :open="open"
-    :title="title"
-    :description="description"
-    @update:open="emit('update:open', $event)"
-  >
+  <UModal :title="title" :description="description" :dismissible="!loading">
     <template #footer>
       <div class="flex w-full justify-end gap-2">
         <UButton
@@ -42,13 +44,13 @@ function close() {
           variant="ghost"
           label="Cancel"
           :disabled="loading"
-          @click="close"
+          @click="emit('close', false)"
         />
         <UButton
           :color="confirmColor"
           :label="confirmLabel"
           :loading="loading"
-          @click="emit('confirm')"
+          @click="confirm"
         />
       </div>
     </template>

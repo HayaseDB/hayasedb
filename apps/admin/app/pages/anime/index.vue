@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import type { ApiClient } from '#imports'
+import { LazyConfirmModal } from '#components'
 
 type AnimeListItem = Awaited<
   ReturnType<ApiClient['anime']['list']>
@@ -43,17 +44,21 @@ const titleSortIcon = computed(() => {
   return order.value === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'
 })
 
-const {
-  target: deleteTarget,
-  open: deleteOpen,
-  deleting,
-  ask: askDelete,
-  confirm: confirmDelete,
-} = useConfirmDelete<AnimeListItem>(async (item) => {
-  const ok = await actions.remove(item.id)
-  if (ok) await refresh()
-  return ok
-})
+const overlay = useOverlay()
+const confirmModal = overlay.create(LazyConfirmModal)
+
+function askDelete(item: AnimeListItem) {
+  confirmModal.open({
+    title: 'Delete anime',
+    description: `Delete “${item.slug}”? This cannot be undone.`,
+    confirmLabel: 'Delete',
+    onConfirm: async () => {
+      const ok = await actions.remove(item.id)
+      if (ok) await refresh()
+      return ok
+    },
+  })
+}
 
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
@@ -259,15 +264,6 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
             :total="total"
           />
         </div>
-
-        <ConfirmModal
-          v-model:open="deleteOpen"
-          title="Delete anime"
-          :description="`Delete “${deleteTarget?.slug ?? ''}”? This cannot be undone.`"
-          confirm-label="Delete"
-          :loading="deleting"
-          @confirm="confirmDelete"
-        />
       </div>
     </template>
   </UDashboardPanel>

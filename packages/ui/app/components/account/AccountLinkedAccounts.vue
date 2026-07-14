@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AccountLinkedRow, SocialProvider } from '@hayasedb/contract'
+import { LazyConfirmModal } from '#components'
 
 const props = withDefaults(
   defineProps<{
@@ -46,17 +47,16 @@ const rows = computed<ProviderRow[]>(() =>
   })),
 )
 
-const confirmOpen = ref(false)
-const pending = ref<{ providerId: string; accountId: string } | null>(null)
+const overlay = useOverlay()
+const confirmModal = overlay.create(LazyConfirmModal)
 
 function askUnlink(providerId: string, accountId: string) {
-  pending.value = { providerId, accountId }
-  confirmOpen.value = true
-}
-
-function onConfirm() {
-  if (pending.value) props.onUnlink?.(pending.value)
-  confirmOpen.value = false
+  confirmModal.open({
+    title: 'Unlink this account?',
+    description: "You'll no longer be able to sign in with this provider.",
+    confirmLabel: 'Unlink',
+    onConfirm: () => props.onUnlink?.({ providerId, accountId }),
+  })
 }
 </script>
 
@@ -113,14 +113,5 @@ function onConfirm() {
         </p>
       </div>
     </div>
-
-    <ConfirmModal
-      v-model:open="confirmOpen"
-      title="Unlink this account?"
-      description="You'll no longer be able to sign in with this provider."
-      confirm-label="Unlink"
-      :loading="loading"
-      @confirm="onConfirm"
-    />
   </div>
 </template>

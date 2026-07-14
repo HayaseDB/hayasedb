@@ -123,6 +123,31 @@ export const setPasswordSchema = z
     path: ['confirmPassword'],
   })
 
+export const userRoles = ['user', 'admin'] as const
+export type UserRole = (typeof userRoles)[number]
+
+export const adminCreateUserSchema = z.object({
+  name: nameSchema,
+  email: emailSchema,
+  password: newPasswordSchema,
+  role: z.enum(userRoles),
+})
+
+export const adminUpdateUserSchema = z.object({
+  name: nameSchema,
+  email: emailSchema,
+})
+
+export const adminSetPasswordSchema = setPasswordSchema
+
+export const adminBanUserSchema = z.object({
+  reason: requiredString('Reason')
+    .trim()
+    .min(1, 'Reason is required')
+    .max(200, 'Reason must be at most 200 characters'),
+  expiresIn: z.number().int().positive().optional(),
+})
+
 export type LoginSchema = z.output<typeof loginSchema>
 export type RegisterSchema = z.output<typeof registerSchema>
 export type ForgotPasswordSchema = z.output<typeof forgotPasswordSchema>
@@ -131,3 +156,7 @@ export type UpdateProfileSchema = z.output<typeof updateProfileSchema>
 export type ChangeEmailSchema = z.output<typeof changeEmailSchema>
 export type ChangePasswordSchema = z.output<typeof changePasswordSchema>
 export type SetPasswordSchema = z.output<typeof setPasswordSchema>
+export type AdminCreateUserSchema = z.output<typeof adminCreateUserSchema>
+export type AdminUpdateUserSchema = z.output<typeof adminUpdateUserSchema>
+export type AdminSetPasswordSchema = z.output<typeof adminSetPasswordSchema>
+export type AdminBanUserSchema = z.output<typeof adminBanUserSchema>

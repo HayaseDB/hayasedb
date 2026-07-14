@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "nest start -b swc -w",
+    "dev": "NODE_ENV=development nest start -b swc -w",
     "build": "nest build -b swc",
     "start": "node dist/src/main",
     "seed:demo": "nest build -b swc && node dist/src/seed-demo",

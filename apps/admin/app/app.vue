@@ -3,7 +3,7 @@ import { en } from '@nuxt/ui/locale'
 
 useHead({
   titleTemplate: (title) =>
-    title ? `${title} · HayaseDB Admin` : 'HayaseDB Admin',
+    title ? `${title} - HayaseDB Admin` : 'HayaseDB Admin',
 })
 </script>
 

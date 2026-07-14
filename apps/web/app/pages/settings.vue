@@ -75,7 +75,7 @@ async function onResend() {
 }
 
 async function onDeleteAccount() {
-  await deleteAccount()
+  return await deleteAccount()
 }
 
 async function onUpdateProfile(data: UpdateProfileSchema) {
@@ -108,11 +108,15 @@ async function onSetPassword(data: SetPasswordSchema) {
 }
 
 async function onRevokeSession(token: string) {
-  if (await revokeSession(token)) await refreshSessions()
+  const ok = await revokeSession(token)
+  if (ok) await refreshSessions()
+  return ok
 }
 
 async function onRevokeOtherSessions() {
-  if (await revokeOtherSessions()) await refreshSessions()
+  const ok = await revokeOtherSessions()
+  if (ok) await refreshSessions()
+  return ok
 }
 
 function onLinkAccount(provider: SocialProvider) {
@@ -123,9 +127,9 @@ async function onUnlinkAccount(payload: {
   providerId: string
   accountId: string
 }) {
-  if (await unlinkAccount(payload.providerId, payload.accountId)) {
-    await refreshAccounts()
-  }
+  const ok = await unlinkAccount(payload.providerId, payload.accountId)
+  if (ok) await refreshAccounts()
+  return ok
 }
 </script>
 

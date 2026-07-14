@@ -2,6 +2,7 @@
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import type { CreateGenreInput } from '@hayasedb/contract'
 import type { ApiClient } from '#imports'
+import { LazyConfirmModal, LazyGenreFormModal } from '#components'
 
 type GenreListItem = Awaited<
   ReturnType<ApiClient['genre']['list']>
@@ -12,38 +13,47 @@ useSeoMeta({ title: 'Genres' })
 const { genres, pending, refresh } = useGenres()
 const actions = useGenreActions()
 
-const formOpen = ref(false)
-const editTarget = ref<GenreListItem | null>(null)
+const overlay = useOverlay()
+const formModal = overlay.create(LazyGenreFormModal)
+const confirmModal = overlay.create(LazyConfirmModal)
 
-function openCreate() {
-  editTarget.value = null
-  formOpen.value = true
-}
-
-function openEdit(genre: GenreListItem) {
-  editTarget.value = genre
-  formOpen.value = true
-}
-
-async function submitForm(data: CreateGenreInput): Promise<boolean> {
-  const ok = editTarget.value
-    ? await actions.update({ id: editTarget.value.id, ...data })
+async function submitForm(
+  genre: GenreListItem | null,
+  data: CreateGenreInput,
+): Promise<boolean> {
+  const ok = genre
+    ? await actions.update({ id: genre.id, ...data })
     : await actions.create(data)
   if (ok) await refresh()
   return ok
 }
 
-const {
-  target: deleteTarget,
-  open: deleteOpen,
-  deleting,
-  ask: askDelete,
-  confirm: confirmDelete,
-} = useConfirmDelete<GenreListItem>(async (genre) => {
-  const ok = await actions.remove(genre.id)
-  if (ok) await refresh()
-  return ok
-})
+function openCreate() {
+  formModal.open({
+    genre: null,
+    onSubmit: (data) => submitForm(null, data),
+  })
+}
+
+function openEdit(genre: GenreListItem) {
+  formModal.open({
+    genre,
+    onSubmit: (data) => submitForm(genre, data),
+  })
+}
+
+function askDelete(genre: GenreListItem) {
+  confirmModal.open({
+    title: 'Delete genre',
+    description: `Delete “${genre.name}”? This cannot be undone.`,
+    confirmLabel: 'Delete',
+    onConfirm: async () => {
+      const ok = await actions.remove(genre.id)
+      if (ok) await refresh()
+      return ok
+    },
+  })
+}
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
@@ -150,21 +160,6 @@ const columns: TableColumn<GenreListItem>[] = [
             </div>
           </template>
         </UTable>
-
-        <GenreFormModal
-          v-model:open="formOpen"
-          :genre="editTarget"
-          :on-submit="submitForm"
-        />
-
-        <ConfirmModal
-          v-model:open="deleteOpen"
-          title="Delete genre"
-          :description="`Delete “${deleteTarget?.name ?? ''}”? This cannot be undone.`"
-          confirm-label="Delete"
-          :loading="deleting"
-          @confirm="confirmDelete"
-        />
       </div>
     </template>
   </UDashboardPanel>
