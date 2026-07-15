@@ -25,7 +25,9 @@ export function authFactory(
   const discordClientSecret = config.get('DISCORD_CLIENT_SECRET', {
     infer: true,
   })
-  const [webOrigin] = config.get('AUTH_TRUSTED_ORIGINS', { infer: true })
+  const webOrigin =
+    config.get('WEB_PUBLIC_URL', { infer: true }) ??
+    config.get('AUTH_TRUSTED_ORIGINS', { infer: true })[0]
 
   return createAuth({
     db,

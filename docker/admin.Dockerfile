@@ -26,4 +26,8 @@ WORKDIR /app
 COPY --from=build /app/apps/admin/.output ./.output
 USER node
 EXPOSE 3002
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3002/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
 CMD ["node", ".output/server/index.mjs"]

@@ -17,7 +17,16 @@ async function bootstrap() {
   })
   const config = app.get<ConfigService<Env, true>>(ConfigService)
 
-  await runMigrations(config.get('DATABASE_URL', { infer: true }))
+  try {
+    await runMigrations(config.get('DATABASE_URL', { infer: true }))
+  } catch (error) {
+    Logger.error(
+      'Database migration failed',
+      error instanceof Error ? error.stack : String(error),
+      'Migrations',
+    )
+    throw error
+  }
 
   app.setGlobalPrefix('api')
   app.enableShutdownHooks()

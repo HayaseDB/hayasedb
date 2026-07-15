@@ -9,7 +9,10 @@ import { validate } from './env.schema'
       isGlobal: true,
       cache: true,
       validate,
-      envFilePath: resolve(process.cwd(), '../../.env'),
+      envFilePath:
+        process.env.NODE_ENV === 'production'
+          ? []
+          : resolve(process.cwd(), '../../.env'),
     }),
   ],
 })

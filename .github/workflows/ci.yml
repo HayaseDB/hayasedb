@@ -33,3 +33,6 @@ jobs:
 
       - name: Lint, typecheck, build (affected)
         run: bunx turbo run lint typecheck build --filter='...[origin/main]'
+
+      - name: Check migration history
+        run: bun --filter @hayasedb/db db:check

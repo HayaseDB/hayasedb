@@ -19,6 +19,7 @@ const appEnv = z.object({
   API_HOST: z.string().default('0.0.0.0'),
   API_PORT: z.coerce.number().int().positive().default(3000),
   API_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
+  WEB_PUBLIC_URL: z.string().url().optional(),
 })
 
 const dbEnv = z.object({

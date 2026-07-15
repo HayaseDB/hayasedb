@@ -16,6 +16,7 @@ import { MAILER } from './mail/mail.constants'
 import { AccountModule } from './modules/account/account.module'
 import { AnimeModule } from './modules/anime/anime.module'
 import { GenreModule } from './modules/genre/genre.module'
+import { HealthModule } from './modules/health/health.module'
 import { SystemModule } from './modules/system/system.module'
 import type { ORPCContext } from './orpc/context'
 import { RedisModule } from './redis/redis.module'
@@ -55,6 +56,7 @@ import { StorageService } from './storage/storage.service'
         },
       }),
     }),
+    HealthModule,
     SystemModule,
     AccountModule,
     AnimeModule,

@@ -15,13 +15,15 @@
   },
   "main": "./dist/index.mjs",
   "files": [
-    "dist"
+    "dist",
+    "drizzle"
   ],
   "sideEffects": false,
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch --no-clean",
     "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check --dialect=postgresql --out=./drizzle",
     "db:migrate": "tsx src/migrate-cli.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit -p tsconfig.json",
