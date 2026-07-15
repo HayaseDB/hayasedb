@@ -23,7 +23,7 @@
   "devDependencies": {
     "@hayasedb/config": "workspace:*",
     "@nuxt/eslint": "^1.9.0",
-    "eslint": "^9.0.0 || ^10.0.0",
+    "eslint": "^10.7.0",
     "nuxt": "^4.4.8",
     "typescript": "catalog:",
     "vue-tsc": "catalog:"
