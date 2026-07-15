@@ -2,23 +2,36 @@
 FROM oven/bun:1.3.14-slim AS prune
 WORKDIR /app
 COPY . .
-RUN bunx turbo@2.10.2 prune @hayasedb/api --docker
+RUN --mount=type=cache,target=/root/.install-cache \
+    bun install --frozen-lockfile --ignore-scripts \
+ && bunx turbo prune @hayasedb/api --docker
 
 FROM oven/bun:1.3.14-slim AS deps
 WORKDIR /app
 COPY --from=prune /app/out/json/ .
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.install-cache \
+    bun install --frozen-lockfile
 
 FROM oven/bun:1.3.14-slim AS build
 WORKDIR /app
 COPY --from=deps /app/ .
 COPY --from=prune /app/out/full/ .
-RUN bunx turbo@2.10.2 run build --filter=@hayasedb/api
+RUN bunx turbo run build --filter=@hayasedb/api
+
+FROM oven/bun:1.3.14-slim AS prod-deps
+WORKDIR /app
+COPY --from=prune /app/out/json/ .
+RUN --mount=type=cache,target=/root/.install-cache \
+    bun install --frozen-lockfile --production --ignore-scripts
 
 FROM node:22-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=build /app/ .
+COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=node:node /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/packages ./packages
+COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
+COPY --from=build --chown=node:node /app/apps/api/package.json ./apps/api/package.json
 WORKDIR /app/apps/api
 USER node
 EXPOSE 3000

@@ -1,7 +1,7 @@
 {
   "$schema": "https://v2-10-3.turborepo.dev/schema.json",
   "ui": "stream",
-  "globalDependencies": ["tsconfig.base.json", ".nvmrc", ".env"],
+  "globalDependencies": [".nvmrc", ".env"],
   "globalEnv": [
     "NODE_ENV",
     "DATABASE_URL",

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
     "./tsconfig/nest.json": "./tsconfig/nest.json",
     "./tsconfig/package.json": "./tsconfig/package.json",
     "./eslint": "./eslint/index.ts",
