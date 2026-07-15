@@ -16,7 +16,7 @@
   "dependencies": {
     "@eslint/js": "catalog:",
     "eslint-config-prettier": "catalog:",
-    "typescript-eslint": "8.62.1"
+    "typescript-eslint": "8.64.0"
   },
   "peerDependencies": {
     "eslint": "^9.0.0 || ^10.0.0",
@@ -24,7 +24,7 @@
     "typescript": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^22.20.1",
     "eslint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:"
