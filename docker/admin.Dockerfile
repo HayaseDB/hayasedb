@@ -1,24 +1,21 @@
 # syntax=docker/dockerfile:1
-ARG BUN_VERSION=1.3.14
-ARG NODE_VERSION=22
-
-FROM oven/bun:${BUN_VERSION}-slim AS prune
+FROM oven/bun:1.3.14-slim AS prune
 WORKDIR /app
 COPY . .
 RUN bunx turbo@2.10.2 prune @hayasedb/admin --docker
 
-FROM oven/bun:${BUN_VERSION}-slim AS deps
+FROM oven/bun:1.3.14-slim AS deps
 WORKDIR /app
 COPY --from=prune /app/out/json/ .
 RUN bun install --frozen-lockfile
 
-FROM oven/bun:${BUN_VERSION}-slim AS build
+FROM oven/bun:1.3.14-slim AS build
 WORKDIR /app
 COPY --from=deps /app/ .
 COPY --from=prune /app/out/full/ .
 RUN bunx turbo@2.10.2 run build --filter=@hayasedb/admin
 
-FROM node:${NODE_VERSION}-slim AS runtime
+FROM node:22-slim AS runtime
 ENV NODE_ENV=production
 ENV NITRO_PORT=3002
 ENV NITRO_HOST=0.0.0.0

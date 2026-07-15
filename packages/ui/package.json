@@ -15,12 +15,13 @@
     "@iconify-json/lucide": "^1.2.116",
     "@iconify-json/simple-icons": "^1.2.0",
     "@nuxt/ui": "4.9.0",
-    "tailwindcss": "^4.3.2"
+    "tailwindcss": "^4.3.2",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@hayasedb/config": "workspace:*",
     "@nuxt/eslint": "^1.9.0",
-    "eslint": "^9.0.0 || ^10.0.0",
+    "eslint": "catalog:",
     "nuxt": "^4.4.8",
     "typescript": "catalog:",
     "vue-tsc": "catalog:"
