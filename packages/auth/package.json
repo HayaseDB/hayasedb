@@ -1,0 +1,51 @@
+{
+  "name": "@hayasedb/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./dist/client.mjs"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "auth:generate": "better-auth generate --config ./src/auth.instance.ts --output ../db/src/schema/auth.ts -y",
+    "build": "tsdown",
+    "dev": "tsdown --watch --no-clean",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@hayasedb/contract": "workspace:*",
+    "@hayasedb/db": "workspace:*",
+    "better-auth": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@better-auth/cli": "1.4.22",
+    "@hayasedb/config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}

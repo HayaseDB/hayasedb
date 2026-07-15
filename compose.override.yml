@@ -1,0 +1,53 @@
+services:
+  postgres:
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+
+  redis:
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+
+  minio:
+    ports:
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    networks: [internal]
+    ports:
+      - '${MAIL_SMTP_PORT:-1025}:1025'
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O-', 'http://localhost:8025/readyz']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      MAIL_DRIVER: smtp
+      MAIL_SMTP_HOST: mailpit
+      MAIL_SMTP_PORT: '1025'
+      MAIL_SMTP_SECURE: 'false'
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+
+  admin:
+    build:
+      context: .
+      dockerfile: docker/admin.Dockerfile
+
+networks:
+  traefik-public:
+    external: false
+    driver: bridge
+  internal:
+    driver: bridge

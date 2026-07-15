@@ -1,86 +1,56 @@
-import { ClassSerializerInterceptor, Logger, ValidationPipe } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { apiReference } from '@scalar/nestjs-api-reference';
-import { Request, Response } from 'express';
-import helmet from 'helmet';
-import { dump as yamlDump } from 'js-yaml';
-
-import { AppModule } from './app.module';
+import 'reflect-metadata'
+import { Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { NestFactory } from '@nestjs/core'
+import type { NestExpressApplication } from '@nestjs/platform-express'
+import { apiReference } from '@scalar/nestjs-api-reference'
+import { AuthService } from '@thallesp/nestjs-better-auth'
+import { runMigrations } from '@hayasedb/db'
+import { AppModule } from './app.module'
+import type { Auth } from './auth/auth'
+import type { Env } from './config/env.schema'
+import { buildOpenApiSources } from './openapi'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  })
+  const config = app.get<ConfigService<Env, true>>(ConfigService)
 
-  app.use(helmet());
-  app.enableCors({
-    origin: process.env.API_WEB_URL || '*',
-    credentials: true,
-  });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-
-  const port = process.env.API_PORT ?? 3000;
-
-  if (process.env.API_SWAGGER_ENABLED !== 'false') {
-    const swaggerPath = process.env.API_SWAGGER_PATH || 'docs';
-    const config = new DocumentBuilder()
-      .setTitle('HayaseDB API')
-      .setDescription('HayaseDB API Documentation')
-      .setVersion('0.0.1')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-
-    app.use(`/${swaggerPath}.json`, (_req: Request, res: Response) => {
-      res.json(document);
-    });
-
-    app.use(`/${swaggerPath}.yaml`, (_req: Request, res: Response) => {
-      res.setHeader('Content-Type', 'text/yaml');
-      res.send(yamlDump(document));
-    });
-
-    app.use(
-      `/${swaggerPath}`,
-      apiReference({
-        theme: 'purple',
-        layout: 'modern',
-        metaData: {
-          title: 'HayaseDB API',
-          description: 'HayaseDB API Documentation',
-        },
-        hideClientButton: true,
-        showSidebar: true,
-        operationTitleSource: 'summary',
-        persistAuth: true,
-        isEditable: true,
-        hideModels: true,
-        hideDarkModeToggle: false,
-        documentDownloadType: 'both',
-        hideTestRequestButton: false,
-        hideSearch: false,
-        withDefaultFonts: true,
-        defaultOpenAllTags: false,
-        content: document,
-      }),
-    );
-
-    Logger.log(
-      `API documentation available at: http://localhost:${port}/${swaggerPath}`,
-      'Bootstrap',
-    );
+  try {
+    await runMigrations(config.get('DATABASE_URL', { infer: true }))
+  } catch (error) {
+    Logger.error(
+      'Database migration failed',
+      error instanceof Error ? error.stack : String(error),
+      'Migrations',
+    )
+    throw error
   }
 
-  await app.listen(port, '0.0.0.0');
+  app.setGlobalPrefix('api')
+  app.enableShutdownHooks()
+  app.enableCors({
+    origin: config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
 
-  Logger.log(`Application is running on: ${await app.getUrl()}`, 'Bootstrap');
+  const authApi = app.get<AuthService<Auth>>(AuthService).api
+  const sources = await buildOpenApiSources(
+    authApi,
+    config.get('API_PUBLIC_URL', { infer: true }),
+  )
+  app.use('/docs', apiReference({ showDeveloperTools: 'never', sources }))
+
+  const host = config.get('API_HOST', { infer: true })
+  const port = config.get('API_PORT', { infer: true })
+  await app.listen(port, host)
+  Logger.log(`listening on http://${host}:${port}`, 'Bootstrap')
 }
 
-void bootstrap();
+bootstrap().catch((error) => {
+  Logger.error(error, 'Bootstrap')
+  process.exit(1)
+})

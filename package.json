@@ -1,24 +1,82 @@
 {
-  "name": "@hayasedb/root",
-  "version": "0.0.1",
-  "type": "module",
+  "name": "hayasedb",
   "private": true,
-  "packageManager": "pnpm@10.30.1",
-  "author": "HayaseDB",
-  "license": "UNLICENSED",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/HayaseDB/hayasedb.git"
-  },
+  "type": "module",
+  "packageManager": "bun@1.3.14",
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "bun": ">=1.3"
+  },
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "typescript": "5.9.3",
+      "vue-tsc": "3.3.6",
+      "zod": "4.4.3",
+      "drizzle-orm": "0.45.2",
+      "drizzle-kit": "0.31.10",
+      "postgres": "3.4.9",
+      "better-auth": "1.6.23",
+      "ioredis": "5.11.1",
+      "@orpc/contract": "2.0.0-beta.11",
+      "@orpc/server": "2.0.0-beta.11",
+      "@orpc/client": "2.0.0-beta.11",
+      "@orpc/nest": "2.0.0-beta.11",
+      "@orpc/openapi": "2.0.0-beta.11",
+      "@orpc/zod": "2.0.0-beta.11",
+      "tsdown": "0.22.3",
+      "tsx": "4.23.0",
+      "dotenv": "17.4.2",
+      "@react-email/components": "1.0.12",
+      "@react-email/render": "2.0.10",
+      "@react-email/ui": "6.6.8",
+      "react-email": "6.6.8",
+      "react": "19.2.7",
+      "react-dom": "19.2.7",
+      "@types/react": "19.2.17",
+      "nodemailer": "9.0.3",
+      "@types/nodemailer": "8.0.1",
+      "resend": "6.17.1",
+      "blurhash": "2.0.5",
+      "@vueuse/core": "14.3.0"
+    }
   },
   "scripts": {
-    "prepare": "lefthook install"
+    "build": "turbo run build",
+    "predev": "bun run infra:up",
+    "dev": "turbo run dev",
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "turbo run lint typecheck test && bun run format:check",
+    "check:fix": "bun run format && bun run lint:fix",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "clean:cache": "rm -rf .turbo node_modules/.cache && find apps packages -maxdepth 2 \\( -name '.turbo' -o -name '.nuxt' -o -name '.output' -o -name '.nitro' -o -name 'dist' -o -name '.cache' \\) -prune -exec rm -rf {} +",
+    "db:generate": "turbo run db:generate --filter=@hayasedb/db",
+    "db:migrate": "turbo run db:migrate --filter=@hayasedb/db",
+    "db:studio": "bun --filter @hayasedb/db db:studio",
+    "auth:generate": "bun --filter @hayasedb/auth auth:generate",
+    "changeset": "changeset",
+    "version": "changeset version && bun install --lockfile-only",
+    "tag": "changeset tag",
+    "changelog": "changeset status --verbose"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.4.3",
-    "@commitlint/config-conventional": "^20.4.3",
-    "lefthook": "^2.1.3"
+    "@changesets/cli": "2.31.0",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "10.1.8",
+    "fkill-cli": "9.0.0",
+    "jiti": "^2.7.0",
+    "prettier": "3.9.4",
+    "prettier-plugin-tailwindcss": "0.8.0",
+    "turbo": "^2.10.4"
   }
 }

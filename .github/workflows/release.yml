@@ -1,176 +1,145 @@
 name: Release
 
 on:
-  release:
-    types: [published]
-
-permissions: {}
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: release
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
-  validate-version:
-    name: Validate (${{ matrix.package }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - package: api
-            path: apps/api/package.json
-          - package: web
-            path: apps/web/package.json
-          - package: sdk
-            path: packages/sdk/package.json
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            ${{ matrix.path }}
-            .github
-
-      - name: Validate version
-        uses: ./.github/actions/validate-version
-        with:
-          package: ${{ matrix.package }}
-          path: ${{ matrix.path }}
-
-  changelog:
-    name: Changelog
-    needs: validate-version
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  version:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
       contents: write
+      pull-requests: write
+    outputs:
+      released: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
-          sparse-checkout: .github
+          fetch-depth: 0
 
-      - name: Generate changelog
-        uses: ./.github/actions/generate-changelog
+      - uses: actions/setup-node@v4
         with:
-          tag-name: ${{ github.event.release.tag_name }}
-          release-body: ${{ github.event.release.body }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          node-version-file: .nvmrc
 
-  test:
-    needs: validate-version
-    permissions:
-      contents: read
-    uses: ./.github/workflows/test.yml
-
-  publish-sdk:
-    name: Publish SDK
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
         with:
-          sparse-checkout: |
-            packages/sdk
-            packages/shared
-            .npmrc
-            package.json
-            pnpm-lock.yaml
-            pnpm-workspace.yaml
-            .github
+          bun-version: 1.3.14
 
-      - name: Publish
-        uses: ./.github/actions/publish-sdk
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Version or tag release
+        id: changesets
+        uses: changesets/action@v1
         with:
-          registry-token: ${{ secrets.GITHUB_TOKEN }}
+          version: bun run version
+          publish: bun run tag
+          commit: 'chore: release'
+          title: 'chore: release'
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build:
-    name: Build (${{ matrix.package }})
-    needs: test
-    runs-on: ubuntu-latest
+      - name: Resolve release version
+        id: version
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          version="$(node -p "require('./apps/api/package.json').version")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${version}"
+
+      - name: Create unified GitHub Release
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v${{ steps.version.outputs.version }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; skipping."
+          else
+            gh release create "$tag" \
+              --target "${{ github.sha }}" \
+              --title "$tag" \
+              --generate-notes
+          fi
+
+  images:
+    needs: version
+    if: needs.version.outputs.released == 'true'
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - package: api
-            app-dir: apps/api
-            image: ghcr.io/hayasedb/api
-          - package: web
-            app-dir: apps/web
-            image: ghcr.io/hayasedb/web
+        app: [api, web, admin]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            ${{ matrix.app-dir }}
-            packages/shared
-            packages/sdk
-            .npmrc
-            package.json
-            pnpm-lock.yaml
-            pnpm-workspace.yaml
-            .github
+      - uses: actions/checkout@v4
 
-      - name: Generate Docker metadata
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest
         with:
-          images: ${{ matrix.image }}
+          images: ghcr.io/hayasedb/hayasedb-${{ matrix.app }}
           tags: |
-            type=semver,pattern=v{{version}}
+            type=raw,value=${{ needs.version.outputs.version }}
             type=raw,value=latest
 
       - name: Build and push
-        uses: ./.github/actions/docker-build
+        id: push
+        uses: docker/build-push-action@v6
         with:
           context: .
-          dockerfile: ./${{ matrix.app-dir }}/Dockerfile
-          image: ${{ matrix.image }}
+          file: docker/${{ matrix.app }}.Dockerfile
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-scope: ${{ matrix.package }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ghcr.io/hayasedb/hayasedb-${{ matrix.app }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
   deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    needs: [version, images]
+    if: needs.version.outputs.released == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production
     permissions:
       contents: read
-    environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            apps/api/package.json
-            .github
-
-      - name: Compute expected version
-        id: version
+      - name: Trigger Portainer redeploy
         run: |
-          VERSION=$(jq -r '.version' apps/api/package.json)
-          echo "expected=${VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Deploy
-        uses: ./.github/actions/deploy-portainer
-        with:
-          webhook-url: ${{ secrets.PORTAINER_WEBHOOK_URL }}
-          environment: production
-          api-url: ${{ vars.PRODUCTION_API_URL }}
-          expected-version: ${{ steps.version.outputs.expected }}
+          curl --fail --silent --show-error -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"

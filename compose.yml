@@ -1,0 +1,214 @@
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks: [internal]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    networks: [internal]
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio-data:/data
+    networks: [traefik-public, internal]
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.http.routers.${STACK_NAME}-minio.rule=Host(`${MINIO_DOMAIN}`)
+        - traefik.http.routers.${STACK_NAME}-minio.entrypoints=websecure
+        - traefik.http.routers.${STACK_NAME}-minio.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-minio.service=${STACK_NAME}-minio
+        - traefik.http.services.${STACK_NAME}-minio.loadbalancer.server.port=9000
+        - traefik.http.routers.${STACK_NAME}-minio-console.rule=Host(`${MINIO_CONSOLE_DOMAIN}`)
+        - traefik.http.routers.${STACK_NAME}-minio-console.entrypoints=websecure
+        - traefik.http.routers.${STACK_NAME}-minio-console.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-minio-console.service=${STACK_NAME}-minio-console
+        - traefik.http.services.${STACK_NAME}-minio-console.loadbalancer.server.port=9001
+
+  api:
+    image: ghcr.io/hayasedb/hayasedb-api:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      API_HOST: 0.0.0.0
+      API_PORT: '3000'
+      API_PUBLIC_URL: https://${API_DOMAIN}
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_TRUSTED_ORIGINS: https://${WEB_DOMAIN},https://${ADMIN_DOMAIN}
+      AUTH_TRUSTED_PROXIES: ${AUTH_TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+      WEB_PUBLIC_URL: https://${WEB_DOMAIN}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: '9000'
+      MINIO_USE_SSL: 'false'
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET:-media}
+      MINIO_PUBLIC_URL: https://${MINIO_DOMAIN}
+      MAIL_DRIVER: ${MAIL_DRIVER:-resend}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_SMTP_HOST: ${MAIL_SMTP_HOST}
+      MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-587}
+      MAIL_SMTP_SECURE: ${MAIL_SMTP_SECURE:-true}
+      MAIL_SMTP_USER: ${MAIL_SMTP_USER:-}
+      MAIL_SMTP_PASS: ${MAIL_SMTP_PASS:-}
+      MAIL_RESEND_API_KEY: ${MAIL_RESEND_API_KEY:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+    networks: [traefik-public, internal]
+    stop_grace_period: 30s
+    deploy:
+      replicas: 2
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        monitor: 60s
+      rollback_config:
+        order: start-first
+        parallelism: 1
+        failure_action: pause
+      restart_policy:
+        condition: any
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.http.routers.${STACK_NAME}-api.rule=Host(`${API_DOMAIN}`)
+        - traefik.http.routers.${STACK_NAME}-api.entrypoints=websecure
+        - traefik.http.routers.${STACK_NAME}-api.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-api.service=${STACK_NAME}-api
+        - traefik.http.services.${STACK_NAME}-api.loadbalancer.server.port=3000
+        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.path=/api/ready
+        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.interval=10s
+        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.timeout=3s
+
+  web:
+    image: ghcr.io/hayasedb/hayasedb-web:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NITRO_PORT: '3001'
+      NITRO_HOST: 0.0.0.0
+      NUXT_API_URL: http://api:3000
+    networks: [traefik-public, internal]
+    stop_grace_period: 30s
+    deploy:
+      replicas: 2
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        monitor: 60s
+      rollback_config:
+        order: start-first
+        parallelism: 1
+        failure_action: pause
+      restart_policy:
+        condition: any
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.http.routers.${STACK_NAME}-web.rule=Host(`${WEB_DOMAIN}`)
+        - traefik.http.routers.${STACK_NAME}-web.entrypoints=websecure
+        - traefik.http.routers.${STACK_NAME}-web.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-web.service=${STACK_NAME}-web
+        - traefik.http.services.${STACK_NAME}-web.loadbalancer.server.port=3001
+
+  admin:
+    image: ghcr.io/hayasedb/hayasedb-admin:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NITRO_PORT: '3002'
+      NITRO_HOST: 0.0.0.0
+      NUXT_API_URL: http://api:3000
+    networks: [traefik-public, internal]
+    stop_grace_period: 30s
+    deploy:
+      replicas: 2
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        monitor: 60s
+      rollback_config:
+        order: start-first
+        parallelism: 1
+        failure_action: pause
+      restart_policy:
+        condition: any
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.http.routers.${STACK_NAME}-admin.rule=Host(`${ADMIN_DOMAIN}`)
+        - traefik.http.routers.${STACK_NAME}-admin.entrypoints=websecure
+        - traefik.http.routers.${STACK_NAME}-admin.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-admin.service=${STACK_NAME}-admin
+        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.server.port=3002
+
+networks:
+  traefik-public:
+    external: true
+  internal:
+    driver: overlay
+
+volumes:
+  pgdata: {}
+  redisdata: {}
+  minio-data: {}

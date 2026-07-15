@@ -1,0 +1,78 @@
+{
+  "$schema": "https://v2-10-3.turborepo.dev/schema.json",
+  "ui": "stream",
+  "globalDependencies": ["tsconfig.base.json", ".nvmrc", ".env"],
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "POSTGRES_HOST",
+    "POSTGRES_PORT",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_DB",
+    "REDIS_HOST",
+    "REDIS_PORT",
+    "API_HOST",
+    "API_PORT",
+    "API_PUBLIC_URL",
+    "AUTH_SECRET",
+    "AUTH_TRUSTED_ORIGINS",
+    "AUTH_TRUSTED_PROXIES",
+    "WEB_PUBLIC_URL",
+    "GITHUB_CLIENT_ID",
+    "GITHUB_CLIENT_SECRET",
+    "MINIO_ENDPOINT",
+    "MINIO_PORT",
+    "MINIO_USE_SSL",
+    "MINIO_ACCESS_KEY",
+    "MINIO_SECRET_KEY",
+    "MINIO_BUCKET",
+    "MINIO_PUBLIC_URL",
+    "MINIO_CONSOLE_PORT",
+    "MINIO_DOMAIN",
+    "MINIO_CONSOLE_DOMAIN",
+    "NUXT_API_URL",
+    "WEB_PORT",
+    "ADMIN_PORT",
+    "MAIL_DRIVER",
+    "MAIL_FROM",
+    "MAIL_SMTP_HOST",
+    "MAIL_SMTP_PORT",
+    "MAIL_SMTP_SECURE",
+    "MAIL_SMTP_USER",
+    "MAIL_SMTP_PASS",
+    "MAIL_RESEND_API_KEY",
+    "MAILPIT_UI_PORT",
+    "DISCORD_CLIENT_ID",
+    "DISCORD_CLIENT_SECRET"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".output/**", ".nuxt/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "lint": {},
+    "db:generate": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "db:migrate": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    }
+  }
+}

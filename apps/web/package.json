@@ -1,42 +1,42 @@
 {
   "name": "@hayasedb/web",
-  "version": "0.0.1",
-  "description": "HayaseDB Web Frontend",
-  "author": "HayaseDB",
+  "version": "0.0.0",
   "type": "module",
   "private": true,
-  "license": "UNLICENSED",
-  "engines": {
-    "node": ">=22"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/HayaseDB/hayasedb.git",
-    "directory": "apps/web"
-  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "typecheck": "nuxt typecheck",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "typecheck": "nuxt typecheck"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@hayasedb/sdk": "workspace:*",
-    "nuxt": "^4.3.1",
-    "vue": "^3.5.30",
-    "vue-router": "^5.0.3"
+    "@hayasedb/auth": "workspace:*",
+    "@hayasedb/contract": "workspace:*",
+    "@hayasedb/domain": "workspace:*",
+    "@hayasedb/nuxt": "workspace:*",
+    "@hayasedb/ui": "workspace:*",
+    "@iconify-json/lucide": "^1.2.116",
+    "@iconify-json/simple-icons": "^1.2.0",
+    "@nuxt/ui": "4.9.0",
+    "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@vueuse/core": "catalog:",
+    "better-auth": "catalog:",
+    "nuxt": "^4.4.8",
+    "tailwindcss": "^4.3.2",
+    "vue": "^3.5.38",
+    "vue-router": "^5.1.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.4.1",
-    "eslint": "^10.0.3",
-    "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "vue-tsc": "^3.2.5"
+    "@hayasedb/config": "workspace:*",
+    "@nuxt/eslint": "^1.9.0",
+    "eslint": "^9.0.0 || ^10.0.0",
+    "typescript": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }
