@@ -61,13 +61,11 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-minio.rule=Host(`${MINIO_DOMAIN}`)
-        - traefik.http.routers.${STACK_NAME}-minio.entrypoints=websecure
-        - traefik.http.routers.${STACK_NAME}-minio.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-minio.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-minio.service=${STACK_NAME}-minio
         - traefik.http.services.${STACK_NAME}-minio.loadbalancer.server.port=9000
         - traefik.http.routers.${STACK_NAME}-minio-console.rule=Host(`${MINIO_CONSOLE_DOMAIN}`)
-        - traefik.http.routers.${STACK_NAME}-minio-console.entrypoints=websecure
-        - traefik.http.routers.${STACK_NAME}-minio-console.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-minio-console.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-minio-console.service=${STACK_NAME}-minio-console
         - traefik.http.services.${STACK_NAME}-minio-console.loadbalancer.server.port=9001
 
@@ -126,8 +124,7 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-api.rule=Host(`${API_DOMAIN}`)
-        - traefik.http.routers.${STACK_NAME}-api.entrypoints=websecure
-        - traefik.http.routers.${STACK_NAME}-api.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-api.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-api.service=${STACK_NAME}-api
         - traefik.http.services.${STACK_NAME}-api.loadbalancer.server.port=3000
         - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.path=/api/ready
@@ -163,8 +160,7 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-web.rule=Host(`${WEB_DOMAIN}`)
-        - traefik.http.routers.${STACK_NAME}-web.entrypoints=websecure
-        - traefik.http.routers.${STACK_NAME}-web.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-web.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-web.service=${STACK_NAME}-web
         - traefik.http.services.${STACK_NAME}-web.loadbalancer.server.port=3001
 
@@ -197,8 +193,7 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-admin.rule=Host(`${ADMIN_DOMAIN}`)
-        - traefik.http.routers.${STACK_NAME}-admin.entrypoints=websecure
-        - traefik.http.routers.${STACK_NAME}-admin.tls.certresolver=le
+        - traefik.http.routers.${STACK_NAME}-admin.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-admin.service=${STACK_NAME}-admin
         - traefik.http.services.${STACK_NAME}-admin.loadbalancer.server.port=3002
 
