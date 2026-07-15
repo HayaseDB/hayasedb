@@ -10,7 +10,8 @@
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
     "lint": "eslint .",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "prepare": "bun run postinstall"
   },
   "dependencies": {
     "@hayasedb/auth": "workspace:*",

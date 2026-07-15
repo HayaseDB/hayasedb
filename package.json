@@ -69,6 +69,7 @@
     "auth:generate": "bun --filter @hayasedb/auth auth:generate",
     "changeset": "changeset",
     "version": "changeset version && bun install --lockfile-only",
+    "tag": "changeset tag",
     "changelog": "changeset status --verbose"
   },
   "devDependencies": {
