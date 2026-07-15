@@ -52,7 +52,7 @@
     "build": "turbo run build",
     "predev": "bun run infra:up",
     "dev": "turbo run dev",
-    "infra:up": "docker compose up -d --wait",
+    "infra:up": "docker compose up -d --wait postgres redis minio",
     "infra:down": "docker compose down",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint -- --fix",
