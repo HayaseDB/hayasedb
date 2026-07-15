@@ -51,13 +51,19 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".output/**", ".nuxt/**"]
     },
+    "prepare": {
+      "dependsOn": ["^build"],
+      "outputs": [".nuxt/**"]
+    },
     "typecheck": {
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^typecheck", "prepare"]
     },
     "test": {
       "dependsOn": ["^build"]
     },
-    "lint": {},
+    "lint": {
+      "dependsOn": ["prepare"]
+    },
     "db:generate": {
       "cache": false,
       "dependsOn": ["^build"]
