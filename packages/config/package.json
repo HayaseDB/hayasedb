@@ -24,7 +24,7 @@
     "typescript": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.1",
     "eslint": "^9.0.0 || ^10.0.0",
     "tsdown": "catalog:",
     "typescript": "catalog:"

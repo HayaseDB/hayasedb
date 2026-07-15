@@ -42,7 +42,7 @@
   "devDependencies": {
     "@better-auth/cli": "1.4.22",
     "@hayasedb/config": "workspace:*",
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.1",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "tsdown": "catalog:",

@@ -32,7 +32,7 @@
   "devDependencies": {
     "@hayasedb/config": "workspace:*",
     "@react-email/ui": "catalog:",
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.1",
     "@types/nodemailer": "catalog:",
     "@types/react": "catalog:",
     "react-email": "catalog:",
