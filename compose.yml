@@ -106,17 +106,11 @@ services:
     networks: [traefik-public, internal]
     stop_grace_period: 30s
     deploy:
-      replicas: 2
+      replicas: 1
       update_config:
         order: start-first
-        parallelism: 1
-        delay: 10s
-        failure_action: rollback
-        monitor: 60s
-      rollback_config:
-        order: start-first
-        parallelism: 1
         failure_action: pause
+        monitor: 60s
       restart_policy:
         condition: any
         delay: 5s
@@ -142,17 +136,11 @@ services:
     networks: [traefik-public, internal]
     stop_grace_period: 30s
     deploy:
-      replicas: 2
+      replicas: 1
       update_config:
         order: start-first
-        parallelism: 1
-        delay: 10s
-        failure_action: rollback
-        monitor: 60s
-      rollback_config:
-        order: start-first
-        parallelism: 1
         failure_action: pause
+        monitor: 60s
       restart_policy:
         condition: any
         delay: 5s
@@ -175,17 +163,11 @@ services:
     networks: [traefik-public, internal]
     stop_grace_period: 30s
     deploy:
-      replicas: 2
+      replicas: 1
       update_config:
         order: start-first
-        parallelism: 1
-        delay: 10s
-        failure_action: rollback
-        monitor: 60s
-      rollback_config:
-        order: start-first
-        parallelism: 1
         failure_action: pause
+        monitor: 60s
       restart_policy:
         condition: any
         delay: 5s
