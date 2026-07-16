@@ -16,6 +16,26 @@ const ADVISORY_LOCK_ID = 4711
 const LOCK_TIMEOUT_MS = 60_000
 const LOCK_RETRY_MS = 100
 const DDL_LOCK_TIMEOUT_MS = 10_000
+const CONNECT_TIMEOUT_MS = 90_000
+const CONNECT_RETRY_MS = 1_000
+
+const TRANSIENT_CONNECT_CODES = new Set([
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'CONNECT_TIMEOUT',
+  '57P03',
+])
+
+export class MigrationConnectTimeoutError extends Error {
+  override readonly name = 'MigrationConnectTimeoutError'
+
+  constructor(timeoutMs: number) {
+    super(`Timed out after ${timeoutMs}ms waiting for the database`)
+  }
+}
 
 export class MigrationLockTimeoutError extends Error {
   override readonly name = 'MigrationLockTimeoutError'
@@ -30,6 +50,31 @@ export class MigrationsNotAppliedError extends Error {
 
   constructor(readonly hashes: readonly string[]) {
     super(`${hashes.length} migration(s) were not applied`)
+  }
+}
+
+function isTransientConnectError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code
+  return typeof code === 'string' && TRANSIENT_CONNECT_CODES.has(code)
+}
+
+async function waitForConnection(client: postgres.Sql): Promise<void> {
+  const deadline = Date.now() + CONNECT_TIMEOUT_MS
+
+  for (;;) {
+    try {
+      await client`SELECT 1`
+      return
+    } catch (error) {
+      if (!isTransientConnectError(error)) throw error
+      if (Date.now() >= deadline) {
+        throw new MigrationConnectTimeoutError(CONNECT_TIMEOUT_MS)
+      }
+      console.warn(
+        `[db] database unavailable (${(error as { code: string }).code}), retrying in ${CONNECT_RETRY_MS}ms`,
+      )
+      await delay(CONNECT_RETRY_MS)
+    }
   }
 }
 
@@ -69,6 +114,7 @@ async function assertApplied(client: postgres.Sql): Promise<void> {
 export async function runMigrations(url: string): Promise<void> {
   const client = postgres(url, {
     max: 1,
+    connect_timeout: 10,
     onnotice: (notice) => {
       if (notice.code === '42P06' || notice.code === '42P07') return
       console.warn('[db] notice:', notice.message)
@@ -77,6 +123,7 @@ export async function runMigrations(url: string): Promise<void> {
 
   let locked = false
   try {
+    await waitForConnection(client)
     await client.unsafe(`SET lock_timeout = ${DDL_LOCK_TIMEOUT_MS}`)
     await acquireLock(client)
     locked = true
