@@ -18,6 +18,9 @@ export default defineNuxtConfig({
   alias: {
     '#shared': join(layerDir, 'app'),
   },
+  nitro: {
+    moduleSideEffects: ['@orpc/openapi'],
+  },
   vite: {
     optimizeDeps: {
       include: [
