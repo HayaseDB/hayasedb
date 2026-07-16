@@ -109,8 +109,8 @@ services:
       replicas: 1
       update_config:
         order: start-first
-        failure_action: pause
-        monitor: 60s
+        failure_action: rollback
+        monitor: 120s
       restart_policy:
         condition: any
         delay: 5s
