@@ -1,4 +1,5 @@
 import type { AnimeMediaType } from '@hayasedb/contract'
+import type { StagedExistingItem } from './useMediaStaging'
 
 type MediaItem = {
   id: string
@@ -8,22 +9,6 @@ type MediaItem = {
 }
 
 type AnimeDetail = { media: MediaItem[] }
-
-type ExistingItem = {
-  key: string
-  kind: 'existing'
-  id: string
-  url: string
-}
-
-type PendingItem = {
-  key: string
-  kind: 'pending'
-  file: File
-  url: string
-}
-
-export type StagedItem = ExistingItem | PendingItem
 
 type MediaApi = {
   addMedia: (input: {
@@ -42,13 +27,13 @@ type MediaApi = {
 function existingOf(
   anime: AnimeDetail | null | undefined,
   type: AnimeMediaType,
-) {
+): StagedExistingItem[] {
   return (anime?.media ?? [])
     .filter((m) => m.type === type)
     .sort((a, b) => a.position - b.position)
-    .map((m): ExistingItem => ({
+    .map((m) => ({
       key: m.id,
-      kind: 'existing',
+      kind: 'existing' as const,
       id: m.id,
       url: m.url,
     }))
@@ -62,89 +47,14 @@ export function useStagedMedia(
   source: () => AnimeDetail | null | undefined,
   api: MediaApi,
 ) {
-  let tempSeq = 0
-  const pendingUrls = new Set<string>()
+  const initial = () => ({
+    cover: singleOf(source(), 'COVER'),
+    banner: singleOf(source(), 'BANNER'),
+    gallery: existingOf(source(), 'GALLERY'),
+  })
 
-  function makePending(file: File): PendingItem {
-    const url = URL.createObjectURL(file)
-    pendingUrls.add(url)
-    tempSeq += 1
-    return { key: `pending-${tempSeq}`, kind: 'pending', file, url }
-  }
-
-  function revoke(item: StagedItem) {
-    if (item.kind === 'pending' && pendingUrls.has(item.url)) {
-      URL.revokeObjectURL(item.url)
-      pendingUrls.delete(item.url)
-    }
-  }
-
-  const cover = ref<StagedItem | null>(singleOf(source(), 'COVER'))
-  const banner = ref<StagedItem | null>(singleOf(source(), 'BANNER'))
-  const gallery = ref<StagedItem[]>(existingOf(source(), 'GALLERY'))
-
-  function sync() {
-    for (const item of [cover.value, banner.value, ...gallery.value]) {
-      if (item) revoke(item)
-    }
-    cover.value = singleOf(source(), 'COVER')
-    banner.value = singleOf(source(), 'BANNER')
-    gallery.value = existingOf(source(), 'GALLERY')
-  }
-
-  function setSingle(type: 'COVER' | 'BANNER', file: File) {
-    const slot = type === 'COVER' ? cover : banner
-    if (slot.value) revoke(slot.value)
-    slot.value = makePending(file)
-  }
-
-  function removeSingle(type: 'COVER' | 'BANNER') {
-    const slot = type === 'COVER' ? cover : banner
-    if (slot.value) revoke(slot.value)
-    slot.value = null
-  }
-
-  function addGallery(file: File) {
-    gallery.value = [...gallery.value, makePending(file)]
-  }
-
-  function removeGallery(key: string) {
-    const item = gallery.value.find((m) => m.key === key)
-    if (item) revoke(item)
-    gallery.value = gallery.value.filter((m) => m.key !== key)
-  }
-
-  function reorderGallery(from: number, to: number) {
-    if (from === to) return
-    const next = [...gallery.value]
-    const [moved] = next.splice(from, 1)
-    if (moved === undefined) return
-    next.splice(to, 0, moved)
-    gallery.value = next
-  }
-
-  function singleState(item: StagedItem | null) {
-    if (!item) return { id: null as string | null }
-    return item.kind === 'existing' ? { id: item.id } : { pending: item.key }
-  }
-
-  const dirtyState = computed(() => ({
-    cover: singleState(cover.value),
-    banner: singleState(banner.value),
-    gallery: gallery.value.map((m) =>
-      m.kind === 'existing' ? { id: m.id } : { pending: m.key },
-    ),
-  }))
-
-  const baseline = computed(() => ({
-    cover: { id: singleOf(source(), 'COVER')?.id ?? null },
-    banner: { id: singleOf(source(), 'BANNER')?.id ?? null },
-    gallery: existingOf(source(), 'GALLERY').map((m) => ({ id: m.id })),
-  }))
-
-  const isDirty = computed(
-    () => JSON.stringify(dirtyState.value) !== JSON.stringify(baseline.value),
-  )
+  const staging = useMediaStaging(initial)
+  const { cover, banner, gallery, isDirty } = staging
 
   async function commitSingle(animeId: string, type: 'COVER' | 'BANNER') {
     const item = type === 'COVER' ? cover.value : banner.value
@@ -164,7 +74,7 @@ export function useStagedMedia(
     const currentIds = existingOf(source(), 'GALLERY').map((m) => m.id)
     const keptIds = new Set(
       gallery.value
-        .filter((m): m is ExistingItem => m.kind === 'existing')
+        .filter((m): m is StagedExistingItem => m.kind === 'existing')
         .map((m) => m.id),
     )
     for (const id of currentIds) {
@@ -211,22 +121,17 @@ export function useStagedMedia(
     await commitGallery(animeId)
   }
 
-  onScopeDispose(() => {
-    for (const url of pendingUrls) URL.revokeObjectURL(url)
-    pendingUrls.clear()
-  })
-
   return {
     cover,
     banner,
     gallery,
     isDirty,
-    setSingle,
-    removeSingle,
-    addGallery,
-    removeGallery,
-    reorderGallery,
+    setSingle: staging.setSingle,
+    removeSingle: staging.removeSingle,
+    addGallery: staging.addGallery,
+    removeGallery: staging.removeGallery,
+    reorderGallery: staging.reorderGallery,
     commit,
-    sync,
+    sync: staging.sync,
   }
 }

@@ -1,4 +1,6 @@
 import {
+  ANIME_FIELD_META,
+  ANIME_FIELD_ORDER,
   ANIME_FORMATS,
   ANIME_MEDIA_TYPES,
   ANIME_STATUSES,
@@ -47,6 +49,7 @@ export const releaseDateSchema = z.preprocess(
 
 export const animeMediaSchema = z.object({
   id: z.string(),
+  mediaId: z.string(),
   type: animeMediaTypeSchema,
   position: z.number().int(),
   url: z.string(),
@@ -78,6 +81,8 @@ export const animeDetailSchema = animeCoreSchema.extend({
   endDate: z.string().nullable(),
   genres: z.array(genreSchema),
   media: z.array(animeMediaSchema),
+  headRev: z.number().int(),
+  deletedAt: z.date().nullable(),
 })
 
 export const animeSortSchema = z.enum(['recent', 'title'])
@@ -91,6 +96,7 @@ export const listAnimeInputSchema = paginationInputSchema.extend({
   sort: animeSortSchema.default('recent'),
   order: sortOrderSchema.default('desc'),
   limit: z.coerce.number().int().min(1).max(100).default(24),
+  includeDeleted: z.coerce.boolean().default(false),
 })
 
 export const createAnimeInputSchema = z.object({
@@ -125,6 +131,46 @@ export const reorderAnimeMediaInputSchema = z.object({
   type: animeMediaTypeSchema,
   orderedIds: z.array(idSchema),
 })
+
+export const animeDocumentMediaSchema = z.object({
+  mediaId: idSchema,
+  type: animeMediaTypeSchema,
+  position: z.number().int().min(0),
+})
+
+export const animeDocumentMediaListSchema = z
+  .array(animeDocumentMediaSchema)
+  .max(30, 'Too many media items')
+  .superRefine((items, ctx) => {
+    for (const type of ['COVER', 'BANNER'] as const) {
+      if (items.filter((m) => m.type === type).length > 1) {
+        ctx.addIssue({ code: 'custom', message: `Only one ${type} allowed` })
+      }
+    }
+  })
+
+export const animeDocumentSchema = createAnimeInputSchema.extend({
+  genreIds: z.array(idSchema).max(50),
+  media: animeDocumentMediaListSchema,
+})
+
+export const animeDocumentPatchSchema = animeDocumentSchema.partial()
+
+export type AnimeDocument = z.output<typeof animeDocumentSchema>
+export type AnimeDocumentPatch = z.output<typeof animeDocumentPatchSchema>
+export type AnimeDocumentMedia = z.output<typeof animeDocumentMediaSchema>
+
+const _metaCoversSchema: Record<keyof AnimeDocument, unknown> = ANIME_FIELD_META
+
+const _metaHasNoExtras: Record<keyof typeof ANIME_FIELD_META, unknown> =
+  animeDocumentSchema.shape
+
+const _orderCoversSchema: Record<(typeof ANIME_FIELD_ORDER)[number], unknown> =
+  animeDocumentSchema.shape
+
+void _metaCoversSchema
+void _metaHasNoExtras
+void _orderCoversSchema
 
 export type AnimeListItem = z.output<typeof animeListItemSchema>
 export type AnimeDetail = z.output<typeof animeDetailSchema>

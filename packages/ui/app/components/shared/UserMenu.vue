@@ -6,11 +6,13 @@ const props = withDefaults(
   defineProps<{
     user?: AccountUser | null
     signInTo?: string
+    showContributions?: boolean
     onSignOut?: () => unknown
   }>(),
   {
     user: null,
     signInTo: '/login',
+    showContributions: false,
     onSignOut: undefined,
   },
 )
@@ -23,7 +25,18 @@ const items = computed<DropdownMenuItem[][]>(() => [
       slot: 'account',
     },
   ],
-  [{ label: 'Settings', icon: 'i-lucide-settings', to: '/settings' }],
+  [
+    ...(props.showContributions
+      ? [
+          {
+            label: 'My contributions',
+            icon: 'i-lucide-git-pull-request-arrow',
+            to: '/contributions',
+          },
+        ]
+      : []),
+    { label: 'Settings', icon: 'i-lucide-settings', to: '/settings' },
+  ],
   [
     {
       label: 'Sign out',

@@ -35,9 +35,18 @@ const rangeEnd = computed(() => Math.min(page.value * pageSize, total.value))
 
 <template>
   <UContainer class="py-10">
-    <div class="mb-6 flex flex-col gap-1">
-      <h1 class="text-highlighted text-2xl font-semibold">Explore</h1>
-      <p class="text-muted text-sm">Search and discover anime.</p>
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-col gap-1">
+        <h1 class="text-highlighted text-2xl font-semibold">Explore</h1>
+        <p class="text-muted text-sm">Search and discover anime.</p>
+      </div>
+      <UButton
+        to="/contribute/new"
+        label="Add anime"
+        icon="i-lucide-plus"
+        color="neutral"
+        variant="outline"
+      />
     </div>
 
     <AnimeFilterBar

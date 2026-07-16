@@ -16,14 +16,13 @@ import { MAILER } from './mail/mail.constants'
 import { AccountModule } from './modules/account/account.module'
 import { AnimeModule } from './modules/anime/anime.module'
 import { GenreModule } from './modules/genre/genre.module'
+import { ModerationModule } from './modules/moderation/moderation.module'
 import { HealthModule } from './modules/health/health.module'
 import { SystemModule } from './modules/system/system.module'
 import type { ORPCContext } from './orpc/context'
 import { RedisModule } from './redis/redis.module'
 import { REDIS } from './redis/redis.constants'
 import type { Redis } from './redis/redis.factory'
-import { StorageModule } from './storage/storage.module'
-import { StorageService } from './storage/storage.service'
 
 @Module({
   imports: [
@@ -38,16 +37,14 @@ import { StorageService } from './storage/storage.service'
       inject: [REQUEST],
     }),
     AuthModule.forRootAsync({
-      imports: [StorageModule],
-      inject: [ConfigService, DRIZZLE, REDIS, MAILER, StorageService],
+      inject: [ConfigService, DRIZZLE, REDIS, MAILER],
       useFactory: (
         config: ConfigService<Env, true>,
         db: Database,
         redis: Redis,
         mailer: Mailer,
-        storage: StorageService,
       ) => ({
-        auth: authFactory(config, db, redis, mailer, storage),
+        auth: authFactory(config, db, redis, mailer),
         disableTrustedOriginsCors: true,
         bodyParser: {
           json: { limit: '2mb', type: ['application/json', 'text/plain'] },
@@ -61,6 +58,7 @@ import { StorageService } from './storage/storage.service'
     AccountModule,
     AnimeModule,
     GenreModule,
+    ModerationModule,
   ],
 })
 export class AppModule {}

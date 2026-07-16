@@ -16,7 +16,6 @@ interface RunOptions {
   operation: () => Promise<{ error: AuthActionError | null }>
   success: { title: string; description: string }
   errorTitle: string
-  handleStale?: boolean
   onError?: (error: AuthActionError) => boolean
 }
 
@@ -30,32 +29,12 @@ export function useAccountActions() {
 
   const origin = () => useRequestURL().origin
 
-  async function handleStaleSession(error: AuthActionError): Promise<boolean> {
-    if (error.status !== 401 && error.status !== 500) return false
-    const { data } = await auth.getSession({
-      query: { disableCookieCache: true },
-    })
-    if (data?.user) return false
-    await auth.signOut().catch(() => {})
-    await refreshNuxtData('app-session')
-    toast.add({
-      title: 'Session expired',
-      description: 'Please sign in again to continue.',
-      color: 'warning',
-    })
-    await router.push('/login')
-    return true
-  }
-
   async function run(options: RunOptions): Promise<boolean> {
     loading.value = true
     try {
       const { error } = await options.operation()
 
       if (error) {
-        if (options.handleStale && (await handleStaleSession(error))) {
-          return false
-        }
         if (options.onError?.(error)) return true
         toast.add({
           title: options.errorTitle,
@@ -80,7 +59,6 @@ export function useAccountActions() {
         description: 'Your changes have been saved.',
       },
       errorTitle: 'Update failed',
-      handleStale: true,
     })
   }
 

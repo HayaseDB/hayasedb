@@ -17,9 +17,10 @@ const props = withDefaults(
     isDirty: boolean
     changedFields?: (keyof AnimeFormState)[]
     saving: boolean
+    submitLabel?: string
     onSubmit: (data: CreateAnimeInput) => unknown | Promise<unknown>
   }>(),
-  { changedFields: () => [] },
+  { changedFields: () => [], submitLabel: undefined },
 )
 
 const changed = (field: keyof AnimeFormState) =>
@@ -353,9 +354,10 @@ const activeTab = ref('0')
     <div
       class="border-default mt-6 flex items-center justify-end gap-3 border-t py-4"
     >
+      <slot name="footer-leading" />
       <UButton
         type="submit"
-        :label="isEdit ? 'Save changes' : 'Create anime'"
+        :label="submitLabel ?? (isEdit ? 'Save changes' : 'Create anime')"
         color="primary"
         :loading="saving"
         :disabled="isEdit && !isDirty"

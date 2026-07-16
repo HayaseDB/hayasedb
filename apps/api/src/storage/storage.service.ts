@@ -35,17 +35,21 @@ function isBucketAlreadyOwned(error: unknown): boolean {
 @Injectable()
 export class StorageService implements OnApplicationBootstrap {
   private readonly logger = new Logger(StorageService.name)
-  private readonly bucket: string
+  private readonly bucketName: string
   private readonly publicBaseUrl: string
 
   constructor(
     private readonly minio: MinioService,
     config: ConfigService<Env, true>,
   ) {
-    this.bucket = config.get('MINIO_BUCKET', { infer: true })
+    this.bucketName = config.get('MINIO_BUCKET', { infer: true })
     this.publicBaseUrl = config
       .get('MINIO_PUBLIC_URL', { infer: true })
       .replace(/\/+$/, '')
+  }
+
+  get bucket(): string {
+    return this.bucketName
   }
 
   async onApplicationBootstrap(): Promise<void> {
@@ -62,7 +66,7 @@ export class StorageService implements OnApplicationBootstrap {
     if (options.cacheControl) metaData['Cache-Control'] = options.cacheControl
 
     await this.minio.client.putObject(
-      this.bucket,
+      this.bucketName,
       key,
       body,
       body.byteLength,
@@ -70,27 +74,43 @@ export class StorageService implements OnApplicationBootstrap {
     )
   }
 
-  async removeObject(key: string): Promise<void> {
-    await this.minio.client.removeObject(this.bucket, key)
+  private async listKeys(prefix: string): Promise<string[]> {
+    const stream = this.minio.client.listObjectsV2(
+      this.bucketName,
+      prefix,
+      true,
+    )
+    const keys: string[] = []
+    for await (const item of stream) {
+      if (item.name) keys.push(item.name)
+    }
+    return keys
+  }
+
+  async removeByPrefix(prefix: string): Promise<number> {
+    const keys = await this.listKeys(prefix)
+    if (keys.length === 0) return 0
+    await this.minio.client.removeObjects(this.bucketName, keys)
+    return keys.length
   }
 
   publicUrl(key: string): string {
-    return `${this.publicBaseUrl}/${this.bucket}/${key}`
+    return `${this.publicBaseUrl}/${this.bucketName}/${key}`
   }
 
   private async ensureBucket(): Promise<void> {
-    const exists = await this.minio.client.bucketExists(this.bucket)
+    const exists = await this.minio.client.bucketExists(this.bucketName)
     if (!exists) {
       try {
-        await this.minio.client.makeBucket(this.bucket, BUCKET_REGION)
+        await this.minio.client.makeBucket(this.bucketName, BUCKET_REGION)
       } catch (error) {
         if (!isBucketAlreadyOwned(error)) throw error
       }
     }
     await this.minio.client.setBucketPolicy(
-      this.bucket,
-      publicReadPolicy(this.bucket),
+      this.bucketName,
+      publicReadPolicy(this.bucketName),
     )
-    this.logger.log(`Media bucket "${this.bucket}" is ready`)
+    this.logger.log(`Media bucket "${this.bucketName}" is ready`)
   }
 }

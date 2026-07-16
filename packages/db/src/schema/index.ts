@@ -1,4 +1,5 @@
 export * from './anime'
 export * from './auth'
+export * from './contribution'
 export * from './media'
 export * from './meta'

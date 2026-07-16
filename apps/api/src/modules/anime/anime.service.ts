@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { ORPCError } from '@orpc/server'
 import {
   and,
@@ -8,6 +8,7 @@ import {
   exists,
   ilike,
   inArray,
+  isNull,
   ne,
   or,
   sql,
@@ -23,25 +24,51 @@ import type {
   UpdateAnimeInput,
 } from '@hayasedb/contract'
 import { DRIZZLE } from '../../database/database.constants'
-import { StorageService } from '../../storage/storage.service'
-
-type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
+import { MediaService } from '../media/media.service'
+import { entityHandler, type Tx } from '../revision/registry'
+import { RevisionService } from '../revision/revision.service'
 
 @Injectable()
 export class AnimeService {
-  private readonly logger = new Logger(AnimeService.name)
-
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
-    private readonly storage: StorageService,
+    private readonly media: MediaService,
+    private readonly revisions: RevisionService,
   ) {}
 
-  async list(input: ListAnimeInput): Promise<{
+  private async recordDirectWrite(
+    tx: Tx,
+    opts: {
+      entityId: string
+      op: 'create' | 'update' | 'delete'
+      editorId: string | null
+      document?: Record<string, unknown>
+    },
+  ): Promise<void> {
+    const document =
+      opts.document ??
+      (await entityHandler('anime').serialize(tx, opts.entityId))
+    await this.revisions.record(tx, {
+      entityId: opts.entityId,
+      op: opts.op,
+      editorId: opts.editorId,
+      changesetId: null,
+      document,
+    })
+  }
+
+  async list(
+    input: ListAnimeInput,
+    opts: { isAdmin?: boolean } = {},
+  ): Promise<{
     items: AnimeListItem[]
     meta: { total: number; limit: number; offset: number }
   }> {
     const conditions = []
 
+    if (!(input.includeDeleted && opts.isAdmin)) {
+      conditions.push(isNull(schema.entity.deletedAt))
+    }
     if (input.format) conditions.push(eq(schema.anime.format, input.format))
     if (input.status) conditions.push(eq(schema.anime.status, input.status))
 
@@ -85,6 +112,7 @@ export class AnimeService {
       this.db
         .select({ total: sql<number>`count(*)::int` })
         .from(schema.anime)
+        .innerJoin(schema.entity, eq(schema.entity.id, schema.anime.id))
         .where(where),
       this.db
         .select({
@@ -99,6 +127,7 @@ export class AnimeService {
           updatedAt: schema.anime.updatedAt,
         })
         .from(schema.anime)
+        .innerJoin(schema.entity, eq(schema.entity.id, schema.anime.id))
         .where(where)
         .orderBy(...orderBy)
         .limit(input.limit)
@@ -167,17 +196,9 @@ export class AnimeService {
       genresByAnime.set(g.animeId, list)
     }
 
-    const coverByAnime = new Map<
-      string,
-      { storageKey: string; blurhash: string | null }
-    >()
+    const coverByAnime = new Map<string, (typeof covers)[number]>()
     for (const c of covers) {
-      if (!coverByAnime.has(c.animeId)) {
-        coverByAnime.set(c.animeId, {
-          storageKey: c.storageKey,
-          blurhash: c.blurhash,
-        })
-      }
+      if (!coverByAnime.has(c.animeId)) coverByAnime.set(c.animeId, c)
     }
 
     return rows.map((r) => {
@@ -190,7 +211,7 @@ export class AnimeService {
         titleRomaji: r.titleRomaji,
         titleEnglish: r.titleEnglish,
         titleNative: r.titleNative,
-        coverUrl: cover ? this.storage.publicUrl(cover.storageKey) : null,
+        coverUrl: cover ? this.media.publicUrl(cover) : null,
         coverBlurhash: cover?.blurhash ?? null,
         genres: (genresByAnime.get(r.id) ?? []).sort(),
         createdAt: r.createdAt,
@@ -199,38 +220,54 @@ export class AnimeService {
     })
   }
 
-  async getBySlug(slug: string): Promise<AnimeDetail> {
+  async getBySlug(
+    slug: string,
+    opts: { includeDeleted?: boolean } = {},
+  ): Promise<AnimeDetail> {
     const [row] = await this.db
       .select({ id: schema.anime.id })
       .from(schema.anime)
       .where(eq(schema.anime.slug, slug))
       .limit(1)
     if (!row) throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
-    return this.buildDetail(row.id)
+    return this.getById(row.id, opts)
   }
 
-  async getById(id: string): Promise<AnimeDetail> {
-    return this.buildDetail(id)
+  async getById(
+    id: string,
+    opts: { includeDeleted?: boolean } = {},
+  ): Promise<AnimeDetail> {
+    const detail = await this.buildDetail(id)
+    if (detail.deletedAt && !opts.includeDeleted) {
+      throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
+    }
+    return detail
   }
 
   private async buildDetail(animeId: string): Promise<AnimeDetail> {
-    const record = await this.db.query.anime.findFirst({
-      where: eq(schema.anime.id, animeId),
-      with: {
-        genres: { with: { genre: true } },
-        media: { with: { asset: true } },
-      },
-    })
-    if (!record)
+    const [record, entityRow] = await Promise.all([
+      this.db.query.anime.findFirst({
+        where: eq(schema.anime.id, animeId),
+        with: {
+          genres: { with: { genre: true } },
+          media: { with: { asset: true } },
+        },
+      }),
+      this.db.query.entity.findFirst({
+        where: eq(schema.entity.id, animeId),
+      }),
+    ])
+    if (!record || !entityRow)
       throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
 
     const media = [...record.media]
       .sort((a, b) => a.position - b.position)
       .map((m) => ({
         id: m.id,
+        mediaId: m.mediaId,
         type: m.type,
         position: m.position,
-        url: this.storage.publicUrl(m.asset.storageKey),
+        url: this.media.publicUrl(m.asset),
         blurhash: m.asset.blurhash,
         width: m.asset.width,
         height: m.asset.height,
@@ -251,40 +288,51 @@ export class AnimeService {
         .map((g) => ({ id: g.genre.id, name: g.genre.name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
       media,
+      headRev: entityRow.headRev,
+      deletedAt: entityRow.deletedAt,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     }
   }
 
-  async create(input: CreateAnimeInput): Promise<AnimeDetail> {
+  async create(
+    input: CreateAnimeInput,
+    editorId: string | null,
+  ): Promise<AnimeDetail> {
     const { genreIds, ...fields } = input
     await this.assertSlugAvailable(fields.slug)
     const uniqueGenreIds = [...new Set(genreIds ?? [])]
     await this.assertGenresExist(uniqueGenreIds)
 
     const animeId = await this.db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(schema.anime)
-        .values(fields)
-        .returning({ id: schema.anime.id })
+      const entityId = await this.revisions.createEntity(tx, { kind: 'anime' })
+      await tx.insert(schema.anime).values({ id: entityId, ...fields })
       if (uniqueGenreIds.length > 0) {
         await tx
           .insert(schema.animeGenre)
           .values(
-            uniqueGenreIds.map((genreId) => ({ animeId: row!.id, genreId })),
+            uniqueGenreIds.map((genreId) => ({ animeId: entityId, genreId })),
           )
       }
-      return row!.id
+      await this.recordDirectWrite(tx, { entityId, op: 'create', editorId })
+      return entityId
     })
     return this.buildDetail(animeId)
   }
 
-  async update(input: UpdateAnimeInput): Promise<AnimeDetail> {
+  async update(
+    input: UpdateAnimeInput,
+    editorId: string | null,
+  ): Promise<AnimeDetail> {
     const { id, genreIds, ...patch } = input
     await this.assertAnimeExists(id)
     if (patch.slug !== undefined) await this.assertSlugAvailable(patch.slug, id)
     const uniqueGenreIds = genreIds && [...new Set(genreIds)]
     if (uniqueGenreIds) await this.assertGenresExist(uniqueGenreIds)
+
+    if (Object.keys(patch).length === 0 && !uniqueGenreIds) {
+      return this.buildDetail(id)
+    }
 
     await this.db.transaction(async (tx) => {
       if (Object.keys(patch).length > 0) {
@@ -300,34 +348,43 @@ export class AnimeService {
             .values(uniqueGenreIds.map((genreId) => ({ animeId: id, genreId })))
         }
       }
+      await this.recordDirectWrite(tx, { entityId: id, op: 'update', editorId })
     })
     return this.buildDetail(id)
   }
 
-  async remove(id: string): Promise<void> {
-    const orphanedKeys = await this.db.transaction(async (tx) => {
-      const links = await tx
-        .select({ mediaId: schema.animeMedia.mediaId })
-        .from(schema.animeMedia)
-        .where(eq(schema.animeMedia.animeId, id))
-      const [row] = await tx
-        .delete(schema.anime)
-        .where(eq(schema.anime.id, id))
-        .returning({ id: schema.anime.id })
-      if (!row) throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
-      return this.collectOrphanedAssets(
-        tx,
-        links.map((link) => link.mediaId),
-      )
+  async remove(id: string, editorId: string | null): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const [entityRow] = await tx
+        .select()
+        .from(schema.entity)
+        .where(eq(schema.entity.id, id))
+        .for('update')
+      if (!entityRow || entityRow.deletedAt) {
+        throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
+      }
+      const document = await entityHandler('anime').serialize(tx, id)
+      await tx
+        .update(schema.entity)
+        .set({ deletedAt: new Date() })
+        .where(eq(schema.entity.id, id))
+      await this.recordDirectWrite(tx, {
+        entityId: id,
+        op: 'delete',
+        editorId,
+        document,
+      })
     })
-    await this.removeStorageObjects(orphanedKeys)
   }
 
-  async attachMedia(input: {
-    animeId: string
-    mediaId: string
-    type: AddAnimeMediaInput['type']
-  }): Promise<AnimeDetail> {
+  async attachMedia(
+    input: {
+      animeId: string
+      mediaId: string
+      type: AddAnimeMediaInput['type']
+    },
+    editorId: string | null,
+  ): Promise<AnimeDetail> {
     await this.assertAnimeExists(input.animeId)
     await this.db.transaction(async (tx) => {
       const [positionRow] = await tx
@@ -351,30 +408,36 @@ export class AnimeService {
           position: positionRow?.next ?? 0,
         })
         .onConflictDoNothing()
+      await this.recordDirectWrite(tx, {
+        entityId: input.animeId,
+        op: 'update',
+        editorId,
+      })
     })
     return this.buildDetail(input.animeId)
   }
 
-  async removeMedia(id: string): Promise<AnimeDetail> {
-    const { animeId, orphanedKeys } = await this.db.transaction(async (tx) => {
+  async removeMedia(id: string, editorId: string | null): Promise<AnimeDetail> {
+    const animeId = await this.db.transaction(async (tx) => {
       const [row] = await tx
         .delete(schema.animeMedia)
         .where(eq(schema.animeMedia.id, id))
-        .returning({
-          animeId: schema.animeMedia.animeId,
-          mediaId: schema.animeMedia.mediaId,
-        })
+        .returning({ animeId: schema.animeMedia.animeId })
       if (!row) throw new ORPCError('NOT_FOUND', { message: 'Media not found' })
-      return {
-        animeId: row.animeId,
-        orphanedKeys: await this.collectOrphanedAssets(tx, [row.mediaId]),
-      }
+      await this.recordDirectWrite(tx, {
+        entityId: row.animeId,
+        op: 'update',
+        editorId,
+      })
+      return row.animeId
     })
-    await this.removeStorageObjects(orphanedKeys)
     return this.buildDetail(animeId)
   }
 
-  async reorderMedia(input: ReorderAnimeMediaInput): Promise<AnimeDetail> {
+  async reorderMedia(
+    input: ReorderAnimeMediaInput,
+    editorId: string | null,
+  ): Promise<AnimeDetail> {
     await this.assertAnimeExists(input.animeId)
     if (input.orderedIds.length > 0) {
       const cases = sql.join(
@@ -384,60 +447,35 @@ export class AnimeService {
         ),
         sql` `,
       )
-      await this.db
-        .update(schema.animeMedia)
-        .set({
-          position: sql`case ${cases} else ${schema.animeMedia.position} end`,
+      await this.db.transaction(async (tx) => {
+        await tx
+          .update(schema.animeMedia)
+          .set({
+            position: sql`case ${cases} else ${schema.animeMedia.position} end`,
+          })
+          .where(
+            and(
+              inArray(schema.animeMedia.id, input.orderedIds),
+              eq(schema.animeMedia.animeId, input.animeId),
+              eq(schema.animeMedia.type, input.type),
+            ),
+          )
+        await this.recordDirectWrite(tx, {
+          entityId: input.animeId,
+          op: 'update',
+          editorId,
         })
-        .where(
-          and(
-            inArray(schema.animeMedia.id, input.orderedIds),
-            eq(schema.animeMedia.animeId, input.animeId),
-            eq(schema.animeMedia.type, input.type),
-          ),
-        )
+      })
     }
     return this.buildDetail(input.animeId)
-  }
-
-  private async collectOrphanedAssets(
-    tx: Tx,
-    mediaIds: string[],
-  ): Promise<string[]> {
-    const unique = [...new Set(mediaIds)]
-    if (unique.length === 0) return []
-    const stillReferenced = await tx
-      .select({ mediaId: schema.animeMedia.mediaId })
-      .from(schema.animeMedia)
-      .where(inArray(schema.animeMedia.mediaId, unique))
-    const referenced = new Set(stillReferenced.map((row) => row.mediaId))
-    const orphanIds = unique.filter((id) => !referenced.has(id))
-    if (orphanIds.length === 0) return []
-    const deleted = await tx
-      .delete(schema.mediaAsset)
-      .where(inArray(schema.mediaAsset.id, orphanIds))
-      .returning({ storageKey: schema.mediaAsset.storageKey })
-    return deleted.map((row) => row.storageKey)
-  }
-
-  private async removeStorageObjects(keys: string[]): Promise<void> {
-    for (const key of keys) {
-      try {
-        await this.storage.removeObject(key)
-      } catch (error) {
-        this.logger.error(
-          `Failed to delete orphaned media object ${key}`,
-          error instanceof Error ? error.stack : String(error),
-        )
-      }
-    }
   }
 
   private async assertAnimeExists(animeId: string): Promise<void> {
     const [row] = await this.db
       .select({ id: schema.anime.id })
       .from(schema.anime)
-      .where(eq(schema.anime.id, animeId))
+      .innerJoin(schema.entity, eq(schema.entity.id, schema.anime.id))
+      .where(and(eq(schema.anime.id, animeId), isNull(schema.entity.deletedAt)))
       .limit(1)
     if (!row) throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
   }

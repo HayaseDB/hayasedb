@@ -6,7 +6,6 @@ import type { Mailer } from '@hayasedb/mail'
 import { eq } from 'drizzle-orm'
 import type { Env } from '../config/env.schema'
 import { type Redis, makeRedisSecondaryStorage } from '../redis/redis.factory'
-import type { StorageService } from '../storage/storage.service'
 
 export type Auth = ReturnType<typeof createAuth>
 
@@ -17,7 +16,6 @@ export function authFactory(
   db: Database,
   redis: Redis,
   mailer: Mailer,
-  storage: StorageService,
 ): Auth {
   const githubClientId = config.get('GITHUB_CLIENT_ID', { infer: true })
   const githubClientSecret = config.get('GITHUB_CLIENT_SECRET', { infer: true })
@@ -49,21 +47,16 @@ export function authFactory(
         : undefined,
     mailer,
     onDeleteUser: async ({ id }) => {
-      const rows = await db
-        .select({ key: schema.avatar.key })
-        .from(schema.avatar)
-        .where(eq(schema.avatar.userId, id))
-
-      await Promise.all(
-        rows.map((row) =>
-          storage.removeObject(row.key).catch((error) => {
-            authLogger.error(
-              `Failed to remove avatar object ${row.key} for deleted user ${id}`,
-              error instanceof Error ? error.stack : String(error),
-            )
-          }),
-        ),
-      )
+      try {
+        await db
+          .delete(schema.userAvatar)
+          .where(eq(schema.userAvatar.userId, id))
+      } catch (error) {
+        authLogger.error(
+          `Failed to remove avatar links for deleted user ${id}`,
+          error instanceof Error ? error.stack : String(error),
+        )
+      }
     },
   })
 }

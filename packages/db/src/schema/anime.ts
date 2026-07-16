@@ -5,7 +5,6 @@ import {
 } from '@hayasedb/domain'
 import { relations, sql } from 'drizzle-orm'
 import {
-  check,
   date,
   index,
   integer,
@@ -17,6 +16,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
+import { entity } from './contribution'
+import { mediaAsset } from './media'
 
 const uuidV7Pk = () =>
   uuid('id')
@@ -30,7 +31,7 @@ export const animeStatus = pgEnum('anime_status', ANIME_STATUSES)
 export const animeMediaType = pgEnum('anime_media_type', ANIME_MEDIA_TYPES)
 
 export const anime = pgTable('anime', {
-  id: uuidV7Pk(),
+  id: uuidV7Pk().references(() => entity.id),
   slug: text('slug').notNull().unique(),
   format: animeFormat('format'),
   status: animeStatus('status'),
@@ -65,29 +66,6 @@ export const animeGenre = pgTable(
   (table) => [
     primaryKey({ columns: [table.animeId, table.genreId] }),
     index('anime_genre_genre_id_idx').on(table.genreId),
-  ],
-)
-
-export const mediaAsset = pgTable(
-  'media_asset',
-  {
-    id: uuidV7Pk(),
-    storageKey: text('storage_key').notNull().unique(),
-    bucket: text('bucket').notNull(),
-    checksumSha256: text('checksum_sha256').notNull().unique(),
-    mimeType: text('mime_type').notNull(),
-    byteSize: integer('byte_size').notNull(),
-    width: integer('width'),
-    height: integer('height'),
-    blurhash: text('blurhash'),
-    originalFilename: text('original_filename'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (table) => [
-    check(
-      'media_asset_mime_type_check',
-      sql`${table.mimeType} in ('image/webp', 'image/jpeg', 'image/png', 'image/avif')`,
-    ),
   ],
 )
 
@@ -137,10 +115,6 @@ export const animeGenreRelations = relations(animeGenre, ({ one }) => ({
     fields: [animeGenre.genreId],
     references: [genre.id],
   }),
-}))
-
-export const mediaAssetRelations = relations(mediaAsset, ({ many }) => ({
-  attachments: many(animeMedia),
 }))
 
 export const animeMediaRelations = relations(animeMedia, ({ one }) => ({

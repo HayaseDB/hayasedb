@@ -53,7 +53,7 @@
     "build:images": "docker compose build api web admin",
     "predev": "bun run infra:up",
     "dev": "turbo run dev",
-    "infra:up": "docker compose up -d --wait postgres redis minio",
+    "infra:up": "docker compose up -d --wait postgres redis minio mailpit",
     "infra:down": "docker compose down",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint -- --fix",

@@ -103,8 +103,7 @@ export function useAdminUserActions() {
           banExpiresIn: input.expiresIn,
         })
         if (error) return { error }
-        await auth.admin.revokeUserSessions({ userId }).catch(() => {})
-        return { error: null }
+        return await auth.admin.revokeUserSessions({ userId })
       },
       success: {
         title: 'User banned',

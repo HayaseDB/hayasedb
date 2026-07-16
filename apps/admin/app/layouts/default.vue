@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const navItems: NavigationMenuItem[][] = [
+const { pendingCount } = useModerationCounts()
+
+const navItems = computed<NavigationMenuItem[][]>(() => [
   [
     { label: 'Overview', icon: 'i-lucide-layout-dashboard', to: '/' },
     { label: 'Anime', icon: 'i-lucide-clapperboard', to: '/anime' },
     { label: 'Genres', icon: 'i-lucide-tags', to: '/genres' },
+    {
+      label: 'Submissions',
+      icon: 'i-lucide-inbox',
+      to: '/submissions',
+      badge: pendingCount.value > 0 ? String(pendingCount.value) : undefined,
+    },
     { label: 'Users', icon: 'i-lucide-users', to: '/users' },
   ],
-]
+])
 </script>
 
 <template>

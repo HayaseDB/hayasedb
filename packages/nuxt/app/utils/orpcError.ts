@@ -9,3 +9,17 @@ function orpcErrorCode(error: unknown): string | undefined {
 export function isConflictError(error: unknown): boolean {
   return orpcErrorCode(error) === 'CONFLICT'
 }
+
+export function isUnauthorizedError(error: unknown): boolean {
+  return orpcErrorCode(error) === 'UNAUTHORIZED'
+}
+
+export function orpcErrorMessage(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message
+    return typeof message === 'string' && message.length > 0
+      ? message
+      : undefined
+  }
+  return undefined
+}
