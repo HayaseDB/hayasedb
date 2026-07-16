@@ -3,6 +3,7 @@
 **/.output
 **/.nuxt
 **/.turbo
+**/out
 **/.data
 **/coverage
 .git

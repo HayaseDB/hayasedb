@@ -6,8 +6,9 @@
   "main": "./nuxt.config.ts",
   "scripts": {
     "prepare": "nuxi prepare",
-    "typecheck": "nuxi typecheck",
-    "lint": "eslint ."
+    "check-types": "nuxi typecheck",
+    "lint": "eslint .",
+    "clean": "rm -rf .nuxt .turbo"
   },
   "dependencies": {
     "@hayasedb/contract": "workspace:*",
@@ -19,7 +20,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@hayasedb/config": "workspace:*",
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
     "@nuxt/eslint": "^1.9.0",
     "eslint": "catalog:",
     "nuxt": "^4.4.8",

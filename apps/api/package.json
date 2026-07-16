@@ -7,8 +7,9 @@
     "build": "nest build -b swc",
     "start": "node dist/src/main",
     "seed:demo": "nest build -b swc && node dist/src/seed-demo",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@hayasedb/auth": "workspace:*",
@@ -39,7 +40,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@hayasedb/config": "workspace:*",
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.24",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.43",

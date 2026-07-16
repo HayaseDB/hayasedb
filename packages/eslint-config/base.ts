@@ -1,5 +1,6 @@
 import js from '@eslint/js'
 import prettier from 'eslint-config-prettier'
+import turbo from 'eslint-plugin-turbo'
 import tseslint from 'typescript-eslint'
 import type { ConfigArray } from 'typescript-eslint'
 
@@ -17,12 +18,22 @@ export const ignores: ConfigArray = tseslint.config({
   ],
 })
 
-const rules: ConfigArray = tseslint.config({
-  name: 'hayasedb/rules',
-  rules: {
-    'no-undef': 'off',
+export const rules: ConfigArray = tseslint.config(
+  {
+    name: 'hayasedb/rules',
+    rules: {
+      'no-undef': 'off',
+    },
   },
-})
+  {
+    name: 'hayasedb/turbo',
+    files: SCRIPT_FILES,
+    plugins: { turbo },
+    rules: {
+      'turbo/no-undeclared-env-vars': 'warn',
+    },
+  },
+)
 
 export const base: ConfigArray = tseslint.config(
   ...ignores,
@@ -34,9 +45,5 @@ export const base: ConfigArray = tseslint.config(
   ...rules,
   prettier,
 )
-
-export function nuxt<T>(withNuxt: (...configs: unknown[]) => T): T {
-  return withNuxt(...ignores, ...rules, prettier)
-}
 
 export default base

@@ -17,11 +17,13 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch --no-clean",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo"
   },
   "devDependencies": {
-    "@hayasedb/config": "workspace:*",
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
     "tsdown": "catalog:",
     "typescript": "catalog:"
   }

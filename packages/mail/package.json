@@ -18,8 +18,9 @@
     "build": "tsdown",
     "dev": "tsdown --watch --no-clean",
     "email": "email dev --dir ./emails --port 3005",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@react-email/components": "catalog:",
@@ -30,7 +31,8 @@
     "resend": "catalog:"
   },
   "devDependencies": {
-    "@hayasedb/config": "workspace:*",
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
     "@react-email/ui": "catalog:",
     "@types/node": "^22.20.1",
     "@types/nodemailer": "catalog:",

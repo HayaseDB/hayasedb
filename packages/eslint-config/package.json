@@ -1,0 +1,29 @@
+{
+  "name": "@hayasedb/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.ts",
+    "./nuxt": "./nuxt.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-turbo": "^2.10.5",
+    "typescript-eslint": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0 || ^10.0.0"
+  },
+  "devDependencies": {
+    "@hayasedb/typescript-config": "workspace:*",
+    "@types/node": "^22.20.1",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  }
+}

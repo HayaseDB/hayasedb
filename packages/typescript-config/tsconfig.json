@@ -1,0 +1,7 @@
+{
+  "extends": "./library.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["tsdown.ts"]
+}

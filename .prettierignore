@@ -2,6 +2,7 @@ dist/
 .output/
 .nuxt/
 .turbo/
+out/
 .data/
 node_modules/
 bun.lock

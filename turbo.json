@@ -1,12 +1,12 @@
 {
   "$schema": "https://turborepo.dev/schema.v2.json",
   "ui": "stream",
-  "globalDependencies": [".nvmrc"],
+  "globalDependencies": [".nvmrc", "bunfig.toml"],
   "tasks": {
     "build": {
       "dependsOn": ["^build", "^prepare"],
       "inputs": ["$TURBO_DEFAULT$", "!.nuxt/**", "!.output/**", "!dist/**"],
-      "outputs": ["dist/**", ".output/**"],
+      "outputs": ["dist/**"],
       "env": ["NODE_ENV"]
     },
     "prepare": {
@@ -14,14 +14,18 @@
       "inputs": ["$TURBO_DEFAULT$", "!.nuxt/**"],
       "outputs": [".nuxt/**"]
     },
-    "typecheck": {
-      "dependsOn": ["^typecheck", "prepare"]
+    "check-types": {
+      "dependsOn": ["^build", "prepare"]
     },
     "lint": {
       "dependsOn": ["prepare"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "clean": {
+      "cache": false
     },
     "db:generate": {
       "cache": false,
@@ -32,9 +36,6 @@
       "cache": false,
       "dependsOn": ["^build"],
       "passThroughEnv": ["DATABASE_URL", "POSTGRES_*"]
-    },
-    "clean": {
-      "cache": false
     },
     "dev": {
       "cache": false,

@@ -46,7 +46,7 @@ jobs:
           publish: bun run tag
           commit: 'chore: release'
           title: 'chore: release'
-          createGithubReleases: false
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -57,21 +57,6 @@ jobs:
           version="$(node -p "require('./apps/api/package.json').version")"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "Release version: ${version}"
-
-      - name: Create unified GitHub Release
-        if: steps.changesets.outputs.published == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tag="v${{ steps.version.outputs.version }}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag already exists; skipping."
-          else
-            gh release create "$tag" \
-              --target "${{ github.sha }}" \
-              --title "$tag" \
-              --generate-notes
-          fi
 
   images:
     needs: version
@@ -115,7 +100,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: docker/${{ matrix.app }}.Dockerfile
+          file: apps/${{ matrix.app }}/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

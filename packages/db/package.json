@@ -26,8 +26,9 @@
     "db:check": "drizzle-kit check --dialect=postgresql --out=./drizzle",
     "db:migrate": "tsx src/migrate-cli.ts",
     "db:studio": "drizzle-kit studio",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@hayasedb/domain": "workspace:*",
@@ -35,7 +36,8 @@
     "postgres": "catalog:"
   },
   "devDependencies": {
-    "@hayasedb/config": "workspace:*",
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
     "@types/node": "^22.20.1",
     "dotenv": "catalog:",
     "drizzle-kit": "catalog:",

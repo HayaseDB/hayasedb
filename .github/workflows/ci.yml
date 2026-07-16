@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: .turbo/cache
+          path: .turbo
           key: turbo-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             turbo-${{ runner.os }}-
@@ -38,8 +38,8 @@ jobs:
       - name: Check formatting
         run: bun run format:check
 
-      - name: Lint, typecheck, build
-        run: bunx turbo run lint typecheck build ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      - name: Lint, check types, build
+        run: bunx turbo run lint check-types build ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
       - name: Check migration history
         run: bun --filter @hayasedb/db db:check

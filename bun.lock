@@ -39,7 +39,8 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@nuxt/eslint": "^1.9.0",
         "eslint": "catalog:",
         "typescript": "catalog:",
@@ -78,7 +79,8 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@nestjs/cli": "^11.0.24",
         "@swc/cli": "^0.8.1",
         "@swc/core": "^1.15.43",
@@ -111,7 +113,8 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@nuxt/eslint": "^1.9.0",
         "eslint": "catalog:",
         "typescript": "catalog:",
@@ -129,7 +132,8 @@
       },
       "devDependencies": {
         "@better-auth/cli": "1.4.22",
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@types/node": "^22.20.1",
         "dotenv": "catalog:",
         "drizzle-orm": "catalog:",
@@ -143,26 +147,6 @@
         "vue",
       ],
     },
-    "packages/config": {
-      "name": "@hayasedb/config",
-      "version": "0.0.0",
-      "dependencies": {
-        "@eslint/js": "catalog:",
-        "eslint-config-prettier": "catalog:",
-        "typescript-eslint": "8.64.0",
-      },
-      "devDependencies": {
-        "@types/node": "^22.20.1",
-        "eslint": "catalog:",
-        "tsdown": "catalog:",
-        "typescript": "catalog:",
-      },
-      "peerDependencies": {
-        "eslint": "^9.0.0 || ^10.0.0",
-        "tsdown": "catalog:",
-        "typescript": "catalog:",
-      },
-    },
     "packages/contract": {
       "name": "@hayasedb/contract",
       "version": "0.0.0",
@@ -173,7 +157,8 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "tsdown": "catalog:",
         "typescript": "catalog:",
       },
@@ -187,7 +172,8 @@
         "postgres": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@types/node": "^22.20.1",
         "dotenv": "catalog:",
         "drizzle-kit": "catalog:",
@@ -200,9 +186,29 @@
       "name": "@hayasedb/domain",
       "version": "0.0.0",
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "tsdown": "catalog:",
         "typescript": "catalog:",
+      },
+    },
+    "packages/eslint-config": {
+      "name": "@hayasedb/eslint-config",
+      "version": "0.0.0",
+      "dependencies": {
+        "@eslint/js": "catalog:",
+        "eslint-config-prettier": "catalog:",
+        "eslint-plugin-turbo": "^2.10.5",
+        "typescript-eslint": "catalog:",
+      },
+      "devDependencies": {
+        "@hayasedb/typescript-config": "workspace:*",
+        "@types/node": "^22.20.1",
+        "eslint": "catalog:",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "eslint": "^9.0.0 || ^10.0.0",
       },
     },
     "packages/mail": {
@@ -217,7 +223,8 @@
         "resend": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@react-email/ui": "catalog:",
         "@types/node": "^22.20.1",
         "@types/nodemailer": "catalog:",
@@ -242,12 +249,26 @@
         "better-auth": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@nuxt/eslint": "^1.9.0",
         "eslint": "catalog:",
         "nuxt": "^4.4.8",
         "typescript": "catalog:",
         "vue-tsc": "catalog:",
+      },
+    },
+    "packages/typescript-config": {
+      "name": "@hayasedb/typescript-config",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@types/node": "^22.20.1",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
       },
     },
     "packages/ui": {
@@ -263,7 +284,8 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@hayasedb/config": "workspace:*",
+        "@hayasedb/eslint-config": "workspace:*",
+        "@hayasedb/typescript-config": "workspace:*",
         "@nuxt/eslint": "^1.9.0",
         "eslint": "catalog:",
         "nuxt": "^4.4.8",
@@ -604,17 +626,19 @@
 
     "@hayasedb/auth": ["@hayasedb/auth@workspace:packages/auth"],
 
-    "@hayasedb/config": ["@hayasedb/config@workspace:packages/config"],
-
     "@hayasedb/contract": ["@hayasedb/contract@workspace:packages/contract"],
 
     "@hayasedb/db": ["@hayasedb/db@workspace:packages/db"],
 
     "@hayasedb/domain": ["@hayasedb/domain@workspace:packages/domain"],
 
+    "@hayasedb/eslint-config": ["@hayasedb/eslint-config@workspace:packages/eslint-config"],
+
     "@hayasedb/mail": ["@hayasedb/mail@workspace:packages/mail"],
 
     "@hayasedb/nuxt": ["@hayasedb/nuxt@workspace:packages/nuxt"],
+
+    "@hayasedb/typescript-config": ["@hayasedb/typescript-config@workspace:packages/typescript-config"],
 
     "@hayasedb/ui": ["@hayasedb/ui@workspace:packages/ui"],
 
@@ -2195,6 +2219,8 @@
     "eslint-plugin-jsdoc": ["eslint-plugin-jsdoc@63.0.12", "", { "dependencies": { "@es-joy/jsdoccomment": "~0.88.0", "@es-joy/resolve.exports": "1.2.0", "are-docs-informative": "^0.0.2", "comment-parser": "1.4.7", "debug": "^4.4.3", "escape-string-regexp": "^4.0.0", "espree": "^11.2.0", "esquery": "^1.7.0", "html-entities": "^2.6.0", "object-deep-merge": "^2.0.1", "parse-imports-exports": "^0.2.4", "semver": "^7.8.5", "spdx-expression-parse": "^4.0.0", "to-valid-identifier": "^1.0.0" }, "peerDependencies": { "eslint": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0" } }, "sha512-99VfBHyoLlF9n5w9wh+jLWDBzCgYd3tfw3M/aynAd+H2ylGHWLbde/GPTuo/5az3jMAN0fH7QzCYvEOY6u+Ypg=="],
 
     "eslint-plugin-regexp": ["eslint-plugin-regexp@3.1.1", "", { "dependencies": { "@eslint-community/eslint-utils": "^4.2.0", "@eslint-community/regexpp": "^4.11.0", "comment-parser": "^1.4.0", "jsdoc-type-pratt-parser": "^7.0.0", "refa": "^0.12.1", "regexp-ast-analysis": "^0.7.1", "scslre": "^0.3.0" }, "peerDependencies": { "eslint": ">=9.38.0" } }, "sha512-MxR5nqoQCtVWmJwia0D2+NlXX1xzdpkslsVOZLEYQ4PQWEaL65PCZXURxaBc3lPnkNFpNxzMIRmYVxdl8giXRA=="],
+
+    "eslint-plugin-turbo": ["eslint-plugin-turbo@2.10.5", "", { "dependencies": { "dotenv": "16.0.3" }, "peerDependencies": { "eslint": ">6.6.0", "turbo": ">2.0.0" } }, "sha512-4a1hbA04A4D5ZdSpzTAVn2JL0RqEOava+u6MJzxMoY5ckWfqdgcmJnez7a83gj4bUTomBqDP6vlb4Q7LqrfYaw=="],
 
     "eslint-plugin-unicorn": ["eslint-plugin-unicorn@65.0.1", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "@eslint-community/eslint-utils": "^4.9.1", "change-case": "^5.4.4", "ci-info": "^4.4.0", "core-js-compat": "^3.49.0", "detect-indent": "^7.0.2", "find-up-simple": "^1.0.1", "globals": "^17.4.0", "indent-string": "^5.0.0", "is-builtin-module": "^5.0.0", "jsesc": "^3.1.0", "pluralize": "^8.0.0", "regjsparser": "^0.13.0", "semver": "^7.7.4", "strip-indent": "^4.1.1" }, "peerDependencies": { "eslint": ">=9.38.0" } }, "sha512-daCrQrgxOoOz2uMPWB3Y3vvv/5q+ncwICI8IjoebiwtW87CaY4tAN5EEiRXTYVnf7qi1v1BGBdHOSnZLV0rx6A=="],
 
@@ -4177,6 +4203,8 @@
     "eslint-flat-config-utils/@eslint/config-helpers": ["@eslint/config-helpers@0.5.5", "", { "dependencies": { "@eslint/core": "^1.2.1" } }, "sha512-eIJYKTCECbP/nsKaaruF6LW967mtbQbsw4JTtSVkUQc9MneSkbrgPJAbKl9nWr0ZeowV8BfsarBmPpBzGelA2w=="],
 
     "eslint-import-context/get-tsconfig": ["get-tsconfig@4.14.0", "", { "dependencies": { "resolve-pkg-maps": "^1.0.0" } }, "sha512-yTb+8DXzDREzgvYmh6s9vHsSVCHeC0G3PI5bEXNBHtmshPnO+S5O7qgLEOn0I5QvMy6kpZN8K1NKGyilLb93wA=="],
+
+    "eslint-plugin-turbo/dotenv": ["dotenv@16.0.3", "", {}, "sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ=="],
 
     "eslint-plugin-unicorn/@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@7.29.7", "", {}, "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="],
 

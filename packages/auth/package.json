@@ -22,8 +22,9 @@
     "auth:generate": "better-auth generate --config ./src/auth.instance.ts --output ../db/src/schema/auth.ts -y",
     "build": "tsdown",
     "dev": "tsdown --watch --no-clean",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@hayasedb/contract": "workspace:*",
@@ -41,7 +42,8 @@
   },
   "devDependencies": {
     "@better-auth/cli": "1.4.22",
-    "@hayasedb/config": "workspace:*",
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
     "@types/node": "^22.20.1",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",

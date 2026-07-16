@@ -1,4 +1,4 @@
 {
-  "extends": "../config/tsconfig/package.json",
+  "extends": "@hayasedb/typescript-config/library.json",
   "include": ["src"]
 }

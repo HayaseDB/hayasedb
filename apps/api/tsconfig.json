@@ -1,5 +1,5 @@
 {
-  "extends": "@hayasedb/config/tsconfig/nest.json",
+  "extends": "@hayasedb/typescript-config/nest.json",
   "compilerOptions": {
     "types": ["node", "reflect-metadata"],
     "outDir": "dist",

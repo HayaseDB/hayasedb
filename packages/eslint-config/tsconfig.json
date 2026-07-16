@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["src", "drizzle.config.ts"]
+  "include": ["base.ts", "nuxt.ts", "eslint.config.ts"]
 }

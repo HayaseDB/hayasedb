@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: true,
 
-  extends: ['../../packages/nuxt', '../../packages/ui'],
+  extends: ['@hayasedb/nuxt', '@hayasedb/ui'],
   modules: ['@nuxt/ui', '@nuxt/eslint'],
 
   app: {

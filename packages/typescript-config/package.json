@@ -1,0 +1,24 @@
+{
+  "name": "@hayasedb/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base.json": "./base.json",
+    "./library.json": "./library.json",
+    "./nest.json": "./nest.json",
+    "./tsdown": "./tsdown.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}
