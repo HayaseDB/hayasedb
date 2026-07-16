@@ -46,7 +46,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
       - minio-data:/data
-    networks: [traefik-public, internal]
+    networks: [internal, traefik-public]
     healthcheck:
       test: ['CMD', 'mc', 'ready', 'local']
       interval: 5s
@@ -103,7 +103,7 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
-    networks: [traefik-public, internal]
+    networks: [internal, traefik-public]
     stop_grace_period: 30s
     deploy:
       replicas: 1
@@ -133,7 +133,7 @@ services:
       NITRO_PORT: '3001'
       NITRO_HOST: 0.0.0.0
       NUXT_API_URL: http://api:3000
-    networks: [traefik-public, internal]
+    networks: [internal, traefik-public]
     stop_grace_period: 30s
     deploy:
       replicas: 1
@@ -160,7 +160,7 @@ services:
       NITRO_PORT: '3002'
       NITRO_HOST: 0.0.0.0
       NUXT_API_URL: http://api:3000
-    networks: [traefik-public, internal]
+    networks: [internal, traefik-public]
     stop_grace_period: 30s
     deploy:
       replicas: 1
