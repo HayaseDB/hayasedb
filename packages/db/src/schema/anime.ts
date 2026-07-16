@@ -17,6 +17,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
+import { user } from './auth'
+import { entity } from './contribution'
 
 const uuidV7Pk = () =>
   uuid('id')
@@ -30,7 +32,7 @@ export const animeStatus = pgEnum('anime_status', ANIME_STATUSES)
 export const animeMediaType = pgEnum('anime_media_type', ANIME_MEDIA_TYPES)
 
 export const anime = pgTable('anime', {
-  id: uuidV7Pk(),
+  id: uuidV7Pk().references(() => entity.id),
   slug: text('slug').notNull().unique(),
   format: animeFormat('format'),
   status: animeStatus('status'),
@@ -91,6 +93,23 @@ export const mediaAsset = pgTable(
   ],
 )
 
+export const mediaUpload = pgTable(
+  'media_upload',
+  {
+    id: uuidV7Pk(),
+    mediaAssetId: uuid('media_asset_id')
+      .notNull()
+      .references(() => mediaAsset.id, { onDelete: 'cascade' }),
+    uploaderId: text('uploader_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('media_upload_uploader_idx').on(table.uploaderId, table.createdAt),
+  ],
+)
+
 export const animeMedia = pgTable(
   'anime_media',
   {
@@ -141,6 +160,18 @@ export const animeGenreRelations = relations(animeGenre, ({ one }) => ({
 
 export const mediaAssetRelations = relations(mediaAsset, ({ many }) => ({
   attachments: many(animeMedia),
+  uploads: many(mediaUpload),
+}))
+
+export const mediaUploadRelations = relations(mediaUpload, ({ one }) => ({
+  asset: one(mediaAsset, {
+    fields: [mediaUpload.mediaAssetId],
+    references: [mediaAsset.id],
+  }),
+  uploader: one(user, {
+    fields: [mediaUpload.uploaderId],
+    references: [user.id],
+  }),
 }))
 
 export const animeMediaRelations = relations(animeMedia, ({ one }) => ({

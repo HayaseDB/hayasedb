@@ -37,6 +37,11 @@
       "dependsOn": ["^build"],
       "passThroughEnv": ["DATABASE_URL", "POSTGRES_*"]
     },
+    "seed:demo": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["DATABASE_URL", "POSTGRES_*", "MINIO_*", "SEED_COUNT"]
+    },
     "dev": {
       "cache": false,
       "persistent": true,

@@ -213,16 +213,19 @@ async function main() {
       const gIds: string[] = []
       for (const name of entry.genres) gIds.push(await ensureGenre(name))
 
-      const created = await anime.create({
-        slug,
-        format,
-        status,
-        titleRomaji: entry.title.romaji ?? undefined,
-        titleEnglish: entry.title.english ?? undefined,
-        titleNative: entry.title.native ?? undefined,
-        description: cleanDescription(entry.description) ?? undefined,
-        genreIds: gIds,
-      })
+      const created = await anime.create(
+        {
+          slug,
+          format,
+          status,
+          titleRomaji: entry.title.romaji ?? undefined,
+          titleEnglish: entry.title.english ?? undefined,
+          titleNative: entry.title.native ?? undefined,
+          description: cleanDescription(entry.description) ?? undefined,
+          genreIds: gIds,
+        },
+        null,
+      )
       const animeId = created.id
       logger.log(`Created ${slug}`)
 
@@ -231,7 +234,10 @@ async function main() {
         try {
           const file = await downloadImage(coverUrl)
           const asset = await media.ingest(file, `${slug}-cover`)
-          await anime.attachMedia({ animeId, mediaId: asset.id, type: 'COVER' })
+          await anime.attachMedia(
+            { animeId, mediaId: asset.id, type: 'COVER' },
+            null,
+          )
         } catch (error) {
           logger.warn(
             `Cover failed for ${slug}: ${error instanceof Error ? error.message : String(error)}`,
@@ -242,11 +248,14 @@ async function main() {
         try {
           const file = await downloadImage(entry.bannerImage)
           const asset = await media.ingest(file, `${slug}-banner`)
-          await anime.attachMedia({
-            animeId,
-            mediaId: asset.id,
-            type: 'BANNER',
-          })
+          await anime.attachMedia(
+            {
+              animeId,
+              mediaId: asset.id,
+              type: 'BANNER',
+            },
+            null,
+          )
         } catch (error) {
           logger.warn(
             `Banner failed for ${slug}: ${error instanceof Error ? error.message : String(error)}`,
@@ -261,11 +270,14 @@ async function main() {
         try {
           const file = await downloadImage(url)
           const asset = await media.ingest(file, `${slug}-gallery`)
-          await anime.attachMedia({
-            animeId,
-            mediaId: asset.id,
-            type: 'GALLERY',
-          })
+          await anime.attachMedia(
+            {
+              animeId,
+              mediaId: asset.id,
+              type: 'GALLERY',
+            },
+            null,
+          )
         } catch (error) {
           logger.warn(
             `Gallery image failed for ${slug}: ${error instanceof Error ? error.message : String(error)}`,

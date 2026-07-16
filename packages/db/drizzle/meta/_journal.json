@@ -29,6 +29,20 @@
       "when": 1784013644022,
       "tag": "0003_flashy_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784069109597,
+      "tag": "0004_previous_the_executioner",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784196632110,
+      "tag": "0005_marvelous_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

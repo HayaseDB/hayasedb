@@ -16,6 +16,7 @@ import { MAILER } from './mail/mail.constants'
 import { AccountModule } from './modules/account/account.module'
 import { AnimeModule } from './modules/anime/anime.module'
 import { GenreModule } from './modules/genre/genre.module'
+import { ModerationModule } from './modules/moderation/moderation.module'
 import { HealthModule } from './modules/health/health.module'
 import { SystemModule } from './modules/system/system.module'
 import type { ORPCContext } from './orpc/context'
@@ -61,6 +62,7 @@ import { StorageService } from './storage/storage.service'
     AccountModule,
     AnimeModule,
     GenreModule,
+    ModerationModule,
   ],
 })
 export class AppModule {}

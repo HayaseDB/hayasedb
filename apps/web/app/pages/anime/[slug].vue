@@ -117,13 +117,23 @@ useSeoMeta({
         </div>
 
         <div class="min-w-0 flex-1">
-          <div class="flex flex-col gap-1">
-            <h1 class="text-highlighted text-2xl font-semibold lg:text-3xl">
-              {{ detail.titleEnglish }}
-            </h1>
-            <p v-if="detail.titleNative" class="text-muted text-sm">
-              {{ detail.titleNative }}
-            </p>
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="flex min-w-0 flex-col gap-1">
+              <h1 class="text-highlighted text-2xl font-semibold lg:text-3xl">
+                {{ detail.titleEnglish }}
+              </h1>
+              <p v-if="detail.titleNative" class="text-muted text-sm">
+                {{ detail.titleNative }}
+              </p>
+            </div>
+            <UButton
+              :to="`/contribute/anime/${detail.id}`"
+              label="Suggest edit"
+              icon="i-lucide-pencil"
+              color="neutral"
+              variant="outline"
+              size="sm"
+            />
           </div>
 
           <div class="mt-4">

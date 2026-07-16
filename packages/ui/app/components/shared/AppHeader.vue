@@ -28,7 +28,7 @@ const links: NavigationMenuItem[] = [
     <UNavigationMenu :items="links" />
 
     <template #right>
-      <UserMenu :user="user" :on-sign-out="onSignOut" />
+      <UserMenu :user="user" :on-sign-out="onSignOut" show-contributions />
     </template>
 
     <template #body>
