@@ -1,4 +1,4 @@
-import { createORPCClient } from '@orpc/client'
+import { createORPCClient, onError } from '@orpc/client'
 import { OpenAPILink } from '@orpc/openapi/fetch'
 import type { OpenAPILinkOptions } from '@orpc/openapi/fetch'
 import type { JsonifiedClient } from '@orpc/openapi'
@@ -10,12 +10,23 @@ export type ApiClient = JsonifiedClient<RouterContractClient<typeof contract>>
 type ApiClientOptions = Pick<
   OpenAPILinkOptions<Record<never, never>>,
   'origin' | 'headers'
->
+> & {
+  onUnauthorized?: () => void
+}
 
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
+  const { onUnauthorized, ...linkOptions } = options
+
   const link = new OpenAPILink(contract, {
     url: '/api',
-    ...options,
+    ...linkOptions,
+    interceptors: onUnauthorized
+      ? [
+          onError((error) => {
+            if (isUnauthorizedError(error)) onUnauthorized()
+          }),
+        ]
+      : [],
     fetch: (url, init) =>
       globalThis.fetch(url, { ...init, credentials: 'include' }),
   })
