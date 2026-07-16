@@ -13,7 +13,10 @@
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "**/base.mjs",
+    "**/base.ts"
+  ],
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch --no-clean",

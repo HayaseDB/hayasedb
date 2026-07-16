@@ -50,6 +50,7 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "build:images": "docker compose build api web admin",
     "predev": "bun run infra:up",
     "dev": "turbo run dev",
     "infra:up": "docker compose up -d --wait postgres redis minio",
@@ -81,6 +82,6 @@
     "jiti": "^2.7.0",
     "prettier": "3.9.5",
     "prettier-plugin-tailwindcss": "0.8.0",
-    "turbo": "^2.10.5"
+    "turbo": "2.10.5"
   }
 }
