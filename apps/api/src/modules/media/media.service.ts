@@ -1,25 +1,29 @@
 import { createHash } from 'node:crypto'
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import { ORPCError } from '@orpc/server'
 import { encode } from 'blurhash'
-import { eq } from 'drizzle-orm'
 import { type Database, schema } from '@hayasedb/db'
+import {
+  MEDIA_CACHE_CONTROL,
+  MEDIA_MAX_DIMENSION,
+  MEDIA_OBJECT_NAME,
+  MEDIA_OUTPUT_EXTENSION,
+  MEDIA_OUTPUT_MIME_TYPE,
+  MEDIA_OUTPUT_QUALITY,
+  mediaKeyPrefix,
+  mediaObjectKey,
+} from '@hayasedb/domain'
+import { eq } from 'drizzle-orm'
 import sharp from 'sharp'
-import type { Env } from '../../config/env.schema'
 import { DRIZZLE } from '../../database/database.constants'
 import { StorageService } from '../../storage/storage.service'
 
-const OUTPUT_CONTENT_TYPE = 'image/webp'
-const OUTPUT_QUALITY = 85
-const MAX_DIMENSION = 2048
-const CACHE_CONTROL = 'public, max-age=31536000, immutable'
 const BLURHASH_COMPONENTS_X = 4
 const BLURHASH_COMPONENTS_Y = 3
 
 export interface StoredMediaAsset {
   id: string
-  url: string
+  storageKey: string
   blurhash: string | null
   width: number | null
   height: number | null
@@ -32,7 +36,6 @@ export class MediaService {
   constructor(
     private readonly storage: StorageService,
     @Inject(DRIZZLE) private readonly db: Database,
-    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async ingest(
@@ -48,11 +51,11 @@ export class MediaService {
     try {
       const result = await sharp(input)
         .rotate()
-        .resize(MAX_DIMENSION, MAX_DIMENSION, {
+        .resize(MEDIA_MAX_DIMENSION, MEDIA_MAX_DIMENSION, {
           fit: 'inside',
           withoutEnlargement: true,
         })
-        .webp({ quality: OUTPUT_QUALITY })
+        .webp({ quality: MEDIA_OUTPUT_QUALITY })
         .toBuffer({ resolveWithObject: true })
       output = result.data
       width = result.info.width
@@ -80,20 +83,20 @@ export class MediaService {
     const existing = await this.findByChecksum(checksum)
     if (existing) return existing
 
-    const storageKey = `originals/${checksum}.webp`
-    await this.storage.putObject(storageKey, output, {
-      contentType: OUTPUT_CONTENT_TYPE,
-      cacheControl: CACHE_CONTROL,
+    const prefix = mediaKeyPrefix(checksum)
+    await this.storage.putObject(mediaObjectKey(checksum), output, {
+      contentType: MEDIA_OUTPUT_MIME_TYPE,
+      cacheControl: MEDIA_CACHE_CONTROL,
     })
 
     try {
       const [row] = await this.db
         .insert(schema.mediaAsset)
         .values({
-          storageKey,
-          bucket: this.config.get('MINIO_BUCKET', { infer: true }),
+          storageKey: prefix,
+          bucket: this.storage.bucket,
           checksumSha256: checksum,
-          mimeType: OUTPUT_CONTENT_TYPE,
+          mimeType: MEDIA_OUTPUT_MIME_TYPE,
           byteSize: output.byteLength,
           width,
           height,
@@ -101,25 +104,17 @@ export class MediaService {
           originalFilename: originalFilename ?? null,
         })
         .onConflictDoNothing({ target: schema.mediaAsset.checksumSha256 })
-        .returning({
-          id: schema.mediaAsset.id,
-          storageKey: schema.mediaAsset.storageKey,
-          blurhash: schema.mediaAsset.blurhash,
-          width: schema.mediaAsset.width,
-          height: schema.mediaAsset.height,
-        })
+        .returning(assetColumns)
 
-      const asset = row
-        ? this.toStoredAsset(row)
-        : await this.findByChecksum(checksum)
+      const asset = row ?? (await this.findByChecksum(checksum))
       if (!asset) throw new Error('Failed to persist media asset')
       return asset
     } catch (error) {
       const persisted = await this.findByChecksum(checksum)
       if (!persisted) {
-        await this.storage.removeObject(storageKey).catch((cleanupError) => {
+        await this.storage.removeByPrefix(prefix).catch((cleanupError) => {
           this.logger.error(
-            `Failed to clean up orphaned media ${storageKey}`,
+            `Failed to clean up orphaned media ${prefix}`,
             cleanupError instanceof Error
               ? cleanupError.stack
               : String(cleanupError),
@@ -130,37 +125,28 @@ export class MediaService {
     }
   }
 
-  private async findByChecksum(
-    checksum: string,
-  ): Promise<StoredMediaAsset | null> {
+  publicUrl(asset: Pick<StoredMediaAsset, 'storageKey'>): string {
+    return this.storage.publicUrl(
+      `${asset.storageKey}/${MEDIA_OBJECT_NAME}.${MEDIA_OUTPUT_EXTENSION}`,
+    )
+  }
+
+  async findByChecksum(checksum: string): Promise<StoredMediaAsset | null> {
     const [row] = await this.db
-      .select({
-        id: schema.mediaAsset.id,
-        storageKey: schema.mediaAsset.storageKey,
-        blurhash: schema.mediaAsset.blurhash,
-        width: schema.mediaAsset.width,
-        height: schema.mediaAsset.height,
-      })
+      .select(assetColumns)
       .from(schema.mediaAsset)
       .where(eq(schema.mediaAsset.checksumSha256, checksum))
       .limit(1)
-    return row ? this.toStoredAsset(row) : null
+    return row ?? null
   }
 
-  private toStoredAsset(row: {
-    id: string
-    storageKey: string
-    blurhash: string | null
-    width: number | null
-    height: number | null
-  }): StoredMediaAsset {
-    return {
-      id: row.id,
-      url: this.storage.publicUrl(row.storageKey),
-      blurhash: row.blurhash,
-      width: row.width,
-      height: row.height,
-    }
+  async findById(id: string): Promise<StoredMediaAsset | null> {
+    const [row] = await this.db
+      .select(assetColumns)
+      .from(schema.mediaAsset)
+      .where(eq(schema.mediaAsset.id, id))
+      .limit(1)
+    return row ?? null
   }
 
   private async computeBlurhash(webp: Buffer): Promise<string | null> {
@@ -184,4 +170,12 @@ export class MediaService {
       return null
     }
   }
+}
+
+const assetColumns = {
+  id: schema.mediaAsset.id,
+  storageKey: schema.mediaAsset.storageKey,
+  blurhash: schema.mediaAsset.blurhash,
+  width: schema.mediaAsset.width,
+  height: schema.mediaAsset.height,
 }

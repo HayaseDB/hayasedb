@@ -93,23 +93,12 @@ export function useModerationActions() {
     return detail
   }
 
-  async function sweepMedia(): Promise<void> {
-    const result = await run(() => api.media.sweep(), 'Failed to sweep media')
-    if (result) {
-      toast.add({
-        title: `Swept ${result.deleted} unused media asset${result.deleted === 1 ? '' : 's'}`,
-        color: 'success',
-      })
-    }
-  }
-
   return {
     busy,
     approve,
     reject,
     revertChangeset,
     revertToRevision,
-    sweepMedia,
   }
 }
 

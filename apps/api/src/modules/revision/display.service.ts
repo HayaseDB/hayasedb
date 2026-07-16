@@ -4,7 +4,7 @@ import type { ContributionDisplay } from '@hayasedb/contract'
 import type { RefTarget } from '@hayasedb/domain'
 import { type Database, schema } from '@hayasedb/db'
 import { DRIZZLE } from '../../database/database.constants'
-import { StorageService } from '../../storage/storage.service'
+import { MediaService } from '../media/media.service'
 import { collectDocumentRefs, type KindedDocument } from './diff'
 
 type RefResolver = (
@@ -16,7 +16,7 @@ type RefResolver = (
 export class DisplayService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
-    private readonly storage: StorageService,
+    private readonly media: MediaService,
   ) {}
 
   private readonly resolvers: Record<
@@ -83,7 +83,7 @@ export class DisplayService {
     const mediaAssets: ContributionDisplay['mediaAssets'] = {}
     for (const asset of assets) {
       mediaAssets[asset.id] = {
-        url: this.storage.publicUrl(asset.storageKey),
+        url: this.media.publicUrl(asset),
         blurhash: asset.blurhash,
         width: asset.width,
         height: asset.height,

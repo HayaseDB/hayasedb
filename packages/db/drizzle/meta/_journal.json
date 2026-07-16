@@ -43,6 +43,13 @@
       "when": 1784196632110,
       "tag": "0005_marvelous_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784211880757,
+      "tag": "0006_wet_gladiator",
+      "breakpoints": true
     }
   ]
 }

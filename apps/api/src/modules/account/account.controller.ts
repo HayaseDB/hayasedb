@@ -1,12 +1,12 @@
 import { Controller, Logger } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
-import { implement } from '@orpc/server'
+import { ORPCError, implement } from '@orpc/server'
 import { AuthService } from '@thallesp/nestjs-better-auth'
 import { fromNodeHeaders } from 'better-auth/node'
 import { contract } from '@hayasedb/contract'
 import type { Auth } from '../../auth/auth'
 import { requireVerifiedUser } from '../../auth/require-verified-user'
-import { AvatarService, InvalidImageError } from './avatar.service'
+import { AvatarService } from './avatar.service'
 
 @Controller()
 export class AccountController {
@@ -28,14 +28,7 @@ export class AccountController {
         try {
           return await this.avatarService.upload(userId, headers, input.file)
         } catch (error) {
-          if (error instanceof InvalidImageError) {
-            throw errors.INPUT_VALIDATION_FAILED({
-              message: error.message,
-              data: {
-                issues: [{ path: ['file'], message: error.message }],
-              },
-            })
-          }
+          if (error instanceof ORPCError) throw error
           this.logger.error(
             `Avatar upload failed for user ${userId}`,
             error instanceof Error ? error.stack : String(error),

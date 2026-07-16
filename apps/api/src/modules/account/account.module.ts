@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common'
-import { StorageModule } from '../../storage/storage.module'
+import { MediaModule } from '../media/media.module'
 import { AccountController } from './account.controller'
 import { AvatarService } from './avatar.service'
 
 @Module({
-  imports: [StorageModule],
+  imports: [MediaModule],
   controllers: [AccountController],
   providers: [AvatarService],
 })

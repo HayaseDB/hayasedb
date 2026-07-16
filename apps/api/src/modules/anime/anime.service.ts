@@ -24,7 +24,7 @@ import type {
   UpdateAnimeInput,
 } from '@hayasedb/contract'
 import { DRIZZLE } from '../../database/database.constants'
-import { StorageService } from '../../storage/storage.service'
+import { MediaService } from '../media/media.service'
 import { entityHandler, type Tx } from '../revision/registry'
 import { RevisionService } from '../revision/revision.service'
 
@@ -32,7 +32,7 @@ import { RevisionService } from '../revision/revision.service'
 export class AnimeService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
-    private readonly storage: StorageService,
+    private readonly media: MediaService,
     private readonly revisions: RevisionService,
   ) {}
 
@@ -196,17 +196,9 @@ export class AnimeService {
       genresByAnime.set(g.animeId, list)
     }
 
-    const coverByAnime = new Map<
-      string,
-      { storageKey: string; blurhash: string | null }
-    >()
+    const coverByAnime = new Map<string, (typeof covers)[number]>()
     for (const c of covers) {
-      if (!coverByAnime.has(c.animeId)) {
-        coverByAnime.set(c.animeId, {
-          storageKey: c.storageKey,
-          blurhash: c.blurhash,
-        })
-      }
+      if (!coverByAnime.has(c.animeId)) coverByAnime.set(c.animeId, c)
     }
 
     return rows.map((r) => {
@@ -219,7 +211,7 @@ export class AnimeService {
         titleRomaji: r.titleRomaji,
         titleEnglish: r.titleEnglish,
         titleNative: r.titleNative,
-        coverUrl: cover ? this.storage.publicUrl(cover.storageKey) : null,
+        coverUrl: cover ? this.media.publicUrl(cover) : null,
         coverBlurhash: cover?.blurhash ?? null,
         genres: (genresByAnime.get(r.id) ?? []).sort(),
         createdAt: r.createdAt,
@@ -275,7 +267,7 @@ export class AnimeService {
         mediaId: m.mediaId,
         type: m.type,
         position: m.position,
-        url: this.storage.publicUrl(m.asset.storageKey),
+        url: this.media.publicUrl(m.asset),
         blurhash: m.asset.blurhash,
         width: m.asset.width,
         height: m.asset.height,

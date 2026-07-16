@@ -5,7 +5,7 @@ import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { requireAdminUser } from '../../auth/require-admin'
 import { AnimeService } from './anime.service'
-import { MediaService } from './media.service'
+import { MediaService } from '../media/media.service'
 
 @Controller()
 export class AnimeController {

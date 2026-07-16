@@ -10,7 +10,7 @@ import {
 import { AppModule } from './app.module'
 import { DRIZZLE } from './database/database.constants'
 import { AnimeService } from './modules/anime/anime.service'
-import { MediaService } from './modules/anime/media.service'
+import { MediaService } from './modules/media/media.service'
 
 const ANILIST_ENDPOINT = 'https://graphql.anilist.co'
 const DEMO_COUNT = Number(process.env.SEED_COUNT ?? 50)

@@ -5,14 +5,13 @@ import { HistoryModule } from '../history/history.module'
 import { RevisionModule } from '../revision/revision.module'
 import { ChangesetController } from './changeset.controller'
 import { MediaController } from './media.controller'
-import { MediaGcService } from './media-gc.service'
 import { ModerationService } from './moderation.service'
 import { RevisionController } from './revision.controller'
 
 @Module({
   imports: [StorageModule, RevisionModule, ContributionModule, HistoryModule],
   controllers: [ChangesetController, RevisionController, MediaController],
-  providers: [ModerationService, MediaGcService],
-  exports: [ModerationService, MediaGcService],
+  providers: [ModerationService],
+  exports: [ModerationService],
 })
 export class ModerationModule {}

@@ -10,7 +10,7 @@ import type {
 import { type Database, schema } from '@hayasedb/db'
 import { isSupersedableStatus } from '@hayasedb/domain'
 import { DRIZZLE } from '../../database/database.constants'
-import { MediaService } from '../anime/media.service'
+import { MediaService } from '../media/media.service'
 import {
   assertOwnerOrAdmin,
   assertPending,
@@ -56,7 +56,7 @@ export class ContributionService {
 
     return {
       mediaId: asset.id,
-      url: asset.url,
+      url: this.media.publicUrl(asset),
       blurhash: asset.blurhash,
       width: asset.width,
       height: asset.height,

@@ -5,7 +5,6 @@ import {
 } from '@hayasedb/domain'
 import { relations, sql } from 'drizzle-orm'
 import {
-  check,
   date,
   index,
   integer,
@@ -17,8 +16,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
-import { user } from './auth'
 import { entity } from './contribution'
+import { mediaAsset } from './media'
 
 const uuidV7Pk = () =>
   uuid('id')
@@ -70,46 +69,6 @@ export const animeGenre = pgTable(
   ],
 )
 
-export const mediaAsset = pgTable(
-  'media_asset',
-  {
-    id: uuidV7Pk(),
-    storageKey: text('storage_key').notNull().unique(),
-    bucket: text('bucket').notNull(),
-    checksumSha256: text('checksum_sha256').notNull().unique(),
-    mimeType: text('mime_type').notNull(),
-    byteSize: integer('byte_size').notNull(),
-    width: integer('width'),
-    height: integer('height'),
-    blurhash: text('blurhash'),
-    originalFilename: text('original_filename'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (table) => [
-    check(
-      'media_asset_mime_type_check',
-      sql`${table.mimeType} in ('image/webp', 'image/jpeg', 'image/png', 'image/avif')`,
-    ),
-  ],
-)
-
-export const mediaUpload = pgTable(
-  'media_upload',
-  {
-    id: uuidV7Pk(),
-    mediaAssetId: uuid('media_asset_id')
-      .notNull()
-      .references(() => mediaAsset.id, { onDelete: 'cascade' }),
-    uploaderId: text('uploader_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (table) => [
-    index('media_upload_uploader_idx').on(table.uploaderId, table.createdAt),
-  ],
-)
-
 export const animeMedia = pgTable(
   'anime_media',
   {
@@ -155,22 +114,6 @@ export const animeGenreRelations = relations(animeGenre, ({ one }) => ({
   genre: one(genre, {
     fields: [animeGenre.genreId],
     references: [genre.id],
-  }),
-}))
-
-export const mediaAssetRelations = relations(mediaAsset, ({ many }) => ({
-  attachments: many(animeMedia),
-  uploads: many(mediaUpload),
-}))
-
-export const mediaUploadRelations = relations(mediaUpload, ({ one }) => ({
-  asset: one(mediaAsset, {
-    fields: [mediaUpload.mediaAssetId],
-    references: [mediaAsset.id],
-  }),
-  uploader: one(user, {
-    fields: [mediaUpload.uploaderId],
-    references: [user.id],
   }),
 }))
 

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common'
-import { StorageModule } from '../../storage/storage.module'
+import { MediaModule } from '../media/media.module'
 import { ChangesetApplyService } from './changeset-apply.service'
 import { DisplayService } from './display.service'
 import { RevisionService } from './revision.service'
 
 @Module({
-  imports: [StorageModule],
+  imports: [MediaModule],
   providers: [RevisionService, ChangesetApplyService, DisplayService],
   exports: [RevisionService, ChangesetApplyService, DisplayService],
 })
