@@ -110,6 +110,7 @@ services:
     stop_grace_period: 30s
     deploy:
       replicas: 1
+      endpoint_mode: dnsrr
       update_config:
         order: start-first
         failure_action: rollback
