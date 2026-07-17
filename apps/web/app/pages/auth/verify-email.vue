@@ -23,7 +23,6 @@ onMounted(async () => {
   if (!token.value) return
   const ok = await verifyEmail(token.value)
   status.value = ok ? 'success' : 'error'
-  if (ok) await refreshNuxtData('app-session')
 })
 
 function onResend() {
@@ -31,7 +30,6 @@ function onResend() {
 }
 
 async function onContinue() {
-  await refreshNuxtData('app-session')
   await router.push('/')
 }
 </script>

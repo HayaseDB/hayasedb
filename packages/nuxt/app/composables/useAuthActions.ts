@@ -113,6 +113,7 @@ export function useAuthActions() {
         description: 'Your email address has been confirmed.',
         color: 'success',
       })
+      await refreshAppSession()
       return true
     } finally {
       loading.value = false
