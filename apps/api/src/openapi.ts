@@ -16,7 +16,7 @@ export async function buildOpenApiSources(
   authApi: Auth['api'],
   publicUrl: string,
 ): Promise<{ title: string; content: OpenApiDocument; default?: boolean }[]> {
-  const servers = [{ url: `${publicUrl}/api` }]
+  const apiServers = [{ url: `${publicUrl}/api` }]
   const info = (title: string): OpenApiInfo => ({
     title,
     version: VERSION,
@@ -29,13 +29,12 @@ export async function buildOpenApiSources(
 
   const [api, auth] = (await Promise.all([
     generator.generate(contract, {
-      base: { info: info('HayaseDB API'), servers },
+      base: { info: info('HayaseDB API'), servers: apiServers },
     }),
     authApi.generateOpenAPISchema(),
   ])) as unknown as [OpenApiDocument, OpenApiDocument]
 
   auth.info = info('HayaseDB Auth')
-  auth.servers = servers
 
   return [
     { title: 'API', content: api, default: true },
