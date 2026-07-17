@@ -183,7 +183,6 @@ networks:
   traefik-public:
     external: true
   internal:
-    driver: overlay
 
 volumes:
   pgdata: {}
