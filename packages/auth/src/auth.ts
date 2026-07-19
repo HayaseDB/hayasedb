@@ -153,6 +153,9 @@ export function createAuth(opts: AuthOptions) {
     },
     advanced: {
       useSecureCookies: production,
+      ...(production && {
+        crossSubDomainCookies: { enabled: true },
+      }),
       ipAddress: {
         ipAddressHeaders: ['x-forwarded-for'],
         trustedProxies: opts.trustedProxies,
