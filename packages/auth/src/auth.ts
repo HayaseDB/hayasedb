@@ -29,14 +29,19 @@ export interface AuthMailer {
   sendWelcome(to: string, name?: string): Promise<void>
 }
 
+export interface DynamicBaseURL {
+  allowedHosts: string[]
+  fallback?: string
+  protocol?: 'http' | 'https'
+}
+
 export interface AuthOptions {
   db: Database
   secret: string
-  baseURL: string
+  baseURL: string | DynamicBaseURL
   frontendBaseURL?: string
   trustedOrigins?: string[]
   trustedProxies?: string[]
-  cookieDomain?: string
   secondaryStorage?: SecondaryStorage
   productionMode?: boolean
   github?: GithubProviderOptions
@@ -49,10 +54,13 @@ export interface AuthOptions {
 export function createAuth(opts: AuthOptions) {
   const production = opts.productionMode ?? false
   const mailer = opts.mailer
+  const baseURLString =
+    typeof opts.baseURL === 'string' ? opts.baseURL : opts.baseURL.fallback
   const frontendBaseURL = (
     opts.frontendBaseURL ??
     opts.trustedOrigins?.[0] ??
-    opts.baseURL
+    baseURLString ??
+    ''
   ).replace(/\/$/, '')
 
   const frontendLink = (path: string, token: string): string =>
@@ -154,13 +162,6 @@ export function createAuth(opts: AuthOptions) {
     },
     advanced: {
       useSecureCookies: production,
-      ...(production &&
-        opts.cookieDomain && {
-          crossSubDomainCookies: {
-            enabled: true,
-            domain: opts.cookieDomain,
-          },
-        }),
       ipAddress: {
         ipAddressHeaders: ['x-forwarded-for'],
         trustedProxies: opts.trustedProxies,
