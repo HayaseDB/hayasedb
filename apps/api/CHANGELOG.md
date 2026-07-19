@@ -1,5 +1,17 @@
 # @hayasedb/api
 
+## 0.2.1
+
+### Patch Changes
+
+- 58431f3: Fix session cookies not persisting across subdomains after OAuth sign-in. Cross-subdomain cookies now use a configurable `AUTH_COOKIE_DOMAIN` (e.g. `.hayasedb.com`) so the session set on the API host is shared with the web and admin apps, instead of being scoped host-only.
+- Updated dependencies [58431f3]
+  - @hayasedb/auth@0.2.1
+  - @hayasedb/contract@0.2.1
+  - @hayasedb/db@0.2.1
+  - @hayasedb/domain@0.2.1
+  - @hayasedb/mail@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes

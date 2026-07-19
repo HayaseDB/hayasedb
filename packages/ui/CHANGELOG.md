@@ -1,5 +1,12 @@
 # @hayasedb/ui
 
+## 0.2.1
+
+### Patch Changes
+
+- @hayasedb/contract@0.2.1
+- @hayasedb/domain@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
