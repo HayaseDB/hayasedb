@@ -36,6 +36,7 @@ const authEnv = z.object({
   AUTH_TRUSTED_PROXIES: csv(
     '127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16',
   ),
+  AUTH_COOKIE_DOMAIN: z.string().optional(),
 
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),

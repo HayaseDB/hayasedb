@@ -36,6 +36,7 @@ export interface AuthOptions {
   frontendBaseURL?: string
   trustedOrigins?: string[]
   trustedProxies?: string[]
+  cookieDomain?: string
   secondaryStorage?: SecondaryStorage
   productionMode?: boolean
   github?: GithubProviderOptions
@@ -153,9 +154,13 @@ export function createAuth(opts: AuthOptions) {
     },
     advanced: {
       useSecureCookies: production,
-      ...(production && {
-        crossSubDomainCookies: { enabled: true },
-      }),
+      ...(production &&
+        opts.cookieDomain && {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: opts.cookieDomain,
+          },
+        }),
       ipAddress: {
         ipAddressHeaders: ['x-forwarded-for'],
         trustedProxies: opts.trustedProxies,
