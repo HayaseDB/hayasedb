@@ -18,6 +18,6 @@ export default defineEventHandler((event) => {
   if (clientIp) headers['x-forwarded-for'] = clientIp
 
   return proxyRequest(event, apiUrl + event.path, {
-    fetchOptions: { headers },
+    fetchOptions: { headers, redirect: 'manual' },
   })
 })
