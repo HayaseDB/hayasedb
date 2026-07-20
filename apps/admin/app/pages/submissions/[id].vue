@@ -7,7 +7,6 @@ const route = useRoute()
 const api = useApiClient()
 const actions = useModerationActions()
 const contributionActions = useContributionActions()
-const { refresh: refreshCounts } = useModerationCounts()
 const overlay = useOverlay()
 
 const id = computed(() => String(route.params.id))
@@ -41,7 +40,7 @@ const confirmModal = overlay.create(LazyConfirmModal)
 const rejectModal = overlay.create(LazyRejectChangesetModal)
 
 async function afterDecision() {
-  await Promise.all([refresh(), refreshCounts()])
+  await refresh()
 }
 
 function askApprove() {

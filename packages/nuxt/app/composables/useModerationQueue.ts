@@ -27,7 +27,9 @@ export function useModerationActions() {
   ): Promise<T | false> {
     busy.value = true
     try {
-      return await action()
+      const result = await action()
+      await refreshModerationCounts()
+      return result
     } catch (error) {
       toast.add({
         title: orpcErrorMessage(error) ?? failureTitle,
@@ -102,9 +104,15 @@ export function useModerationActions() {
   }
 }
 
+export const MODERATION_COUNTS_KEY = 'moderation-counts'
+
+export function refreshModerationCounts() {
+  return refreshNuxtData(MODERATION_COUNTS_KEY)
+}
+
 export function useModerationCounts() {
   const api = useApiClient()
-  const { data, refresh } = useAsyncData('moderation-counts', () =>
+  const { data, refresh } = useAsyncData(MODERATION_COUNTS_KEY, () =>
     api.changeset.stats(),
   )
   const pendingCount = computed(() => data.value?.pending ?? 0)

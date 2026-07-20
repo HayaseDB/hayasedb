@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const { pendingCount } = useModerationCounts()
+const { pendingCount, refresh: refreshCounts } = useModerationCounts()
+const route = useRoute()
+
+watch(
+  () => route.path,
+  () => {
+    refreshCounts()
+  },
+)
 
 const navItems = computed<NavigationMenuItem[][]>(() => [
   [
