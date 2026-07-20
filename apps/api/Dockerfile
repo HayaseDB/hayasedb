@@ -1,26 +1,36 @@
 # syntax=docker/dockerfile:1
 ARG BUN_VERSION=1.3.14
+ARG TURBO_VERSION=2.10.5
 
 FROM oven/bun:${BUN_VERSION}-slim AS base
 WORKDIR /app
 
 FROM base AS prepare
-RUN bun add -g turbo@2.10.5
+ARG TURBO_VERSION
 COPY . .
-RUN turbo prune @hayasedb/api --docker
+RUN bunx turbo@${TURBO_VERSION} prune @hayasedb/api --docker
 
 FROM base AS builder
+ARG TURBO_VERSION
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --ignore-scripts
 
 COPY --from=prepare /app/out/full/ .
-RUN bunx turbo run build
+RUN bunx turbo@${TURBO_VERSION} run build
+
+FROM base AS prod-deps
+COPY --from=prepare /app/out/json/ .
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --production --ignore-scripts --linker=hoisted
 
 FROM node:22-slim AS runner
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=builder --chown=node:node /app/ ./
+COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=node:node /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder --chown=node:node /app/packages ./packages
 WORKDIR /app/apps/api
 USER node
 EXPOSE 3000
