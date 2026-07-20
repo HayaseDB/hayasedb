@@ -1,19 +1,15 @@
 <script setup lang="ts">
-import type { LoginSchema, SocialProvider } from '@hayasedb/contract'
+import type { LoginSchema } from '@hayasedb/contract'
 
 definePageMeta({ layout: false })
 
 useSeoMeta({ title: 'Sign in' })
 
-const { loading, signInEmail, signInSocial } = useAuthActions()
+const { loading, signInEmail } = useAuthActions()
 useAuthError()
 
 function onSubmit(data: LoginSchema) {
   void signInEmail(data, { requireAdmin: true })
-}
-
-function onSocial(provider: SocialProvider) {
-  void signInSocial(provider)
 }
 </script>
 
@@ -23,7 +19,6 @@ function onSocial(provider: SocialProvider) {
       title="Admin sign in"
       :loading="loading"
       :on-submit="onSubmit"
-      :on-social="onSocial"
     />
   </AuthCard>
 </template>

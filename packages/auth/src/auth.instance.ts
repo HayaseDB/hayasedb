@@ -23,6 +23,6 @@ const { db } = createDb(required('DATABASE_URL'))
 export const auth = createAuth({
   db,
   secret: required('AUTH_SECRET'),
-  baseURL: required('API_PUBLIC_URL'),
+  appURL: required('WEB_PUBLIC_URL'),
   trustedOrigins,
 })

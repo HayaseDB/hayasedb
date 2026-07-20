@@ -29,17 +29,10 @@ export interface AuthMailer {
   sendWelcome(to: string, name?: string): Promise<void>
 }
 
-export interface DynamicBaseURL {
-  allowedHosts: string[]
-  fallback?: string
-  protocol?: 'http' | 'https'
-}
-
 export interface AuthOptions {
   db: Database
   secret: string
-  baseURL: string | DynamicBaseURL
-  frontendBaseURL?: string
+  appURL: string
   trustedOrigins?: string[]
   trustedProxies?: string[]
   secondaryStorage?: SecondaryStorage
@@ -54,17 +47,10 @@ export interface AuthOptions {
 export function createAuth(opts: AuthOptions) {
   const production = opts.productionMode ?? false
   const mailer = opts.mailer
-  const baseURLString =
-    typeof opts.baseURL === 'string' ? opts.baseURL : opts.baseURL.fallback
-  const frontendBaseURL = (
-    opts.frontendBaseURL ??
-    opts.trustedOrigins?.[0] ??
-    baseURLString ??
-    ''
-  ).replace(/\/$/, '')
+  const appURL = opts.appURL.replace(/\/$/, '')
 
   const frontendLink = (path: string, token: string): string =>
-    `${frontendBaseURL}${path}?token=${encodeURIComponent(token)}`
+    `${appURL}${path}?token=${encodeURIComponent(token)}`
 
   const socialProviders = {
     ...(opts.github && {
@@ -82,7 +68,7 @@ export function createAuth(opts: AuthOptions) {
   }
 
   return betterAuth({
-    baseURL: opts.baseURL,
+    baseURL: appURL,
     secret: opts.secret,
     trustedOrigins: opts.trustedOrigins ?? [],
     database: drizzleAdapter(opts.db, { provider: 'pg' }),

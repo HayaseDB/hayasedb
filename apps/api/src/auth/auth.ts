@@ -24,27 +24,18 @@ export function authFactory(
     infer: true,
   })
   const trustedOrigins = config.get('AUTH_TRUSTED_ORIGINS', { infer: true })
-  const apiPublicUrl = config.get('API_PUBLIC_URL', { infer: true })
-  const isProd = config.get('NODE_ENV', { infer: true }) === 'production'
-  const webOrigin =
-    config.get('WEB_PUBLIC_URL', { infer: true }) ?? trustedOrigins[0]
 
-  const allowedHosts = trustedOrigins.map((origin) => new URL(origin).host)
-  const baseURL =
-    isProd && allowedHosts.length
-      ? { allowedHosts, fallback: apiPublicUrl, protocol: 'https' as const }
-      : apiPublicUrl
+  const appURL = config.get('WEB_PUBLIC_URL', { infer: true })
 
   return createAuth({
     db,
     secret: config.get('AUTH_SECRET', { infer: true }),
-    baseURL,
-    frontendBaseURL: webOrigin,
+    appURL,
     trustedOrigins,
     trustedProxies: config.get('AUTH_TRUSTED_PROXIES', { infer: true }),
     secondaryStorage: makeRedisSecondaryStorage(redis),
     productionMode: config.get('NODE_ENV', { infer: true }) === 'production',
-    errorCallbackURL: webOrigin ? `${webOrigin}/login` : undefined,
+    errorCallbackURL: `${appURL}/login`,
     github:
       githubClientId && githubClientSecret
         ? { clientId: githubClientId, clientSecret: githubClientSecret }
