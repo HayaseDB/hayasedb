@@ -1,21 +1,23 @@
 # syntax=docker/dockerfile:1
 ARG BUN_VERSION=1.3.14
+ARG TURBO_VERSION=2.10.5
 
 FROM oven/bun:${BUN_VERSION}-slim AS base
 WORKDIR /app
 
 FROM base AS prepare
-RUN bun add -g turbo@2.10.5
+ARG TURBO_VERSION
 COPY . .
-RUN turbo prune @hayasedb/web --docker
+RUN bunx turbo@${TURBO_VERSION} prune @hayasedb/web --docker
 
 FROM base AS builder
+ARG TURBO_VERSION
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --ignore-scripts
 
 COPY --from=prepare /app/out/full/ .
-RUN bunx turbo run build
+RUN bunx turbo@${TURBO_VERSION} run build
 
 FROM node:22-alpine AS runner
 ENV NODE_ENV=production
