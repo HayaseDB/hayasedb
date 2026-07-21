@@ -112,14 +112,14 @@ export function useContributionActions() {
     }
   }
 
-  async function addNote(id: string, body: string) {
+  async function addMessage(id: string, body: string) {
     try {
-      return await api.changeset.addNote({ id, body })
+      return await api.changeset.addMessage({ id, body })
     } catch {
-      toast.add({ title: 'Failed to add note', color: 'error' })
+      toast.add({ title: 'Failed to send message', color: 'error' })
       return false
     }
   }
 
-  return { saving, withdrawing, submit, withdraw, addNote }
+  return { saving, withdrawing, submit, withdraw, addMessage }
 }

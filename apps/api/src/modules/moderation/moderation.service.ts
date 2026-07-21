@@ -47,7 +47,7 @@ export class ModerationService {
 
   async reject(
     id: string,
-    note: string,
+    reason: string,
     adminId: string,
   ): Promise<ChangesetDetail> {
     await this.db.transaction(async (tx) => {
@@ -60,10 +60,11 @@ export class ModerationService {
           decidedById: adminId,
         })
         .where(eq(schema.changeset.id, id))
-      await tx.insert(schema.changesetNote).values({
+      await tx.insert(schema.changesetMessage).values({
         changesetId: id,
         authorId: adminId,
-        body: note,
+        kind: 'rejection',
+        body: reason,
       })
     })
     return this.details.buildDetail(id)

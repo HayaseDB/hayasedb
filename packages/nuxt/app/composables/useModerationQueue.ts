@@ -58,7 +58,7 @@ export function useModerationActions() {
           ? { title: 'Changeset applied', color: 'success' }
           : {
               title: 'Conflicts detected',
-              description: 'See the notes for what blocked the approval.',
+              description: 'See the activity for what blocked the approval.',
               color: 'warning',
             },
       )
@@ -66,10 +66,10 @@ export function useModerationActions() {
     return detail
   }
 
-  async function reject(id: string, note: string) {
+  async function reject(id: string, reason: string) {
     const detail = await run(
       'reject',
-      () => api.changeset.reject({ id, note }),
+      () => api.changeset.reject({ id, reason }),
       'Failed to reject changeset',
     )
     if (detail) toast.add({ title: 'Changeset rejected', color: 'success' })

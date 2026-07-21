@@ -66,8 +66,8 @@ function askReject() {
   if (!current) return
   rejectModal.open({
     summary: current.summary,
-    onConfirm: async (note: string) => {
-      const result = await actions.reject(current.id, note)
+    onConfirm: async (reason: string) => {
+      const result = await actions.reject(current.id, reason)
       if (result) await afterDecision()
       return Boolean(result)
     },
@@ -90,16 +90,20 @@ function askRevert() {
   })
 }
 
-async function addNote(body: string) {
+async function addMessage(body: string) {
   const id = detail.value?.id
   if (!id) return false
-  const note = await contributionActions.addNote(id, body)
-  if (note) await refresh()
-  return Boolean(note)
+  const message = await contributionActions.addMessage(id, body)
+  if (message) await refresh()
+  return Boolean(message)
 }
 
 function entityLink(change: ChangeDetail): string | null {
   return change.op === 'create' ? null : `/anime/${change.entityId}`
+}
+
+function changesetPath(id: string): string {
+  return `/submissions/${id}`
 }
 
 const conflicted = computed(
@@ -224,7 +228,7 @@ function isLocked(action: ModerationAction) {
             variant="subtle"
             icon="i-lucide-triangle-alert"
             title="This submission has conflicts"
-            description="The affected changes are marked below; see the notes for details. Ask the contributor to revise, or reject it."
+            description="The affected changes are marked below; see the activity for details. Ask the contributor to revise, or reject it."
           >
             <template v-if="firstConflictAnchor" #actions>
               <UButton
@@ -257,10 +261,11 @@ function isLocked(action: ModerationAction) {
             </template>
           </ChangeCard>
 
-          <ChangesetNotes
-            :notes="detail.notes"
+          <ChangesetTimeline
+            :changeset="detail"
             placeholder="Message the contributor…"
-            :on-add="addNote"
+            :changeset-path="changesetPath"
+            :on-add="addMessage"
           />
         </div>
       </div>

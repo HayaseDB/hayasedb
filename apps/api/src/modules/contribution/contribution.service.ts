@@ -3,7 +3,7 @@ import { ORPCError } from '@orpc/server'
 import { and, eq, gt, sql } from 'drizzle-orm'
 import type {
   ChangesetDetail,
-  ChangesetNote,
+  ChangesetMessage,
   SubmitChangesetInput,
   UploadMediaOutput,
 } from '@hayasedb/contract'
@@ -253,26 +253,27 @@ export class ContributionService {
     return this.details.buildDetail(id)
   }
 
-  async addNote(
+  async addMessage(
     id: string,
     userId: string,
     body: string,
     isAdmin: boolean,
-  ): Promise<ChangesetNote> {
+  ): Promise<ChangesetMessage> {
     const row = await this.details.getChangesetRow(id)
     assertOwnerOrAdmin(row, userId, isAdmin)
-    const [[note], author] = await Promise.all([
+    const [[message], author] = await Promise.all([
       this.db
-        .insert(schema.changesetNote)
+        .insert(schema.changesetMessage)
         .values({ changesetId: id, authorId: userId, body })
         .returning(),
       this.users.loadAuthor(userId),
     ])
     return {
-      id: note!.id,
+      id: message!.id,
       author,
-      body: note!.body,
-      createdAt: note!.createdAt,
+      kind: message!.kind,
+      body: message!.body,
+      createdAt: message!.createdAt,
     }
   }
 

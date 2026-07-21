@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { changesetNoteBodySchema } from '@hayasedb/contract'
+import { changesetMessageBodySchema } from '@hayasedb/contract'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import * as z from 'zod'
 
 const props = defineProps<{
   summary: string
-  onConfirm: (note: string) => Promise<boolean>
+  onConfirm: (reason: string) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{ close: [boolean] }>()
 
 const schema = z.object({
-  note: changesetNoteBodySchema.min(3, 'Explain why this is rejected'),
+  reason: changesetMessageBodySchema.min(3, 'Explain why this is rejected'),
 })
 
 type RejectState = z.output<typeof schema>
 
 const form = useTemplateRef('form')
 const saving = ref(false)
-const state = reactive<RejectState>({ note: '' })
+const state = reactive<RejectState>({ reason: '' })
 
 async function handleSubmit(event: FormSubmitEvent<RejectState>) {
   saving.value = true
   try {
-    if (await props.onConfirm(event.data.note)) emit('close', true)
+    if (await props.onConfirm(event.data.reason)) emit('close', true)
   } finally {
     saving.value = false
   }
@@ -47,11 +47,11 @@ async function handleSubmit(event: FormSubmitEvent<RejectState>) {
       >
         <UFormField
           label="Reason"
-          name="note"
-          help="The contributor sees this note and can revise & resubmit."
+          name="reason"
+          help="The contributor sees this reason and can revise & resubmit."
         >
           <UTextarea
-            v-model="state.note"
+            v-model="state.reason"
             :rows="4"
             placeholder="What needs to change?"
             class="w-full"

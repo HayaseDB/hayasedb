@@ -67,13 +67,18 @@ export class ChangesetController {
     )
   }
 
-  @Implement(contract.changeset.addNote)
-  addNote() {
-    return implement(contract.changeset.addNote).handler(
+  @Implement(contract.changeset.addMessage)
+  addMessage() {
+    return implement(contract.changeset.addMessage).handler(
       ({ input, context }) => {
         const userId = requireVerifiedUser(context)
         const isAdmin = context.request.user?.role === 'admin'
-        return this.contributions.addNote(input.id, userId, input.body, isAdmin)
+        return this.contributions.addMessage(
+          input.id,
+          userId,
+          input.body,
+          isAdmin,
+        )
       },
     )
   }
@@ -93,7 +98,7 @@ export class ChangesetController {
     return implement(contract.changeset.reject).handler(
       ({ input, context }) => {
         const adminId = requireAdminUser(context)
-        return this.moderation.reject(input.id, input.note, adminId)
+        return this.moderation.reject(input.id, input.reason, adminId)
       },
     )
   }

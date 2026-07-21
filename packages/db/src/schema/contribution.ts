@@ -1,4 +1,9 @@
-import { CHANGE_OPS, CHANGESET_STATUSES, ENTITY_KINDS } from '@hayasedb/domain'
+import {
+  CHANGE_OPS,
+  CHANGESET_STATUSES,
+  ENTITY_KINDS,
+  MESSAGE_KINDS,
+} from '@hayasedb/domain'
 import { relations, sql } from 'drizzle-orm'
 import {
   boolean,
@@ -26,6 +31,11 @@ export const entityKind = pgEnum('entity_kind', ENTITY_KINDS)
 export const changesetStatus = pgEnum('changeset_status', CHANGESET_STATUSES)
 
 export const changeOp = pgEnum('change_op', CHANGE_OPS)
+
+export const changesetMessageKind = pgEnum(
+  'changeset_message_kind',
+  MESSAGE_KINDS,
+)
 
 export const entity = pgTable(
   'entity',
@@ -58,6 +68,7 @@ export const changeset = pgTable(
     supersedesId: uuid('supersedes_id').references(
       (): AnyPgColumn => changeset.id,
     ),
+    revertsId: uuid('reverts_id').references((): AnyPgColumn => changeset.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -122,8 +133,8 @@ export const change = pgTable(
   ],
 )
 
-export const changesetNote = pgTable(
-  'changeset_note',
+export const changesetMessage = pgTable(
+  'changeset_message',
   {
     id: uuidV7Pk(),
     changesetId: uuid('changeset_id')
@@ -132,11 +143,12 @@ export const changesetNote = pgTable(
     authorId: text('author_id').references(() => user.id, {
       onDelete: 'set null',
     }),
+    kind: changesetMessageKind('kind').default('comment').notNull(),
     body: text('body').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
-    index('changeset_note_changeset_idx').on(
+    index('changeset_message_changeset_idx').on(
       table.changesetId,
       table.createdAt,
     ),
@@ -163,7 +175,7 @@ export const changesetRelations = relations(changeset, ({ one, many }) => ({
     references: [changeset.id],
   }),
   changes: many(change),
-  notes: many(changesetNote),
+  messages: many(changesetMessage),
 }))
 
 export const entityRevisionRelations = relations(entityRevision, ({ one }) => ({
@@ -192,13 +204,16 @@ export const changeRelations = relations(change, ({ one }) => ({
   }),
 }))
 
-export const changesetNoteRelations = relations(changesetNote, ({ one }) => ({
-  changeset: one(changeset, {
-    fields: [changesetNote.changesetId],
-    references: [changeset.id],
+export const changesetMessageRelations = relations(
+  changesetMessage,
+  ({ one }) => ({
+    changeset: one(changeset, {
+      fields: [changesetMessage.changesetId],
+      references: [changeset.id],
+    }),
+    author: one(user, {
+      fields: [changesetMessage.authorId],
+      references: [user.id],
+    }),
   }),
-  author: one(user, {
-    fields: [changesetNote.authorId],
-    references: [user.id],
-  }),
-}))
+)

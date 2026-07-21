@@ -50,6 +50,13 @@
       "when": 1784211880757,
       "tag": "0006_wet_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784619348626,
+      "tag": "0007_overrated_dexter_bennett",
+      "breakpoints": true
     }
   ]
 }

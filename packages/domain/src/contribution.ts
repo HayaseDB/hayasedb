@@ -8,10 +8,12 @@ export const CHANGESET_STATUSES = [
   'superseded',
 ] as const
 export const CHANGE_OPS = ['create', 'update', 'delete'] as const
+export const MESSAGE_KINDS = ['comment', 'rejection', 'system'] as const
 
 export type EntityKind = (typeof ENTITY_KINDS)[number]
 export type ChangesetStatus = (typeof CHANGESET_STATUSES)[number]
 export type ChangeOp = (typeof CHANGE_OPS)[number]
+export type MessageKind = (typeof MESSAGE_KINDS)[number]
 
 export const REVISABLE_STATUSES = ['rejected', 'withdrawn'] as const
 

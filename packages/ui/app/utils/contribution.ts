@@ -8,6 +8,7 @@ import {
   type ChangesetStatus,
   type EntityKind,
   type FieldMeta,
+  type MessageKind,
 } from '@hayasedb/domain'
 import type { AnimeDocument, ChangeDetail } from '@hayasedb/contract'
 
@@ -222,4 +223,142 @@ export function buildDiffRows(change: ChangeDetail): ChangeDiffRow[] {
     })
 
   return change.op === 'create' ? rows : rows.filter((row) => row.changed)
+}
+
+export interface TimelineActor {
+  id: string | null
+  name: string | null
+  image: string | null
+}
+
+type TimelineDate = Date | string
+
+export interface TimelineMessage {
+  id: string
+  author: TimelineActor
+  kind: MessageKind
+  body: string
+  createdAt: TimelineDate
+}
+
+export interface TimelineChangeset {
+  status: ChangesetStatus
+  author: TimelineActor
+  decidedBy: TimelineActor | null
+  submittedAt: TimelineDate | null
+  decidedAt: TimelineDate | null
+  changeCount: number
+  supersedesId: string | null
+  supersededById: string | null
+  revertsId: string | null
+  revertedBy: {
+    changesetId: string
+    actor: TimelineActor
+    at: TimelineDate
+  } | null
+  messages: TimelineMessage[]
+}
+
+interface TimelineEntryBase {
+  id: string
+  actor: TimelineActor
+  date: TimelineDate
+}
+
+export type SubmittedVariant = 'initial' | 'revision' | 'revert'
+
+export type ChangesetTimelineEntry =
+  | (TimelineEntryBase & {
+      type: 'submitted'
+      variant: SubmittedVariant
+      targetId: string | null
+      changeCount: number
+    })
+  | (TimelineEntryBase & { type: 'comment'; body: string })
+  | (TimelineEntryBase & { type: 'system'; body: string })
+  | (TimelineEntryBase & { type: 'rejected'; body: string | null })
+  | (TimelineEntryBase & { type: 'approved' | 'withdrawn' })
+  | (TimelineEntryBase & { type: 'superseded' | 'reverted'; targetId: string })
+
+const UNKNOWN_ACTOR: TimelineActor = { id: null, name: null, image: null }
+
+const MESSAGE_ENTRY_TYPES: Record<
+  MessageKind,
+  'comment' | 'system' | 'rejected'
+> = {
+  comment: 'comment',
+  system: 'system',
+  rejection: 'rejected',
+}
+
+export function buildChangesetTimeline(
+  changeset: TimelineChangeset,
+): ChangesetTimelineEntry[] {
+  const entries: ChangesetTimelineEntry[] = []
+
+  if (changeset.submittedAt) {
+    const variant: SubmittedVariant = changeset.revertsId
+      ? 'revert'
+      : changeset.supersedesId
+        ? 'revision'
+        : 'initial'
+    entries.push({
+      id: 'submitted',
+      type: 'submitted',
+      actor: changeset.author,
+      date: changeset.submittedAt,
+      variant,
+      targetId: changeset.revertsId ?? changeset.supersedesId,
+      changeCount: changeset.changeCount,
+    })
+  }
+
+  for (const message of changeset.messages) {
+    entries.push({
+      id: message.id,
+      type: MESSAGE_ENTRY_TYPES[message.kind],
+      actor: message.author,
+      date: message.createdAt,
+      body: message.body,
+    })
+  }
+
+  if (changeset.decidedAt) {
+    const decision = {
+      id: 'decision',
+      actor: changeset.decidedBy ?? UNKNOWN_ACTOR,
+      date: changeset.decidedAt,
+    }
+    if (changeset.status === 'approved') {
+      entries.push({ ...decision, type: 'approved' })
+    } else if (changeset.status === 'withdrawn') {
+      entries.push({ ...decision, type: 'withdrawn', actor: changeset.author })
+    } else if (changeset.status === 'superseded' && changeset.supersededById) {
+      entries.push({
+        ...decision,
+        type: 'superseded',
+        actor: changeset.author,
+        targetId: changeset.supersededById,
+      })
+    } else if (
+      changeset.status === 'rejected' &&
+      !changeset.messages.some((message) => message.kind === 'rejection')
+    ) {
+      entries.push({ ...decision, type: 'rejected', body: null })
+    }
+  }
+
+  if (changeset.revertedBy) {
+    entries.push({
+      id: 'reverted',
+      type: 'reverted',
+      actor: changeset.revertedBy.actor,
+      date: changeset.revertedBy.at,
+      targetId: changeset.revertedBy.changesetId,
+    })
+  }
+
+  return entries.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  )
 }

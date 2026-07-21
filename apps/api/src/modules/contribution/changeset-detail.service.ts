@@ -126,18 +126,42 @@ export class ChangesetDetailService {
   async buildDetail(changesetId: string): Promise<ChangesetDetail> {
     const row = await this.getChangesetRow(changesetId)
 
-    const [changes, notes] = await Promise.all([
-      this.db
-        .select()
-        .from(schema.change)
-        .where(eq(schema.change.changesetId, changesetId))
-        .orderBy(asc(schema.change.ord)),
-      this.db
-        .select()
-        .from(schema.changesetNote)
-        .where(eq(schema.changesetNote.changesetId, changesetId))
-        .orderBy(asc(schema.changesetNote.createdAt)),
-    ])
+    const [changes, messages, [supersededBy], [revertedBy]] = await Promise.all(
+      [
+        this.db
+          .select()
+          .from(schema.change)
+          .where(eq(schema.change.changesetId, changesetId))
+          .orderBy(asc(schema.change.ord)),
+        this.db
+          .select()
+          .from(schema.changesetMessage)
+          .where(eq(schema.changesetMessage.changesetId, changesetId))
+          .orderBy(asc(schema.changesetMessage.createdAt)),
+        this.db
+          .select({ id: schema.changeset.id })
+          .from(schema.changeset)
+          .where(eq(schema.changeset.supersedesId, changesetId))
+          .orderBy(desc(schema.changeset.createdAt))
+          .limit(1),
+        this.db
+          .select({
+            id: schema.changeset.id,
+            authorId: schema.changeset.authorId,
+            decidedAt: schema.changeset.decidedAt,
+            createdAt: schema.changeset.createdAt,
+          })
+          .from(schema.changeset)
+          .where(
+            and(
+              eq(schema.changeset.revertsId, changesetId),
+              eq(schema.changeset.status, 'approved'),
+            ),
+          )
+          .orderBy(desc(schema.changeset.createdAt))
+          .limit(1),
+      ],
+    )
 
     const entityIds = changes.map((change) => change.entityId)
     const entities =
@@ -189,7 +213,8 @@ export class ChangesetDetailService {
     const authors = await this.users.loadAuthors([
       row.authorId,
       row.decidedById,
-      ...notes.map((note) => note.authorId),
+      revertedBy?.authorId ?? null,
+      ...messages.map((message) => message.authorId),
     ])
 
     return {
@@ -198,14 +223,26 @@ export class ChangesetDetailService {
         ? (authors.get(row.decidedById) ?? NULL_AUTHOR)
         : null,
       supersedesId: row.supersedesId,
+      supersededById: supersededBy?.id ?? null,
+      revertsId: row.revertsId,
+      revertedBy: revertedBy
+        ? {
+            changesetId: revertedBy.id,
+            actor: revertedBy.authorId
+              ? (authors.get(revertedBy.authorId) ?? NULL_AUTHOR)
+              : NULL_AUTHOR,
+            at: revertedBy.decidedAt ?? revertedBy.createdAt,
+          }
+        : null,
       changes: changeDetails,
-      notes: notes.map((note) => ({
-        id: note.id,
-        author: note.authorId
-          ? (authors.get(note.authorId) ?? NULL_AUTHOR)
+      messages: messages.map((message) => ({
+        id: message.id,
+        author: message.authorId
+          ? (authors.get(message.authorId) ?? NULL_AUTHOR)
           : NULL_AUTHOR,
-        body: note.body,
-        createdAt: note.createdAt,
+        kind: message.kind,
+        body: message.body,
+        createdAt: message.createdAt,
       })),
       display: await this.display.buildDisplay(displayDocuments),
     }

@@ -1,4 +1,4 @@
-import { addChangesetNoteContract } from './add-note'
+import { addChangesetMessageContract } from './add-message'
 import { approveChangesetContract } from './approve'
 import { getChangesetContract } from './get'
 import { listChangesetsContract } from './list'
@@ -17,10 +17,10 @@ export const changesetContract = {
   approve: approveChangesetContract,
   reject: rejectChangesetContract,
   revert: revertChangesetContract,
-  addNote: addChangesetNoteContract,
+  addMessage: addChangesetMessageContract,
 }
 
-export * from './add-note'
+export * from './add-message'
 export * from './approve'
 export * from './get'
 export * from './list'

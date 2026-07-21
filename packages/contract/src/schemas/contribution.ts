@@ -2,9 +2,11 @@ import {
   CHANGE_OPS,
   CHANGESET_STATUSES,
   ENTITY_KINDS,
+  MESSAGE_KINDS,
   type ChangeOp,
   type ChangesetStatus,
   type EntityKind,
+  type MessageKind,
 } from '@hayasedb/domain'
 import * as z from 'zod'
 import { ENTITY_DOCUMENT_SCHEMAS } from './entity-documents'
@@ -14,8 +16,9 @@ import { mediaFileSchema } from './media'
 export const entityKindSchema = z.enum(ENTITY_KINDS)
 export const changesetStatusSchema = z.enum(CHANGESET_STATUSES)
 export const changeOpSchema = z.enum(CHANGE_OPS)
+export const changesetMessageKindSchema = z.enum(MESSAGE_KINDS)
 
-export type { ChangeOp, ChangesetStatus, EntityKind }
+export type { ChangeOp, ChangesetStatus, EntityKind, MessageKind }
 
 function changeArmsForKind<K extends EntityKind>(kind: K) {
   const document = ENTITY_DOCUMENT_SCHEMAS[kind]
@@ -70,11 +73,11 @@ export const submitChangesetInputSchema = z.object({
   supersedesId: idSchema.optional(),
 })
 
-export const changesetNoteBodySchema = z
+export const changesetMessageBodySchema = z
   .string()
   .trim()
-  .min(1, 'Note is required')
-  .max(2000, 'Note is too long')
+  .min(1, 'Message is required')
+  .max(2000, 'Message is too long')
 
 export const listChangesetsInputSchema = paginationInputSchema.extend({
   status: changesetStatusSchema.optional(),
@@ -119,9 +122,10 @@ export const changeDetailSchema = z.object({
   entityLabel: z.string(),
 })
 
-export const changesetNoteSchema = z.object({
+export const changesetMessageSchema = z.object({
   id: idSchema,
   author: changesetAuthorSchema,
+  kind: changesetMessageKindSchema,
   body: z.string(),
   createdAt: z.date(),
 })
@@ -139,11 +143,20 @@ export const contributionDisplaySchema = z.object({
   ),
 })
 
+export const changesetRevertedBySchema = z.object({
+  changesetId: idSchema,
+  actor: changesetAuthorSchema,
+  at: z.date(),
+})
+
 export const changesetDetailSchema = changesetListItemSchema.extend({
   decidedBy: changesetAuthorSchema.nullable(),
   supersedesId: idSchema.nullable(),
+  supersededById: idSchema.nullable(),
+  revertsId: idSchema.nullable(),
+  revertedBy: changesetRevertedBySchema.nullable(),
   changes: z.array(changeDetailSchema),
-  notes: z.array(changesetNoteSchema),
+  messages: z.array(changesetMessageSchema),
   display: contributionDisplaySchema,
 })
 
@@ -193,7 +206,8 @@ export type ListChangesetsInput = z.output<typeof listChangesetsInputSchema>
 export type ChangesetAuthor = z.output<typeof changesetAuthorSchema>
 export type ChangesetListItem = z.output<typeof changesetListItemSchema>
 export type ChangeDetail = z.output<typeof changeDetailSchema>
-export type ChangesetNote = z.output<typeof changesetNoteSchema>
+export type ChangesetMessage = z.output<typeof changesetMessageSchema>
+export type ChangesetRevertedBy = z.output<typeof changesetRevertedBySchema>
 export type ChangesetDetail = z.output<typeof changesetDetailSchema>
 export type ChangesetStats = z.output<typeof changesetStatsSchema>
 export type ContributionDisplay = z.output<typeof contributionDisplaySchema>

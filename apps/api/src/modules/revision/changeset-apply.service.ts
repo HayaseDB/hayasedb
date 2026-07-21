@@ -201,9 +201,10 @@ export class ChangesetApplyService {
           )
       }
       const messages = conflicts.map((c) => c.message)
-      await tx.insert(schema.changesetNote).values({
+      await tx.insert(schema.changesetMessage).values({
         changesetId,
         authorId: decidedById,
+        kind: 'system',
         body: `Approval blocked by conflicts:\n${messages
           .map((m) => `- ${m}`)
           .join('\n')}`,
@@ -286,9 +287,10 @@ export class ChangesetApplyService {
         }
       }
 
-      await this.db.insert(schema.changesetNote).values({
+      await this.db.insert(schema.changesetMessage).values({
         changesetId: id,
         authorId: decidedById,
+        kind: 'system',
         body: message,
       })
       return { result: 'conflict', messages: [message] }
@@ -303,6 +305,7 @@ export class ChangesetApplyService {
     return this.submitAndApply(
       adminId,
       summary ?? `Revert of changeset ${changesetId.slice(0, 8)}`,
+      changesetId,
       async (tx) => {
         const cs = await lockChangeset(tx, changesetId)
         if (cs.status !== 'approved') {
@@ -392,6 +395,7 @@ export class ChangesetApplyService {
     return this.submitAndApply(
       adminId,
       `Revert to revision ${toRev}`,
+      null,
       async (tx) => {
         const [entityRow] = await tx
           .select()
@@ -438,6 +442,7 @@ export class ChangesetApplyService {
   private async submitAndApply(
     adminId: string,
     summary: string,
+    revertsId: string | null,
     prepare: (tx: Tx) => Promise<RevertChangeDraft[]>,
   ): Promise<{ changesetId: string; result: ApplyResult }> {
     let changesetId = ''
@@ -457,6 +462,7 @@ export class ChangesetApplyService {
               status: 'pending',
               summary,
               submittedAt: new Date(),
+              revertsId,
             })
             .returning({ id: schema.changeset.id })
           changesetId = cs!.id

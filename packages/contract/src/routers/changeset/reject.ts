@@ -2,7 +2,7 @@ import * as z from 'zod'
 import { base } from '../../base'
 import {
   changesetDetailSchema,
-  changesetNoteBodySchema,
+  changesetMessageBodySchema,
   idSchema,
 } from '../../schemas'
 
@@ -13,5 +13,5 @@ export const rejectChangesetContract = base
     tags: ['Changesets'],
     summary: 'Reject changeset',
   })
-  .input(z.object({ id: idSchema, note: changesetNoteBodySchema }))
+  .input(z.object({ id: idSchema, reason: changesetMessageBodySchema }))
   .output(changesetDetailSchema)

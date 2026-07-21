@@ -62,10 +62,14 @@ const canResubmit = computed(
   () => isRevisableStatus(detail.value.status) && resubmitTo.value !== null,
 )
 
-async function addNote(body: string) {
-  const note = await actions.addNote(detail.value.id, body)
-  if (note) await refresh()
-  return Boolean(note)
+async function addMessage(body: string) {
+  const message = await actions.addMessage(detail.value.id, body)
+  if (message) await refresh()
+  return Boolean(message)
+}
+
+function changesetPath(id: string): string {
+  return `/contributions/${id}`
 }
 
 useSeoMeta({ title: () => `Contribution – ${detail.value.summary}` })
@@ -125,12 +129,12 @@ useSeoMeta({ title: () => `Contribution – ${detail.value.summary}` })
           :title="detail.summary"
         />
 
-        <ChangesetNotes
-          title="Discussion"
-          :notes="detail.notes"
-          placeholder="Write a note to the moderators…"
+        <ChangesetTimeline
+          :changeset="detail"
+          placeholder="Write a message to the moderators…"
+          :changeset-path="changesetPath"
           unknown-author-label="Moderator"
-          :on-add="addNote"
+          :on-add="addMessage"
         />
       </div>
     </div>
