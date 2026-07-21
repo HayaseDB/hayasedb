@@ -14,7 +14,7 @@
     "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/domain": "workspace:*",
-    "@nuxt/ui": "4.9.0",
+    "@nuxt/ui": "4.10.0",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
@@ -26,7 +26,7 @@
     "@hayasedb/typescript-config": "workspace:*",
     "@nuxt/eslint": "^1.9.0",
     "eslint": "catalog:",
-    "nuxt": "^4.4.8",
+    "nuxt": "^4.5.0",
     "typescript": "catalog:",
     "vue-tsc": "catalog:"
   }

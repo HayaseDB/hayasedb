@@ -25,7 +25,7 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "@scalar/nestjs-api-reference": "1.2.9",
+    "@scalar/nestjs-api-reference": "1.2.11",
     "@thallesp/nestjs-better-auth": "2.7.0",
     "better-auth": "catalog:",
     "blurhash": "catalog:",
@@ -44,7 +44,7 @@
     "@hayasedb/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.24",
     "@swc/cli": "^0.8.1",
-    "@swc/core": "^1.15.43",
+    "@swc/core": "^1.15.46",
     "@types/express": "^5.0.0",
     "@types/node": "^22.20.1",
     "typescript": "catalog:"
