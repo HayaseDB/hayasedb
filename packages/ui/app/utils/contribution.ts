@@ -132,21 +132,30 @@ function withoutKeys(item: unknown, keys?: readonly string[]): unknown {
   return rest
 }
 
+function isEmptyValue(value: unknown): boolean {
+  if (value === null || value === undefined || value === '') return true
+  if (Array.isArray(value)) return value.length === 0
+  if (typeof value === 'object') return Object.keys(value).length === 0
+  return false
+}
+
 function identity(
   value: unknown,
   meta?: FieldMeta,
   positional?: readonly string[],
 ): string {
-  if (meta?.unordered) return unorderedStringify(value ?? null)
+  if (isEmptyValue(value)) return 'null'
+
+  if (meta?.unordered) return unorderedStringify(value)
 
   const isSingleton = !Array.isArray(value) || value.length <= 1
   if (positional?.length && isSingleton) {
     const stripped = Array.isArray(value)
       ? value.map((item) => withoutKeys(item, positional))
       : value
-    return stableStringify(stripped ?? null)
+    return stableStringify(stripped)
   }
-  return stableStringify(value ?? null)
+  return stableStringify(value)
 }
 
 function sameValue(

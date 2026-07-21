@@ -11,13 +11,27 @@ useSeoMeta({ title: 'Submissions' })
 
 const router = useRouter()
 const { status, page, pageSize, items, total, pending } = useModerationQueue()
+const { pendingCount } = useModerationCounts()
 
-const statusTabs = CHANGESET_STATUSES.filter((value) => value !== 'draft').map(
-  (value) => ({ label: CHANGESET_STATUS_LABELS[value], value }),
+const statusTabs = computed(() =>
+  CHANGESET_STATUSES.filter((value) => value !== 'draft').map((value) => ({
+    label: CHANGESET_STATUS_LABELS[value],
+    value,
+    badge:
+      value === 'pending' && pendingCount.value > 0
+        ? String(pendingCount.value)
+        : undefined,
+  })),
+)
+
+const emptyLabel = computed(
+  () => `No ${CHANGESET_STATUS_LABELS[status.value].toLowerCase()} submissions`,
 )
 
 const ChangesetStatusBadge = resolveComponent('ChangesetStatusBadge')
 const UBadge = resolveComponent('UBadge')
+const UUser = resolveComponent('UUser')
+const UTooltip = resolveComponent('UTooltip')
 
 const columns: TableColumn<ChangesetRow>[] = [
   {
@@ -44,11 +58,14 @@ const columns: TableColumn<ChangesetRow>[] = [
     accessorKey: 'author',
     header: 'Author',
     cell: ({ row }) =>
-      h(
-        'span',
-        { class: 'text-sm' },
-        row.original.author.name ?? '(deleted user)',
-      ),
+      h(UUser, {
+        name: row.original.author.name ?? '(deleted user)',
+        avatar: {
+          src: row.original.author.image ?? undefined,
+          alt: row.original.author.name ?? 'User',
+        },
+        size: 'sm',
+      }),
   },
   {
     accessorKey: 'changeCount',
@@ -70,15 +87,22 @@ const columns: TableColumn<ChangesetRow>[] = [
   {
     accessorKey: 'submittedAt',
     header: 'Submitted',
-    meta: { class: { th: 'w-44', td: 'w-44' } },
-    cell: ({ row }) =>
-      h(
-        'span',
-        { class: 'text-muted text-sm' },
-        row.original.submittedAt
-          ? formatDateTime(row.original.submittedAt)
-          : '—',
-      ),
+    meta: { class: { th: 'w-36', td: 'w-36' } },
+    cell: ({ row }) => {
+      if (!row.original.submittedAt) {
+        return h('span', { class: 'text-muted text-sm' }, '—')
+      }
+      return h(
+        UTooltip,
+        { text: formatDateTime(row.original.submittedAt) },
+        () =>
+          h(
+            'span',
+            { class: 'text-muted text-sm' },
+            formatRelativeTime(row.original.submittedAt),
+          ),
+      )
+    },
   },
 ]
 </script>
@@ -114,7 +138,16 @@ const columns: TableColumn<ChangesetRow>[] = [
               if (row) router.push(`/submissions/${row.original.id}`)
             }
           "
-        />
+        >
+          <template #empty>
+            <UEmpty
+              variant="naked"
+              icon="i-lucide-inbox"
+              :title="emptyLabel"
+              description="Submissions appear here as contributors send them in."
+            />
+          </template>
+        </UTable>
 
         <div v-if="total > pageSize" class="flex justify-center">
           <UPagination

@@ -14,26 +14,27 @@ const id = computed(() => String(route.params.id))
 const {
   data: changeset,
   error,
+  status,
   refresh,
-} = await useAsyncData(
+} = useAsyncData(
   () => `admin-changeset-${id.value}`,
   () => api.changeset.get({ id: id.value }),
   { watch: [id] },
 )
 
-if (error.value || !changeset.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Submission not found' })
-}
+const detail = computed(() => changeset.value)
+const loading = computed(() => status.value === 'pending' && !changeset.value)
 
-const detail = computed(() => changeset.value!)
+provideContributionDisplay(() => detail.value?.display)
 
-provideContributionDisplay(() => detail.value.display)
-
-useSeoMeta({ title: () => `Submission – ${detail.value.summary}` })
+useSeoMeta({
+  title: () =>
+    detail.value ? `Submission – ${detail.value.summary}` : 'Submission',
+})
 
 const crumbs = computed<BreadcrumbItem[]>(() => [
   { label: 'Submissions', to: '/submissions' },
-  { label: detail.value.summary },
+  ...(detail.value ? [{ label: detail.value.summary }] : []),
 ])
 
 const confirmModal = overlay.create(LazyConfirmModal)
@@ -44,6 +45,8 @@ async function afterDecision() {
 }
 
 function askApprove() {
+  const id = detail.value?.id
+  if (!id) return
   confirmModal.open({
     title: 'Approve and apply?',
     description:
@@ -51,7 +54,7 @@ function askApprove() {
     confirmLabel: 'Approve',
     confirmColor: 'primary',
     onConfirm: async () => {
-      const result = await actions.approve(detail.value.id)
+      const result = await actions.approve(id)
       if (result) await afterDecision()
       return Boolean(result)
     },
@@ -59,10 +62,12 @@ function askApprove() {
 }
 
 function askReject() {
+  const current = detail.value
+  if (!current) return
   rejectModal.open({
-    summary: detail.value.summary,
+    summary: current.summary,
     onConfirm: async (note: string) => {
-      const result = await actions.reject(detail.value.id, note)
+      const result = await actions.reject(current.id, note)
       if (result) await afterDecision()
       return Boolean(result)
     },
@@ -70,13 +75,15 @@ function askReject() {
 }
 
 function askRevert() {
+  const id = detail.value?.id
+  if (!id) return
   confirmModal.open({
     title: 'Revert this changeset?',
     description:
       'Every touched entity is restored to its pre-changeset state. Edits made after this changeset on the same fields are overwritten. History is kept.',
     confirmLabel: 'Revert',
     onConfirm: async () => {
-      const result = await actions.revertChangeset(detail.value.id)
+      const result = await actions.revertChangeset(id)
       if (result) await afterDecision()
       return Boolean(result)
     },
@@ -84,13 +91,29 @@ function askRevert() {
 }
 
 async function addNote(body: string) {
-  const note = await contributionActions.addNote(detail.value.id, body)
+  const id = detail.value?.id
+  if (!id) return false
+  const note = await contributionActions.addNote(id, body)
   if (note) await refresh()
   return Boolean(note)
 }
 
 function entityLink(change: ChangeDetail): string | null {
   return change.op === 'create' ? null : `/anime/${change.entityId}`
+}
+
+const conflicted = computed(
+  () => detail.value?.changes.filter((change) => change.conflicted) ?? [],
+)
+
+const firstConflictAnchor = computed(() =>
+  conflicted.value[0] ? `#change-${conflicted.value[0].id}` : null,
+)
+
+const busyAction = actions.busyAction
+
+function isLocked(action: ModerationAction) {
+  return busyAction.value !== null && busyAction.value !== action
 }
 </script>
 
@@ -102,106 +125,144 @@ function entityLink(change: ChangeDetail): string | null {
           <UDashboardSidebarCollapse />
           <UBreadcrumb :items="crumbs" />
         </template>
-        <template #right>
-          <template v-if="detail.status === 'pending'">
-            <UButton
-              label="Reject"
-              color="error"
-              variant="outline"
-              icon="i-lucide-x"
-              :loading="actions.busy.value"
-              @click="askReject()"
-            />
-            <UButton
-              label="Approve"
-              color="primary"
-              icon="i-lucide-check"
-              :loading="actions.busy.value"
-              @click="askApprove()"
-            />
-          </template>
-          <UButton
-            v-else-if="detail.status === 'approved'"
-            label="Revert"
-            color="error"
-            variant="outline"
-            icon="i-lucide-undo-2"
-            :loading="actions.busy.value"
-            @click="askRevert()"
-          />
-        </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
-        <div class="flex flex-col gap-2">
-          <div class="flex flex-wrap items-center gap-3">
-            <ChangesetStatusBadge :status="detail.status" />
-            <span class="flex items-center gap-2 text-sm">
-              <UAvatar
-                :src="detail.author.image ?? undefined"
-                :alt="detail.author.name ?? 'User'"
-                size="2xs"
-              />
-              {{ detail.author.name ?? '(deleted user)' }}
-            </span>
-            <span class="text-muted text-xs">
-              Submitted {{ formatDateTime(detail.submittedAt) }}
-            </span>
-            <span v-if="detail.decidedAt" class="text-muted text-xs">
-              · Decided {{ formatDateTime(detail.decidedAt) }}
-              <template v-if="detail.decidedBy?.name">
-                by {{ detail.decidedBy.name }}
-              </template>
-            </span>
-          </div>
-          <h1 class="text-highlighted text-xl font-semibold">
-            {{ detail.summary }}
-          </h1>
-          <p v-if="detail.supersedesId" class="text-muted text-xs">
-            Revision of
-            <ULink
-              :to="`/submissions/${detail.supersedesId}`"
-              class="text-primary"
-            >
-              an earlier submission
-            </ULink>
-          </p>
+      <div
+        v-if="loading"
+        class="mx-auto grid w-full max-w-6xl items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
+      >
+        <div class="order-first lg:order-last">
+          <USkeleton class="h-64 w-full rounded-lg" />
         </div>
+        <div class="flex min-w-0 flex-col gap-6">
+          <USkeleton class="h-56 w-full rounded-lg" />
+          <USkeleton class="h-40 w-full rounded-lg" />
+        </div>
+      </div>
 
-        <UAlert
-          v-if="detail.changes.some((c) => c.conflicted)"
-          color="error"
-          variant="subtle"
-          icon="i-lucide-triangle-alert"
-          title="This submission has conflicts"
-          description="The affected changes are marked below; see the notes for details. Ask the contributor to revise, or reject it."
-        />
+      <UEmpty
+        v-else-if="error || !detail"
+        icon="i-lucide-circle-alert"
+        title="Could not load this submission"
+        :description="
+          error
+            ? 'Something went wrong fetching it. Try again.'
+            : 'It may have been removed.'
+        "
+        :actions="[
+          {
+            label: 'Try again',
+            onClick: () => refresh(),
+            icon: 'i-lucide-rotate-cw',
+          },
+          {
+            label: 'Back to submissions',
+            to: '/submissions',
+            color: 'neutral',
+            variant: 'subtle',
+          },
+        ]"
+      />
 
-        <ChangeCard
-          v-for="change in detail.changes"
-          :key="change.id"
-          :change="change"
-        >
-          <template #actions>
-            <UButton
-              v-if="entityLink(change)"
-              :to="entityLink(change)!"
-              label="Open entity"
-              icon="i-lucide-external-link"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-            />
-          </template>
-        </ChangeCard>
+      <div
+        v-else
+        class="mx-auto grid w-full max-w-6xl items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
+      >
+        <aside class="order-first lg:sticky lg:top-0 lg:order-last">
+          <ChangesetMetaPanel
+            :changeset="detail"
+            :supersedes-to="
+              detail.supersedesId ? `/submissions/${detail.supersedesId}` : null
+            "
+          >
+            <template
+              v-if="detail.status === 'pending' || detail.status === 'approved'"
+              #actions
+            >
+              <template v-if="detail.status === 'pending'">
+                <UButton
+                  label="Approve and apply"
+                  color="primary"
+                  icon="i-lucide-check"
+                  block
+                  :loading="busyAction === 'approve'"
+                  :disabled="isLocked('approve')"
+                  @click="askApprove()"
+                />
+                <UButton
+                  label="Reject"
+                  color="error"
+                  variant="outline"
+                  icon="i-lucide-x"
+                  block
+                  :loading="busyAction === 'reject'"
+                  :disabled="isLocked('reject')"
+                  @click="askReject()"
+                />
+              </template>
+              <UButton
+                v-else-if="detail.status === 'approved'"
+                label="Revert"
+                color="error"
+                variant="outline"
+                icon="i-lucide-undo-2"
+                block
+                :loading="busyAction === 'revert'"
+                :disabled="isLocked('revert')"
+                @click="askRevert()"
+              />
+            </template>
+          </ChangesetMetaPanel>
+        </aside>
 
-        <ChangesetNotes
-          :notes="detail.notes"
-          placeholder="Message the contributor…"
-          :on-add="addNote"
-        />
+        <div class="flex min-w-0 flex-col gap-6">
+          <UAlert
+            v-if="conflicted.length"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-triangle-alert"
+            title="This submission has conflicts"
+            description="The affected changes are marked below; see the notes for details. Ask the contributor to revise, or reject it."
+          >
+            <template v-if="firstConflictAnchor" #actions>
+              <UButton
+                :to="firstConflictAnchor"
+                :label="`Jump to ${conflicted.length} conflicted ${conflicted.length === 1 ? 'change' : 'changes'}`"
+                color="error"
+                variant="link"
+                size="xs"
+                class="p-0"
+              />
+            </template>
+          </UAlert>
+
+          <ChangeCard
+            v-for="change in detail.changes"
+            :key="change.id"
+            :change="change"
+            :title="detail.summary"
+          >
+            <template #actions>
+              <UButton
+                v-if="entityLink(change)"
+                :to="entityLink(change)!"
+                label="Open entity"
+                icon="i-lucide-external-link"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+              />
+            </template>
+          </ChangeCard>
+
+          <ChangesetNotes
+            :notes="detail.notes"
+            placeholder="Message the contributor…"
+            :on-add="addNote"
+          />
+        </div>
       </div>
     </template>
   </UDashboardPanel>

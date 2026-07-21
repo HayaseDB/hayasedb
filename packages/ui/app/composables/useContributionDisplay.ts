@@ -7,11 +7,11 @@ const CONTRIBUTION_DISPLAY: InjectionKey<ComputedRef<ContributionDisplay>> =
 const EMPTY_DISPLAY: ContributionDisplay = { refs: {}, mediaAssets: {} }
 
 export function provideContributionDisplay(
-  display: MaybeRefOrGetter<ContributionDisplay>,
+  display: MaybeRefOrGetter<ContributionDisplay | null | undefined>,
 ): void {
   provide(
     CONTRIBUTION_DISPLAY,
-    computed(() => toValue(display)),
+    computed(() => toValue(display) ?? EMPTY_DISPLAY),
   )
 }
 

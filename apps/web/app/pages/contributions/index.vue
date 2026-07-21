@@ -19,7 +19,17 @@ useSeoMeta({ title: 'My contributions' })
     </div>
 
     <div
-      v-if="items.length"
+      v-if="pending && !items.length"
+      class="border-default divide-default divide-y rounded-lg border"
+    >
+      <div v-for="n in 3" :key="n" class="flex items-center gap-3 px-4 py-3">
+        <USkeleton class="h-5 w-24 rounded-full" />
+        <USkeleton class="h-4 flex-1" />
+        <USkeleton class="h-4 w-20" />
+      </div>
+    </div>
+    <div
+      v-else-if="items.length"
       class="border-default divide-default divide-y rounded-lg border"
     >
       <NuxtLink
@@ -35,23 +45,33 @@ useSeoMeta({ title: 'My contributions' })
         <span class="text-muted truncate text-sm">
           {{ item.entityLabels.join(', ') }}
         </span>
-        <span class="text-muted text-xs">
-          {{ formatDateTime(item.submittedAt) }}
-        </span>
+        <UBadge
+          :label="String(item.changeCount)"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+        />
+        <UTooltip :text="formatDateTime(item.submittedAt)">
+          <span class="text-muted text-xs">
+            {{ formatRelativeTime(item.submittedAt) }}
+          </span>
+        </UTooltip>
       </NuxtLink>
     </div>
-    <UPageCard v-else-if="!pending" variant="subtle">
-      <div class="flex flex-col items-center gap-3 py-8 text-center">
-        <UIcon
-          name="i-lucide-git-pull-request-arrow"
-          class="text-muted size-8"
-        />
-        <p class="text-muted text-sm">
-          You haven't submitted anything yet. Found something missing or wrong?
-        </p>
-        <UButton to="/contribute/new" label="Add an anime" variant="soft" />
-      </div>
-    </UPageCard>
+    <UEmpty
+      v-else
+      icon="i-lucide-git-pull-request-arrow"
+      title="No contributions yet"
+      description="Found something missing or wrong? Add or correct an entry and it goes to review."
+      :actions="[
+        {
+          label: 'Add an anime',
+          to: '/contribute/new',
+          icon: 'i-lucide-plus',
+          variant: 'subtle',
+        },
+      ]"
+    />
 
     <div v-if="total > pageSize" class="mt-6 flex justify-center">
       <UPagination

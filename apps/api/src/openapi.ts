@@ -35,6 +35,7 @@ export async function buildOpenApiSources(
   ])) as unknown as [OpenApiDocument, OpenApiDocument]
 
   auth.info = info('HayaseDB Auth')
+  auth.servers = [{ url: `${publicUrl}/api/auth` }]
 
   return [
     { title: 'API', content: api, default: true },

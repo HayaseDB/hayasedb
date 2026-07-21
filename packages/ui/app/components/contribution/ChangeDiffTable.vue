@@ -5,8 +5,19 @@ const props = defineProps<{
 }>()
 const rows = computed(() => buildDiffRows(props.change))
 const showBefore = computed(() => props.change.op !== 'create')
+const isDelete = computed(() => props.change.op === 'delete')
 const gridClass = computed(() =>
-  showBefore.value ? 'grid-cols-[8rem_1fr_1fr]' : 'grid-cols-[8rem_1fr]',
+  showBefore.value
+    ? 'grid-cols-1 md:grid-cols-[10rem_1fr_1fr]'
+    : 'grid-cols-1 md:grid-cols-[10rem_1fr]',
+)
+
+const afterHeader = computed(() =>
+  isDelete.value ? 'Removed value' : 'Proposed',
+)
+
+const afterTintClass = computed(() =>
+  isDelete.value ? 'bg-error/5 text-toned' : 'bg-success/5 text-highlighted',
 )
 
 function valueProps(row: ChangeDiffRow, value: unknown) {
@@ -26,27 +37,32 @@ function valueProps(row: ChangeDiffRow, value: unknown) {
   >
     <div
       role="row"
-      class="text-muted grid items-center gap-4 px-4 py-2 text-xs font-medium tracking-wide uppercase"
+      class="text-muted hidden items-center gap-4 px-4 py-2.5 text-xs font-medium md:grid"
       :class="gridClass"
     >
       <span role="columnheader">Field</span>
       <span v-if="showBefore" role="columnheader">Before</span>
-      <span role="columnheader">
-        {{ change.op === 'delete' ? 'Removed value' : 'Proposed' }}
-      </span>
+      <span role="columnheader">{{ afterHeader }}</span>
     </div>
 
     <div
       v-for="row in rows"
       :key="row.key"
       role="row"
-      class="grid gap-4 px-4 py-3 text-sm"
+      class="grid items-start gap-x-4 gap-y-2 px-2 py-3 text-sm"
       :class="gridClass"
     >
-      <span role="rowheader" class="text-highlighted font-medium">
+      <span role="rowheader" class="text-muted px-2 text-sm md:pt-1">
         {{ row.label }}
       </span>
-      <div v-if="showBefore" role="cell" class="text-muted min-w-0">
+
+      <div
+        v-if="showBefore"
+        role="cell"
+        class="text-muted min-w-0 rounded px-2 py-1"
+        :class="row.changed && 'bg-error/5'"
+      >
+        <span class="text-muted mb-0.5 block text-xs md:hidden">Before</span>
         <div class="flex items-start gap-1.5">
           <span :class="row.drifted && 'opacity-60'">
             <ChangeDiffValue v-bind="valueProps(row, row.before)" />
@@ -58,14 +74,10 @@ function valueProps(row: ChangeDiffRow, value: unknown) {
             :close-delay="100"
             arrow
           >
-            <UButton
-              icon="i-lucide-history"
-              color="warning"
-              variant="ghost"
-              size="xs"
-              square
+            <UIcon
+              name="i-lucide-history"
+              class="text-warning mt-0.5 size-4 shrink-0 cursor-help"
               aria-label="Value changed since submission"
-              class="-my-1 shrink-0"
             />
             <template #content>
               <div
@@ -80,7 +92,15 @@ function valueProps(row: ChangeDiffRow, value: unknown) {
           </UPopover>
         </div>
       </div>
-      <div role="cell">
+
+      <div
+        role="cell"
+        class="min-w-0 rounded px-2 py-1"
+        :class="row.changed && afterTintClass"
+      >
+        <span class="text-muted mb-0.5 block text-xs md:hidden">
+          {{ afterHeader }}
+        </span>
         <ChangeDiffValue v-bind="valueProps(row, row.after)" />
       </div>
     </div>

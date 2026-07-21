@@ -15,17 +15,22 @@ export function useModerationQueue(options: { pageSize?: number } = {}) {
   })
 }
 
+export type ModerationAction =
+  'approve' | 'reject' | 'revert' | 'revert-revision'
+
 export function useModerationActions() {
   const api = useApiClient()
   const toast = useToast()
 
-  const busy = ref(false)
+  const busyAction = ref<ModerationAction | null>(null)
+  const busy = computed(() => busyAction.value !== null)
 
   async function run<T>(
+    name: ModerationAction,
     action: () => Promise<T>,
     failureTitle: string,
   ): Promise<T | false> {
-    busy.value = true
+    busyAction.value = name
     try {
       const result = await action()
       await refreshModerationCounts()
@@ -37,12 +42,13 @@ export function useModerationActions() {
       })
       return false
     } finally {
-      busy.value = false
+      busyAction.value = null
     }
   }
 
   async function approve(id: string) {
     const detail = await run(
+      'approve',
       () => api.changeset.approve({ id }),
       'Failed to approve changeset',
     )
@@ -62,6 +68,7 @@ export function useModerationActions() {
 
   async function reject(id: string, note: string) {
     const detail = await run(
+      'reject',
       () => api.changeset.reject({ id, note }),
       'Failed to reject changeset',
     )
@@ -71,6 +78,7 @@ export function useModerationActions() {
 
   async function revertChangeset(id: string) {
     const detail = await run(
+      'revert',
       () => api.changeset.revert({ id }),
       'Failed to revert changeset',
     )
@@ -80,6 +88,7 @@ export function useModerationActions() {
 
   async function revertToRevision(id: string) {
     const detail = await run(
+      'revert-revision',
       () => api.revision.revert({ id }),
       'Failed to revert',
     )
@@ -97,6 +106,7 @@ export function useModerationActions() {
 
   return {
     busy,
+    busyAction,
     approve,
     reject,
     revertChangeset,

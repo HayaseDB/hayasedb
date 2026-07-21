@@ -22,6 +22,7 @@ export function useContributionActions() {
   const toast = useToast()
 
   const saving = ref(false)
+  const withdrawing = ref(false)
 
   async function submit(
     anime: { id: string; headRev: number } | null,
@@ -98,6 +99,7 @@ export function useContributionActions() {
   }
 
   async function withdraw(id: string): Promise<boolean> {
+    withdrawing.value = true
     try {
       await api.changeset.withdraw({ id })
       toast.add({ title: 'Contribution withdrawn', color: 'success' })
@@ -105,6 +107,8 @@ export function useContributionActions() {
     } catch {
       toast.add({ title: 'Failed to withdraw contribution', color: 'error' })
       return false
+    } finally {
+      withdrawing.value = false
     }
   }
 
@@ -117,5 +121,5 @@ export function useContributionActions() {
     }
   }
 
-  return { saving, submit, withdraw, addNote }
+  return { saving, withdrawing, submit, withdraw, addNote }
 }

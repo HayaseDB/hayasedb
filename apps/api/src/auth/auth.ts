@@ -23,7 +23,13 @@ export function authFactory(
   const discordClientSecret = config.get('DISCORD_CLIENT_SECRET', {
     infer: true,
   })
-  const trustedOrigins = config.get('AUTH_TRUSTED_ORIGINS', { infer: true })
+  const apiURL = config.get('API_PUBLIC_URL', { infer: true })
+  const trustedOrigins = [
+    ...new Set([
+      ...config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
+      apiURL,
+    ]),
+  ]
 
   const appURL = config.get('WEB_PUBLIC_URL', { infer: true })
 

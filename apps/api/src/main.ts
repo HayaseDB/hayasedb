@@ -31,7 +31,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
   app.enableShutdownHooks()
   app.enableCors({
-    origin: config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
+    origin: [
+      ...new Set([
+        ...config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
+        config.get('API_PUBLIC_URL', { infer: true }),
+      ]),
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization'],
