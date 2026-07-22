@@ -1,5 +1,19 @@
 # @hayasedb/ui
 
+## 0.3.1
+
+### Patch Changes
+
+- 17f865b: Update dependencies (bun minor/patch group).
+- 17f865b: - Replace `ChangesetNotes` with a `ChangesetTimeline` component rendering comments, rejections, and system events
+  - Add `ChangesetMetaPanel` for changeset status and metadata
+  - Improve diff rendering in `ChangeDiffTable` and `DiffLongText`
+  - Add `formatDate` utilities and timeline helpers in the contribution utils
+- Updated dependencies [17f865b]
+- Updated dependencies [17f865b]
+  - @hayasedb/contract@0.3.1
+  - @hayasedb/domain@0.3.1
+
 ## 0.3.0
 
 ### Patch Changes

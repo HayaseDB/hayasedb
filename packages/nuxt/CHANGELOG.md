@@ -1,5 +1,18 @@
 # @hayasedb/nuxt
 
+## 0.3.1
+
+### Patch Changes
+
+- 17f865b: Update dependencies (bun minor/patch group).
+- 17f865b: - Fix the open-submissions count in `useModerationQueue` not refreshing, which left the sidebar indicator stale after moderating a submission
+  - Update `useContributionActions` for the changeset message system (post messages, reject with a reason)
+- Updated dependencies [17f865b]
+- Updated dependencies [17f865b]
+  - @hayasedb/contract@0.3.1
+  - @hayasedb/domain@0.3.1
+  - @hayasedb/auth@0.3.1
+
 ## 0.3.0
 
 ### Patch Changes
