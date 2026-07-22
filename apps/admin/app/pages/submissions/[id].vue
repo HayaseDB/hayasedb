@@ -246,7 +246,6 @@ function isLocked(action: ModerationAction) {
             v-for="change in detail.changes"
             :key="change.id"
             :change="change"
-            :title="detail.summary"
           >
             <template #actions>
               <UButton

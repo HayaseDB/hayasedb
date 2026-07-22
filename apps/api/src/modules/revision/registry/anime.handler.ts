@@ -1,4 +1,4 @@
-import { and, eq, getTableName, inArray, ne } from 'drizzle-orm'
+import { and, eq, getTableName, inArray, isNull, ne } from 'drizzle-orm'
 import {
   animeDocumentPatchSchema,
   animeDocumentSchema,
@@ -189,6 +189,7 @@ export const animeHandler: EntityKindHandler<AnimeDocument> = {
   async validateRefs(
     tx: Tx,
     payload: Record<string, unknown>,
+    siblingCreates: ReadonlyMap<string, string>,
   ): Promise<string[]> {
     const problems: string[] = []
 
@@ -199,12 +200,21 @@ export const animeHandler: EntityKindHandler<AnimeDocument> = {
           ),
         ]
       : []
-    if (genreIds.length > 0) {
+    const unknownGenreIds = genreIds.filter(
+      (id) => siblingCreates.get(id) !== 'genre',
+    )
+    if (unknownGenreIds.length > 0) {
       const rows = await tx
         .select({ id: schema.genre.id })
         .from(schema.genre)
-        .where(inArray(schema.genre.id, genreIds))
-      if (rows.length !== genreIds.length) {
+        .innerJoin(schema.entity, eq(schema.entity.id, schema.genre.id))
+        .where(
+          and(
+            inArray(schema.genre.id, unknownGenreIds),
+            isNull(schema.entity.deletedAt),
+          ),
+        )
+      if (rows.length !== unknownGenreIds.length) {
         problems.push('One or more referenced genres do not exist')
       }
     }

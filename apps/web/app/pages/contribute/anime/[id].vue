@@ -25,9 +25,12 @@ const { data: prefill } = await useAsyncData(
   async () => {
     if (!from.value) return null
     const changeset = await api.changeset.get({ id: from.value })
+    const animeChange = changeset.changes.find(
+      (change) => change.entityKind === 'anime',
+    )
     if (
-      changeset.changes[0]?.op !== 'update' ||
-      changeset.changes[0]?.entityId !== anime.value?.id ||
+      animeChange?.op !== 'update' ||
+      animeChange.entityId !== anime.value?.id ||
       !isSupersedableStatus(changeset.status)
     ) {
       return null

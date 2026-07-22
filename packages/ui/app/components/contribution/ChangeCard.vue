@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ChangeDetail } from '@hayasedb/contract'
 
-defineProps<{ change: ChangeDetail; title?: string }>()
+defineProps<{ change: ChangeDetail }>()
 
 defineSlots<{
   actions?: () => unknown
@@ -22,7 +22,7 @@ defineSlots<{
           variant="subtle"
         />
         <span class="text-highlighted min-w-0 truncate font-medium">
-          {{ title ?? change.entityLabel }}
+          {{ change.entityLabel }}
         </span>
         <UBadge
           v-if="change.conflicted"

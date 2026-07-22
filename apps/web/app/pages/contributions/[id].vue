@@ -126,7 +126,6 @@ useSeoMeta({ title: () => `Contribution – ${detail.value.summary}` })
           v-for="change in detail.changes"
           :key="change.id"
           :change="change"
-          :title="detail.summary"
         />
 
         <ChangesetTimeline

@@ -58,6 +58,14 @@ export const ANIME_FIELD_META = {
   },
 } as const satisfies Record<string, FieldMeta>
 
+export const GENRE_FIELD_META = {
+  name: { as: 'text', empty: '' },
+} as const satisfies Record<string, FieldMeta>
+
+export const GENRE_FIELD_ORDER = ['name'] as const satisfies ReadonlyArray<
+  keyof typeof GENRE_FIELD_META
+>
+
 export const ANIME_FIELD_ORDER = [
   'slug',
   'format',
@@ -79,10 +87,12 @@ export const ENTITY_FIELD_META: Record<
   Readonly<Record<string, FieldMeta>>
 > = {
   anime: ANIME_FIELD_META,
+  genre: GENRE_FIELD_META,
 }
 
 export const ENTITY_FIELD_ORDER = {
   anime: ANIME_FIELD_ORDER,
+  genre: GENRE_FIELD_ORDER,
 } as const satisfies Record<EntityKind, ReadonlyArray<string>>
 
 export function fieldOrderFor(kind: EntityKind): ReadonlyArray<string> {

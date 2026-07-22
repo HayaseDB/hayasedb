@@ -83,8 +83,13 @@ export class ChangesetApplyService {
     const entityById = new Map(entities.map((e) => [e.id, e]))
 
     const conflicts: { changeId: string; message: string }[] = []
-    const siblingCreates: ReadonlySet<string> = new Set(
-      changes.filter((c) => c.op === 'create').map((c) => c.entityId),
+    const siblingCreates: ReadonlyMap<string, EntityKind> = new Map(
+      changes
+        .filter((c) => c.op === 'create')
+        .map((c) => [c.entityId, c.entityKind]),
+    )
+    const siblingDeletes: ReadonlySet<string> = new Set(
+      changes.filter((c) => c.op === 'delete').map((c) => c.entityId),
     )
 
     for (const change of changes) {
@@ -164,6 +169,19 @@ export class ChangesetApplyService {
             payload,
           )
           if (uniq) conflicts.push({ changeId: change.id, message: uniq })
+        }
+        if (change.op === 'delete' && handler.checkDelete) {
+          const blocked = await handler.checkDelete(
+            tx,
+            change.entityId,
+            siblingDeletes,
+          )
+          if (blocked) {
+            conflicts.push({
+              changeId: change.id,
+              message: `${label}: ${blocked}`,
+            })
+          }
         }
       }
 

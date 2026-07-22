@@ -74,6 +74,15 @@ onUnmounted(() => clearTimeout(copyTimer))
       <USeparator />
 
       <div class="flex min-w-0 flex-col gap-2">
+        <dt class="text-muted text-sm font-medium">Summary</dt>
+        <dd class="text-highlighted min-w-0 text-sm">
+          {{ changeset.summary }}
+        </dd>
+      </div>
+
+      <USeparator />
+
+      <div class="flex min-w-0 flex-col gap-2">
         <dt class="text-muted text-sm font-medium">Author</dt>
         <dd class="min-w-0">
           <UUser v-bind="author" size="md" />

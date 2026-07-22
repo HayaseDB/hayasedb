@@ -29,13 +29,19 @@ export interface EntityKindHandler<
   validateRefs(
     tx: Tx,
     payload: Record<string, unknown>,
-    siblingCreates: ReadonlySet<string>,
+    siblingCreates: ReadonlyMap<string, EntityKind>,
   ): Promise<string[]>
 
   checkUniqueness(
     tx: Tx,
     entityId: string,
     payload: Record<string, unknown>,
+  ): Promise<string | null>
+
+  checkDelete?(
+    tx: Tx,
+    entityId: string,
+    siblingDeletes: ReadonlySet<string>,
   ): Promise<string | null>
 
   apply(

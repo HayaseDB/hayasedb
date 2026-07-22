@@ -13,14 +13,21 @@ const props = withDefaults(
   defineProps<{
     media: AnimeMediaController
     genres: { id: string; name: string }[]
+    proposedGenres?: { id: string; name: string }[]
     isEdit: boolean
     isDirty: boolean
     changedFields?: (keyof AnimeFormState)[]
     saving: boolean
     submitLabel?: string
     onSubmit: (data: CreateAnimeInput) => unknown | Promise<unknown>
+    onCreateGenre?: (name: string) => void
   }>(),
-  { changedFields: () => [], submitLabel: undefined },
+  {
+    proposedGenres: () => [],
+    changedFields: () => [],
+    submitLabel: undefined,
+    onCreateGenre: undefined,
+  },
 )
 
 const changed = (field: keyof AnimeFormState) =>
@@ -30,12 +37,32 @@ const cover = computed(() => props.media.cover.value)
 const banner = computed(() => props.media.banner.value)
 const gallery = computed(() => props.media.gallery.value)
 
-const genreItems = computed(() =>
-  props.genres.map((g: { id: string; name: string }) => ({
+const genreItems = computed(() => [
+  ...props.genres.map((g: { id: string; name: string }) => ({
     label: g.name,
     value: g.id,
   })),
-)
+  ...props.proposedGenres.map((g: { id: string; name: string }) => ({
+    label: `${g.name} (new)`,
+    value: g.id,
+  })),
+])
+
+function handleCreateGenre(name: string) {
+  const trimmed = name.trim()
+  if (!trimmed || !props.onCreateGenre) return
+  const lower = trimmed.toLowerCase()
+  const existing = [...props.genres, ...props.proposedGenres].find(
+    (g) => g.name.toLowerCase() === lower,
+  )
+  if (existing) {
+    if (!state.value.genreIds.includes(existing.id)) {
+      state.value.genreIds = [...state.value.genreIds, existing.id]
+    }
+    return
+  }
+  props.onCreateGenre(trimmed)
+}
 const formatItems = animeFormatOptions
 const statusItems = animeStatusOptions
 
@@ -184,7 +211,14 @@ const activeTab = ref('0')
           </UPageCard>
 
           <UPageCard title="Genres" variant="subtle">
-            <UFormField name="genreIds">
+            <UFormField
+              name="genreIds"
+              :description="
+                onCreateGenre
+                  ? 'Pick existing genres or type a new name to propose it.'
+                  : undefined
+              "
+            >
               <USelectMenu
                 v-model="state.genreIds"
                 :items="genreItems"
@@ -192,8 +226,10 @@ const activeTab = ref('0')
                 multiple
                 placeholder="Select genres"
                 class="w-full"
+                :create-item="Boolean(onCreateGenre)"
                 :highlight="changed('genreIds')"
                 :color="changed('genreIds') ? 'info' : undefined"
+                @create="handleCreateGenre"
               />
             </UFormField>
           </UPageCard>

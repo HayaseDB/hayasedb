@@ -24,6 +24,13 @@ function changeArmsForKind<K extends EntityKind>(kind: K) {
   const document = ENTITY_DOCUMENT_SCHEMAS[kind]
   const target = { entityKind: z.literal(kind), entityId: idSchema }
 
+  const patchDocument = (document as z.ZodObject)
+    .partial()
+    .refine(
+      (patch: Record<string, unknown>) => Object.keys(patch).length > 0,
+      'Update payload must change at least one field',
+    )
+
   return [
     z.object({
       op: z.literal('create'),
@@ -34,12 +41,7 @@ function changeArmsForKind<K extends EntityKind>(kind: K) {
       op: z.literal('update'),
       ...target,
       baseRev: z.number().int().min(1),
-      payload: document
-        .partial()
-        .refine(
-          (patch) => Object.keys(patch).length > 0,
-          'Update payload must change at least one field',
-        ),
+      payload: patchDocument,
     }),
     z.object({
       op: z.literal('delete'),

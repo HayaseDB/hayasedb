@@ -5,7 +5,7 @@ import {
   type CreateAnimeInput,
   type Genre,
 } from '@hayasedb/contract'
-import type { ApiClient } from '#imports'
+import type { ApiClient, ProposedGenre } from '#imports'
 
 type AnimeDetail = Awaited<ReturnType<ApiClient['anime']['getBySlug']>>
 type ChangesetDetail = Awaited<ReturnType<ApiClient['changeset']['get']>>
@@ -24,13 +24,29 @@ const actions = useContributionActions()
 
 const summaryMaxLength = changesetSummarySchema.maxLength ?? undefined
 
+const prefillAnimeChange = computed(
+  () =>
+    props.prefill?.changes.find((change) => change.entityKind === 'anime') ??
+    null,
+)
+
 const prefillPayload = computed(
   () =>
-    (props.prefill?.changes[0]?.payload ?? null) as Record<
+    (prefillAnimeChange.value?.payload ?? null) as Record<
       string,
       unknown
     > | null,
 )
+
+function prefillProposedGenres(): ProposedGenre[] {
+  return (props.prefill?.changes ?? [])
+    .filter((change) => change.entityKind === 'genre' && change.op === 'create')
+    .map((change) => ({
+      id: change.entityId,
+      name: String((change.payload as Record<string, unknown>).name ?? ''),
+    }))
+    .filter((genre) => genre.name.length > 0)
+}
 
 function baseline(): AnimeFormState {
   const next = buildAnimeFormState(props.anime)
@@ -39,6 +55,13 @@ function baseline(): AnimeFormState {
 }
 
 const state = reactive(baseline())
+const proposedGenres = ref<ProposedGenre[]>(prefillProposedGenres())
+
+function proposeGenre(name: string) {
+  const id = crypto.randomUUID()
+  proposedGenres.value = [...proposedGenres.value, { id, name }]
+  state.genreIds = [...state.genreIds, id]
+}
 
 const {
   changedFields,
@@ -63,6 +86,7 @@ const summary = ref(props.prefill?.summary ?? '')
 watch([() => props.anime, () => props.prefill], () => {
   reset()
   media.sync()
+  proposedGenres.value = prefillProposedGenres()
   summary.value = props.prefill?.summary ?? ''
 })
 
@@ -75,6 +99,7 @@ async function submit(data: CreateAnimeInput) {
       mediaDirty: media.isDirty.value,
       summary: summary.value,
       buildDocumentMedia: (upload) => media.buildDocumentMedia(upload),
+      newGenres: proposedGenres.value,
       supersedesId: props.prefill?.id,
     },
   )
@@ -88,6 +113,8 @@ async function submit(data: CreateAnimeInput) {
     v-model:state="state"
     :media="media"
     :genres="genres"
+    :proposed-genres="proposedGenres"
+    :on-create-genre="proposeGenre"
     :is-edit="anime !== null"
     :is-dirty="isDirty"
     :changed-fields="changedFields"

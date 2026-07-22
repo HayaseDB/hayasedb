@@ -244,7 +244,30 @@ export class ChangesetDetailService {
         body: message.body,
         createdAt: message.createdAt,
       })),
-      display: await this.display.buildDisplay(displayDocuments),
+      display: this.overlayPendingGenreLabels(
+        await this.display.buildDisplay(displayDocuments),
+        changes,
+      ),
+    }
+  }
+
+  private overlayPendingGenreLabels(
+    display: ChangesetDetail['display'],
+    changes: ChangeRow[],
+  ): ChangesetDetail['display'] {
+    const pending: Record<string, string> = {}
+    for (const change of changes) {
+      if (change.entityKind !== 'genre' || change.op !== 'create') continue
+      const name = asDocument(change.payload).name
+      if (typeof name === 'string') pending[change.entityId] = name
+    }
+    if (Object.keys(pending).length === 0) return display
+    return {
+      ...display,
+      refs: {
+        ...display.refs,
+        genre: { ...pending, ...display.refs.genre },
+      },
     }
   }
 

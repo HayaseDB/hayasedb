@@ -6,6 +6,11 @@ import type {
 
 type AnimeFormField = keyof CreateAnimeInput
 
+export interface ProposedGenre {
+  id: string
+  name: string
+}
+
 export interface ContributionSubmit {
   data: CreateAnimeInput
   changedFields: AnimeFormField[]
@@ -14,6 +19,7 @@ export interface ContributionSubmit {
   buildDocumentMedia: (
     upload: (file: File) => Promise<{ mediaId: string }>,
   ) => Promise<AnimeDocumentMedia[]>
+  newGenres?: ProposedGenre[]
   supersedesId?: string
 }
 
@@ -43,7 +49,12 @@ export function useContributionActions() {
         api.media.upload({ file }),
       )
 
-      let change: ChangeInput
+      const selectedGenreIds = new Set(input.data.genreIds ?? [])
+      const proposedGenres = (input.newGenres ?? []).filter((genre) =>
+        selectedGenreIds.has(genre.id),
+      )
+
+      let animeChange: ChangeInput
       if (anime) {
         const changed = new Set<string>(input.changedFields)
         const patch = Object.fromEntries(
@@ -54,7 +65,7 @@ export function useContributionActions() {
           toast.add({ title: 'No changes to submit', color: 'warning' })
           return false
         }
-        change = {
+        animeChange = {
           op: 'update',
           entityKind: 'anime',
           entityId: anime.id,
@@ -62,7 +73,7 @@ export function useContributionActions() {
           payload: patch,
         }
       } else {
-        change = {
+        animeChange = {
           op: 'create',
           entityKind: 'anime',
           entityId: crypto.randomUUID(),
@@ -74,9 +85,16 @@ export function useContributionActions() {
         }
       }
 
+      const genreChanges: ChangeInput[] = proposedGenres.map((genre) => ({
+        op: 'create',
+        entityKind: 'genre',
+        entityId: genre.id,
+        payload: { name: genre.name },
+      }))
+
       const changeset = await api.changeset.submit({
         summary: input.summary.trim(),
-        changes: [change],
+        changes: [...genreChanges, animeChange],
         supersedesId: input.supersedesId,
       })
       toast.add({

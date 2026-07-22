@@ -14,8 +14,11 @@ const { data: prefill } = await useAsyncData(
   async () => {
     if (!from.value) return null
     const changeset = await api.changeset.get({ id: from.value })
+    const animeChange = changeset.changes.find(
+      (change) => change.entityKind === 'anime',
+    )
     if (
-      changeset.changes[0]?.op !== 'create' ||
+      animeChange?.op !== 'create' ||
       !isSupersedableStatus(changeset.status)
     ) {
       return null

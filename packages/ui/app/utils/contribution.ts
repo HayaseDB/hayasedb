@@ -66,11 +66,16 @@ const ANIME_ENUM_LABELS: Readonly<
   type: ANIME_MEDIA_TYPE_LABELS,
 }
 
+export const GENRE_FIELD_LABELS = {
+  name: 'Name',
+} satisfies Record<string, string>
+
 const ENTITY_FIELD_LABELS: Record<
   EntityKind,
   Readonly<Record<string, string>>
 > = {
   anime: ANIME_FIELD_LABELS,
+  genre: GENRE_FIELD_LABELS,
 }
 
 const ENTITY_ENUM_LABELS: Record<
@@ -78,6 +83,7 @@ const ENTITY_ENUM_LABELS: Record<
   Readonly<Record<string, Readonly<Record<string, string>>>>
 > = {
   anime: ANIME_ENUM_LABELS,
+  genre: {},
 }
 
 export function contributionFieldLabel(

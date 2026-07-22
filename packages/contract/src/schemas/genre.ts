@@ -29,7 +29,14 @@ export const removeGenreInputSchema = z.object({
   id: idSchema,
 })
 
+export const genreDocumentSchema = z.object({
+  name: genreNameSchema,
+})
+
+export const genreDocumentPatchSchema = genreDocumentSchema.partial()
+
 export type Genre = z.output<typeof genreSchema>
 export type GenreListItem = z.output<typeof genreListItemSchema>
 export type CreateGenreInput = z.output<typeof createGenreInputSchema>
 export type UpdateGenreInput = z.output<typeof updateGenreInputSchema>
+export type GenreDocument = z.output<typeof genreDocumentSchema>

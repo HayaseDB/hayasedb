@@ -21,16 +21,16 @@ export class GenreController {
   @Implement(contract.genre.create)
   create() {
     return implement(contract.genre.create).handler(({ input, context }) => {
-      requireAdminUser(context)
-      return this.genres.create(input.name)
+      const userId = requireAdminUser(context)
+      return this.genres.create(input.name, userId)
     })
   }
 
   @Implement(contract.genre.update)
   update() {
     return implement(contract.genre.update).handler(({ input, context }) => {
-      requireAdminUser(context)
-      return this.genres.update(input.id, input.name)
+      const userId = requireAdminUser(context)
+      return this.genres.update(input.id, input.name, userId)
     })
   }
 
@@ -38,8 +38,8 @@ export class GenreController {
   remove() {
     return implement(contract.genre.remove).handler(
       async ({ input, context }) => {
-        requireAdminUser(context)
-        await this.genres.remove(input.id)
+        const userId = requireAdminUser(context)
+        await this.genres.remove(input.id, userId)
         return { success: true }
       },
     )

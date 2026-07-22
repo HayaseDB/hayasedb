@@ -1,0 +1,2 @@
+ALTER TYPE "public"."entity_kind" ADD VALUE 'genre';--> statement-breakpoint
+ALTER TABLE "genre" ADD CONSTRAINT "genre_id_entity_id_fk" FOREIGN KEY ("id") REFERENCES "public"."entity"("id") ON DELETE no action ON UPDATE no action;

@@ -49,7 +49,7 @@ export const anime = pgTable('anime', {
 })
 
 export const genre = pgTable('genre', {
-  id: uuidV7Pk(),
+  id: uuidV7Pk().references(() => entity.id),
   name: text('name').notNull().unique(),
 })
 

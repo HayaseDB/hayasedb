@@ -503,7 +503,13 @@ export class AnimeService {
     const rows = await this.db
       .select({ id: schema.genre.id })
       .from(schema.genre)
-      .where(inArray(schema.genre.id, genreIds))
+      .innerJoin(schema.entity, eq(schema.entity.id, schema.genre.id))
+      .where(
+        and(
+          inArray(schema.genre.id, genreIds),
+          isNull(schema.entity.deletedAt),
+        ),
+      )
     if (rows.length !== genreIds.length) {
       throw new ORPCError('NOT_FOUND', {
         message: 'One or more genres do not exist',

@@ -10,6 +10,7 @@ import {
 import { AppModule } from './app.module'
 import { DRIZZLE } from './database/database.constants'
 import { AnimeService } from './modules/anime/anime.service'
+import { GenreService } from './modules/genre/genre.service'
 import { MediaService } from './modules/media/media.service'
 
 const ANILIST_ENDPOINT = 'https://graphql.anilist.co'
@@ -154,6 +155,7 @@ async function main() {
   const db = app.get<Database>(DRIZZLE)
   const anime = app.get(AnimeService)
   const media = app.get(MediaService)
+  const genres = app.get(GenreService)
 
   try {
     const [seededRow] = await db
@@ -175,12 +177,7 @@ async function main() {
     async function ensureGenre(name: string): Promise<string> {
       const cached = genreIds.get(name)
       if (cached) return cached
-      const [row] = await db
-        .insert(schema.genre)
-        .values({ name })
-        .onConflictDoUpdate({ target: schema.genre.name, set: { name } })
-        .returning({ id: schema.genre.id })
-      if (!row) throw new Error(`Failed to upsert genre: ${name}`)
+      const row = await genres.create(name, null)
       genreIds.set(name, row.id)
       return row.id
     }

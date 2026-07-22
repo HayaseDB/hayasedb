@@ -8,7 +8,7 @@ import type {
   UploadMediaOutput,
 } from '@hayasedb/contract'
 import { type Database, schema } from '@hayasedb/db'
-import { isSupersedableStatus } from '@hayasedb/domain'
+import { isSupersedableStatus, type EntityKind } from '@hayasedb/domain'
 import { DRIZZLE } from '../../database/database.constants'
 import { MediaService } from '../media/media.service'
 import {
@@ -23,6 +23,16 @@ import { ChangesetDetailService } from './changeset-detail.service'
 
 const MAX_PENDING_CHANGESETS_PER_AUTHOR = 10
 const UPLOAD_DAILY_LIMIT = 100
+
+function changeApplyRank(change: {
+  op: string
+  entityKind: EntityKind
+}): number {
+  if (change.entityKind === 'genre') {
+    return change.op === 'delete' ? 2 : 0
+  }
+  return 1
+}
 
 @Injectable()
 export class ContributionService {
@@ -90,19 +100,28 @@ export class ContributionService {
       })
     }
 
+    const orderedChanges = [...input.changes].sort(
+      (a, b) => changeApplyRank(a) - changeApplyRank(b),
+    )
+
     const changesetId = await this.db.transaction(async (tx) => {
       if (input.supersedesId) {
         await this.claimSuperseded(tx, input.supersedesId, userId)
       }
 
-      const siblingCreates: ReadonlySet<string> = new Set(
-        input.changes
+      const siblingCreates: ReadonlyMap<string, EntityKind> = new Map(
+        orderedChanges
           .filter((change) => change.op === 'create')
+          .map((change) => [change.entityId, change.entityKind]),
+      )
+      const siblingDeletes: ReadonlySet<string> = new Set(
+        orderedChanges
+          .filter((change) => change.op === 'delete')
           .map((change) => change.entityId),
       )
 
       const changeRows: Array<typeof schema.change.$inferInsert> = []
-      for (const [ord, change] of input.changes.entries()) {
+      for (const [ord, change] of orderedChanges.entries()) {
         const handler = entityHandler(change.entityKind)
         const payload =
           change.op === 'delete'
@@ -169,6 +188,15 @@ export class ContributionService {
               payload,
             )
             if (uniq) throw new ORPCError('CONFLICT', { message: uniq })
+          }
+
+          if (change.op === 'delete' && handler.checkDelete) {
+            const blocked = await handler.checkDelete(
+              tx,
+              change.entityId,
+              siblingDeletes,
+            )
+            if (blocked) throw new ORPCError('CONFLICT', { message: blocked })
           }
 
           const headDoc = await handler.serialize(tx, change.entityId)
