@@ -2,7 +2,7 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const { pendingCount, refresh: refreshCounts } = useModerationCounts()
-const { appVersion } = useRuntimeConfig().public
+const { appVersion, gitSha } = useRuntimeConfig().public
 const route = useRoute()
 
 watch(
@@ -48,6 +48,13 @@ const navItems = computed<NavigationMenuItem[][]>(() => [
           <span v-if="!collapsed" class="truncate text-lg">
             HayaseDB <span class="text-muted font-normal">Admin</span>
           </span>
+          <span
+            v-if="!collapsed"
+            class="text-muted shrink-0 self-end pb-0.5 text-xs font-normal"
+            :title="gitSha ? `commit ${gitSha}` : undefined"
+          >
+            v{{ appVersion }}
+          </span>
         </NuxtLink>
       </template>
 
@@ -62,12 +69,7 @@ const navItems = computed<NavigationMenuItem[][]>(() => [
       </template>
 
       <template #footer="{ collapsed }">
-        <div class="flex w-full flex-col gap-1.5">
-          <AdminUserMenu :collapsed="collapsed" class="w-full" />
-          <p v-if="!collapsed" class="text-muted truncate text-xs">
-            v{{ appVersion }}
-          </p>
-        </div>
+        <AdminUserMenu :collapsed="collapsed" class="w-full" />
       </template>
     </UDashboardSidebar>
 

@@ -29,6 +29,8 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
     environment:
       MAIL_DRIVER: smtp
       MAIL_SMTP_HOST: mailpit
@@ -39,11 +41,15 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
 
   admin:
     build:
       context: .
       dockerfile: apps/admin/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
 
 networks:
   traefik-public:

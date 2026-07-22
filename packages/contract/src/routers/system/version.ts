@@ -12,5 +12,6 @@ export const versionContract = base
     z.object({
       name: z.string(),
       version: z.string(),
+      commit: z.string(),
     }),
   )

@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Controller } from '@nestjs/common'
@@ -9,6 +10,21 @@ import { contract } from '@hayasedb/contract'
 const pkg = JSON.parse(
   readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
 ) as { name: string; version: string }
+
+function resolveCommit(): string {
+  if (process.env.GIT_SHA) return process.env.GIT_SHA.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
+const commit = resolveCommit()
 
 @Controller()
 export class SystemController {
@@ -28,6 +44,7 @@ export class SystemController {
     return implement(contract.system.version).handler(() => ({
       name: pkg.name,
       version: pkg.version,
+      commit,
     }))
   }
 }

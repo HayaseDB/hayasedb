@@ -28,7 +28,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile --production --ignore-scripts --linker=hoisted
 
 FROM node:22-slim AS runner
-ENV NODE_ENV=production
+ARG GIT_SHA
+ENV NODE_ENV=production \
+    GIT_SHA=${GIT_SHA}
 WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/apps/api/dist ./apps/api/dist

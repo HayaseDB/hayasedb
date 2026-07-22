@@ -19,6 +19,8 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --ignore-scripts
 
 COPY --from=prepare /app/out/full/ .
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
 RUN --mount=type=cache,target=/app/.turbo/cache \
     bun run build
 

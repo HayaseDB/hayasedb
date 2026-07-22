@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const { appVersion } = useRuntimeConfig().public
+const { appVersion, gitSha } = useRuntimeConfig().public
 
 const legalLinks: NavigationMenuItem[] = [
   { label: 'Imprint', to: '/imprint' },
@@ -12,7 +12,10 @@ const legalLinks: NavigationMenuItem[] = [
 <template>
   <UFooter>
     <template #left>
-      <p class="text-muted text-sm">© HayaseDB · v{{ appVersion }}</p>
+      <p class="text-muted text-sm">
+        © HayaseDB · v{{ appVersion
+        }}<template v-if="gitSha"> ({{ gitSha }})</template>
+      </p>
     </template>
 
     <UNavigationMenu :items="legalLinks" variant="link" />
