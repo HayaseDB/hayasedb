@@ -1,6 +1,7 @@
 import {
   Body,
   Container,
+  Font,
   Head,
   Hr,
   Html,
@@ -9,6 +10,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { brandName, color, font, radius, space } from './theme'
 
 interface LayoutProps {
   preview: string
@@ -18,56 +20,92 @@ interface LayoutProps {
 export function Layout({ preview, children }: LayoutProps) {
   return (
     <Html lang="en">
-      <Head />
+      <Head>
+        <Font
+          fontFamily="Poppins"
+          fallbackFontFamily={['Helvetica', 'Arial', 'sans-serif']}
+          webFont={{
+            url: 'https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrJJfecnFHGPc.woff2',
+            format: 'woff2',
+          }}
+          fontWeight={400}
+          fontStyle="normal"
+        />
+        <Font
+          fontFamily="Poppins"
+          fallbackFontFamily={['Helvetica', 'Arial', 'sans-serif']}
+          webFont={{
+            url: 'https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFd2JQEk.woff2',
+            format: 'woff2',
+          }}
+          fontWeight={600}
+          fontStyle="normal"
+        />
+      </Head>
       <Preview>{preview}</Preview>
       <Body style={body}>
         <Container style={container}>
-          <Section>
-            <Text style={brand}>Hayasedb</Text>
-          </Section>
+          <Header />
           {children}
-          <Hr style={hr} />
-          <Text style={footer}>
-            Hayasedb · This is an automated message, please do not reply.
-          </Text>
+          <Footer />
         </Container>
       </Body>
     </Html>
   )
 }
 
+function Header() {
+  return (
+    <Section>
+      <Text style={wordmark}>{brandName}</Text>
+    </Section>
+  )
+}
+
+function Footer() {
+  return (
+    <>
+      <Hr style={hr} />
+      <Text style={footer}>
+        {brandName} · This is an automated message, please do not reply.
+      </Text>
+    </>
+  )
+}
+
 const body: React.CSSProperties = {
-  backgroundColor: '#f4f4f5',
-  fontFamily:
-    "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+  backgroundColor: color.bg,
+  fontFamily: font.family,
   margin: 0,
-  padding: '24px 0',
+  padding: '24px 12px',
 }
 
 const container: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e4e4e7',
-  borderRadius: '12px',
+  backgroundColor: color.surface,
+  border: `1px solid ${color.border}`,
+  borderRadius: radius.container,
   margin: '0 auto',
   maxWidth: '480px',
-  padding: '32px',
+  padding: space.xl,
 }
 
-const brand: React.CSSProperties = {
-  color: '#18181b',
-  fontSize: '20px',
+const wordmark: React.CSSProperties = {
+  color: color.heading,
+  fontSize: '18px',
   fontWeight: 700,
-  margin: '0 0 8px',
+  letterSpacing: '-0.01em',
+  margin: `0 0 ${space.lg}`,
 }
 
 const hr: React.CSSProperties = {
-  borderColor: '#e4e4e7',
+  borderColor: color.border,
   margin: '28px 0 16px',
 }
 
 const footer: React.CSSProperties = {
-  color: '#a1a1aa',
-  fontSize: '12px',
-  lineHeight: '18px',
+  color: color.muted,
+  fontSize: font.footer.size,
+  fontWeight: font.footer.weight,
+  lineHeight: font.footer.lineHeight,
   margin: 0,
 }

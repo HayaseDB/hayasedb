@@ -14,7 +14,7 @@ export interface Mailer {
   sendVerifyEmail(to: string, url: string): Promise<void>
   sendResetPassword(to: string, url: string): Promise<void>
   sendChangeEmail(to: string, url: string): Promise<void>
-  sendWelcome(to: string, name?: string): Promise<void>
+  sendWelcome(to: string, name?: string, url?: string): Promise<void>
   close(): Promise<void>
 }
 
