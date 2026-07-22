@@ -1,7 +1,6 @@
 services:
   postgres:
     image: postgres:18
-    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -23,7 +22,6 @@ services:
 
   redis:
     image: redis:8
-    restart: unless-stopped
     volumes:
       - redisdata:/data
     networks: [internal]
@@ -33,15 +31,14 @@ services:
       timeout: 5s
       retries: 10
     deploy:
-      endpoint_mode: dnsrr
       replicas: 1
+      endpoint_mode: dnsrr
       restart_policy:
         condition: any
         delay: 5s
 
   minio:
     image: minio/minio:RELEASE.2025-04-08T15-41-24Z
-    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
@@ -62,7 +59,6 @@ services:
         delay: 5s
       labels:
         - traefik.enable=true
-        - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-minio.rule=Host(`${MINIO_DOMAIN}`)
         - traefik.http.routers.${STACK_NAME}-minio.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-minio.service=${STACK_NAME}-minio
@@ -74,7 +70,6 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:9.8
-    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:?PGADMIN_EMAIL required}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?PGADMIN_PASSWORD required}
@@ -89,6 +84,16 @@ services:
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     networks: [internal, traefik-public]
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O /dev/null http://127.0.0.1:80/misc/ping || exit 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     deploy:
       replicas: 1
       endpoint_mode: dnsrr
@@ -97,7 +102,6 @@ services:
         delay: 5s
       labels:
         - traefik.enable=true
-        - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-pgadmin.rule=Host(`${PGADMIN_DOMAIN}`)
         - traefik.http.routers.${STACK_NAME}-pgadmin.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-pgadmin.service=${STACK_NAME}-pgadmin
@@ -105,7 +109,6 @@ services:
 
   api:
     image: ghcr.io/hayasedb/hayasedb-api:${TAG:-latest}
-    restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
@@ -139,30 +142,56 @@ services:
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
     networks: [internal, traefik-public]
     stop_grace_period: 30s
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
     deploy:
       replicas: 1
       endpoint_mode: dnsrr
       update_config:
+        parallelism: 1
         order: start-first
         failure_action: rollback
-        monitor: 120s
+        monitor: 60s
+      rollback_config:
+        parallelism: 1
+        order: start-first
+        monitor: 60s
       restart_policy:
         condition: any
         delay: 5s
       labels:
         - traefik.enable=true
-        - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-api.rule=Host(`${API_DOMAIN}`)
         - traefik.http.routers.${STACK_NAME}-api.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-api.service=${STACK_NAME}-api
+        - traefik.http.routers.${STACK_NAME}-api.middlewares=${STACK_NAME}-api-retry
+        - traefik.http.middlewares.${STACK_NAME}-api-retry.retry.attempts=3
+        - traefik.http.middlewares.${STACK_NAME}-api-retry.retry.initialinterval=250ms
         - traefik.http.services.${STACK_NAME}-api.loadbalancer.server.port=3000
         - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.path=/api/ready
-        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.interval=10s
+        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.interval=5s
         - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.timeout=3s
 
   web:
     image: ghcr.io/hayasedb/hayasedb-web:${TAG:-latest}
-    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - |
+        until node -e "fetch('http://api:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; do
+          echo 'waiting for api readiness...'; sleep 3
+        done
+        exec node .output/server/index.mjs
     environment:
       NODE_ENV: production
       NITRO_PORT: '3001'
@@ -170,26 +199,56 @@ services:
       NUXT_API_URL: http://api:3000
     networks: [internal, traefik-public]
     stop_grace_period: 30s
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     deploy:
       replicas: 1
+      endpoint_mode: dnsrr
       update_config:
+        parallelism: 1
         order: start-first
-        failure_action: pause
+        failure_action: rollback
+        monitor: 60s
+      rollback_config:
+        parallelism: 1
+        order: start-first
         monitor: 60s
       restart_policy:
         condition: any
         delay: 5s
       labels:
         - traefik.enable=true
-        - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-web.rule=Host(`${WEB_DOMAIN}`)
         - traefik.http.routers.${STACK_NAME}-web.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-web.service=${STACK_NAME}-web
+        - traefik.http.routers.${STACK_NAME}-web.middlewares=${STACK_NAME}-web-retry
+        - traefik.http.middlewares.${STACK_NAME}-web-retry.retry.attempts=3
+        - traefik.http.middlewares.${STACK_NAME}-web-retry.retry.initialinterval=250ms
         - traefik.http.services.${STACK_NAME}-web.loadbalancer.server.port=3001
+        - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.path=/healthz
+        - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.interval=5s
+        - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.timeout=3s
 
   admin:
     image: ghcr.io/hayasedb/hayasedb-admin:${TAG:-latest}
-    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - |
+        until node -e "fetch('http://api:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; do
+          echo 'waiting for api readiness...'; sleep 3
+        done
+        exec node .output/server/index.mjs
     environment:
       NODE_ENV: production
       NITRO_PORT: '3002'
@@ -197,22 +256,45 @@ services:
       NUXT_API_URL: http://api:3000
     networks: [internal, traefik-public]
     stop_grace_period: 30s
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3002/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     deploy:
       replicas: 1
+      endpoint_mode: dnsrr
       update_config:
+        parallelism: 1
         order: start-first
-        failure_action: pause
+        failure_action: rollback
+        monitor: 60s
+      rollback_config:
+        parallelism: 1
+        order: start-first
         monitor: 60s
       restart_policy:
         condition: any
         delay: 5s
       labels:
         - traefik.enable=true
-        - traefik.docker.network=traefik-public
         - traefik.http.routers.${STACK_NAME}-admin.rule=Host(`${ADMIN_DOMAIN}`)
         - traefik.http.routers.${STACK_NAME}-admin.entrypoints=web
         - traefik.http.routers.${STACK_NAME}-admin.service=${STACK_NAME}-admin
+        - traefik.http.routers.${STACK_NAME}-admin.middlewares=${STACK_NAME}-admin-retry
+        - traefik.http.middlewares.${STACK_NAME}-admin-retry.retry.attempts=3
+        - traefik.http.middlewares.${STACK_NAME}-admin-retry.retry.initialinterval=250ms
         - traefik.http.services.${STACK_NAME}-admin.loadbalancer.server.port=3002
+        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.path=/healthz
+        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.interval=5s
+        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.timeout=3s
 
 networks:
   traefik-public:
