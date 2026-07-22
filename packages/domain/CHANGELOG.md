@@ -1,5 +1,11 @@
 # @hayasedb/domain
 
+## 0.3.1
+
+### Patch Changes
+
+- 17f865b: Add the `MESSAGE_KINDS` tuple (`comment` | `rejection` | `system`) and `MessageKind` type for changeset messages.
+
 ## 0.3.0
 
 ## 0.2.1
