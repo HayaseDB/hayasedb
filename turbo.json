@@ -7,7 +7,7 @@
       "dependsOn": ["^build", "^prepare"],
       "inputs": ["$TURBO_DEFAULT$", "!.nuxt/**", "!.output/**", "!dist/**"],
       "outputs": ["dist/**"],
-      "env": ["NODE_ENV"]
+      "env": ["NODE_ENV", "GIT_SHA"]
     },
     "prepare": {
       "dependsOn": ["^build"],
