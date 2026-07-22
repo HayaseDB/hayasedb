@@ -29,6 +29,6 @@ USER node
 EXPOSE 3002
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=3 \
-  CMD ["node", "-e", "const p=process.env.NITRO_PORT||3002;fetch(`http://127.0.0.1:${p}/`).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+  CMD ["node", "-e", "const p=process.env.NITRO_PORT||3002;fetch(`http://127.0.0.1:${p}/healthz`).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
 CMD ["node", ".output/server/index.mjs"]
