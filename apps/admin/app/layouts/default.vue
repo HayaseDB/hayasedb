@@ -2,6 +2,7 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const { pendingCount, refresh: refreshCounts } = useModerationCounts()
+const { appVersion } = useRuntimeConfig().public
 const route = useRoute()
 
 watch(
@@ -61,7 +62,12 @@ const navItems = computed<NavigationMenuItem[][]>(() => [
       </template>
 
       <template #footer="{ collapsed }">
-        <AdminUserMenu :collapsed="collapsed" class="w-full" />
+        <div class="flex w-full flex-col gap-1.5">
+          <AdminUserMenu :collapsed="collapsed" class="w-full" />
+          <p v-if="!collapsed" class="text-muted truncate text-xs">
+            v{{ appVersion }}
+          </p>
+        </div>
       </template>
     </UDashboardSidebar>
 

@@ -8,6 +8,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     apiUrl: 'http://localhost:3000',
+    public: {
+      appVersion: '0.0.0',
+    },
   },
 
   eslint: {

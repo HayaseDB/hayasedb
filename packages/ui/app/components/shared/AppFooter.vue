@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
+const { appVersion } = useRuntimeConfig().public
+
 const legalLinks: NavigationMenuItem[] = [
   { label: 'Imprint', to: '/imprint' },
   { label: 'Privacy Policy', to: '/privacy' },
@@ -10,7 +12,7 @@ const legalLinks: NavigationMenuItem[] = [
 <template>
   <UFooter>
     <template #left>
-      <p class="text-muted text-sm">© HayaseDB</p>
+      <p class="text-muted text-sm">© HayaseDB · v{{ appVersion }}</p>
     </template>
 
     <UNavigationMenu :items="legalLinks" variant="link" />

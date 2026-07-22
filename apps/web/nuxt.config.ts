@@ -1,3 +1,5 @@
+import pkg from './package.json'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -5,6 +7,12 @@ export default defineNuxtConfig({
 
   extends: ['@hayasedb/nuxt', '@hayasedb/ui'],
   modules: ['@nuxt/ui', '@nuxt/eslint'],
+
+  runtimeConfig: {
+    public: {
+      appVersion: pkg.version,
+    },
+  },
 
   app: {
     head: {
