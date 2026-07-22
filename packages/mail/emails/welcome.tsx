@@ -1,6 +1,6 @@
-import { CtaButton } from './components/cta-button'
-import { Layout } from './components/layout'
-import { Heading, Paragraph } from './components/typography'
+import { CtaButton } from './_components/cta-button'
+import { Layout } from './_components/layout'
+import { Heading, Paragraph } from './_components/typography'
 
 export const subject = 'Welcome to HayaseDB'
 

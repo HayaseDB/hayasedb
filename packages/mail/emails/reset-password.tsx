@@ -1,7 +1,7 @@
-import { CtaButton } from './components/cta-button'
-import { FallbackLink } from './components/fallback-link'
-import { Layout } from './components/layout'
-import { Heading, Muted, Paragraph } from './components/typography'
+import { CtaButton } from './_components/cta-button'
+import { FallbackLink } from './_components/fallback-link'
+import { Layout } from './_components/layout'
+import { Heading, Muted, Paragraph } from './_components/typography'
 
 export const subject = 'Reset your HayaseDB password'
 
