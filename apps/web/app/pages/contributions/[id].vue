@@ -6,6 +6,8 @@ const api = useApiClient()
 const route = useRoute()
 const actions = useContributionActions()
 const overlay = useOverlay()
+const config = useRuntimeConfig()
+const { data: session } = await useAppSession()
 
 const id = computed(() => String(route.params.id))
 
@@ -72,20 +74,39 @@ function changesetPath(id: string): string {
   return `/contributions/${id}`
 }
 
+const adminSubmissionUrl = computed(() => {
+  const user = session.value?.user
+  if (user?.role !== 'admin' || user.banned) return null
+  return `${config.public.adminUrl}/submissions/${detail.value.id}`
+})
+
 useSeoMeta({ title: () => `Contribution – ${detail.value.summary}` })
 </script>
 
 <template>
   <UContainer class="max-w-6xl py-10">
-    <UButton
-      to="/contributions"
-      variant="link"
-      color="neutral"
-      icon="i-lucide-arrow-left"
-      class="mb-4 -ml-2"
-    >
-      My contributions
-    </UButton>
+    <div class="mb-4 flex items-center justify-between gap-2">
+      <UButton
+        to="/contributions"
+        variant="link"
+        color="neutral"
+        icon="i-lucide-arrow-left"
+        class="-ml-2"
+      >
+        My contributions
+      </UButton>
+      <UButton
+        v-if="adminSubmissionUrl"
+        :to="adminSubmissionUrl"
+        target="_blank"
+        variant="link"
+        color="neutral"
+        trailing-icon="i-lucide-external-link"
+        class="-mr-2"
+      >
+        Open in administration
+      </UButton>
+    </div>
 
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <aside
