@@ -26,7 +26,7 @@ export interface AuthMailer {
   sendVerifyEmail(to: string, url: string): Promise<void>
   sendResetPassword(to: string, url: string): Promise<void>
   sendChangeEmail(to: string, url: string): Promise<void>
-  sendWelcome(to: string, name?: string): Promise<void>
+  sendWelcome(to: string, name?: string, url?: string): Promise<void>
 }
 
 export interface AuthOptions {
@@ -100,7 +100,7 @@ export function createAuth(opts: AuthOptions) {
               frontendLink('/auth/verify-email', token),
             ),
           afterEmailVerification: (user) =>
-            mailer.sendWelcome(user.email, user.name),
+            mailer.sendWelcome(user.email, user.name, appURL),
         }
       : undefined,
     user: {

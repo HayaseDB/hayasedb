@@ -1,29 +1,30 @@
-import { Section, Text } from '@react-email/components'
-import { CtaButton } from './components/cta-button'
-import { Layout } from './components/layout'
-import { buttonWrap, heading, muted, paragraph } from './components/styles'
+import { CtaButton } from './_components/cta-button'
+import { FallbackLink } from './_components/fallback-link'
+import { Layout } from './_components/layout'
+import { Heading, Muted, Paragraph } from './_components/typography'
+
+export const subject = 'Reset your HayaseDB password'
 
 export interface ResetPasswordProps {
   url: string
 }
 
 export default function ResetPassword({
-  url = 'https://example.com/reset?token=preview',
+  url = 'https://example.com/auth/reset-password?token=preview',
 }: ResetPasswordProps) {
   return (
-    <Layout preview="Reset your Hayasedb password">
-      <Text style={heading}>Reset your password</Text>
-      <Text style={paragraph}>
-        We received a request to reset your password. Click the button below to
-        choose a new one. This link expires shortly.
-      </Text>
-      <Section style={buttonWrap}>
-        <CtaButton href={url}>Reset password</CtaButton>
-      </Section>
-      <Text style={muted}>
-        If you didn&apos;t request this, you can safely ignore this email — your
+    <Layout preview="Choose a new password for your HayaseDB account.">
+      <Heading>Reset your password</Heading>
+      <Paragraph>
+        We received a request to reset the password for your HayaseDB account.
+        Click the button below to choose a new one. This link expires in 1 hour.
+      </Paragraph>
+      <CtaButton href={url}>Reset password</CtaButton>
+      <FallbackLink url={url} />
+      <Muted>
+        If you didn&apos;t request this, you can safely ignore this email. Your
         password won&apos;t change.
-      </Text>
+      </Muted>
     </Layout>
   )
 }

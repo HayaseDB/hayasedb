@@ -1,29 +1,30 @@
-import { Section, Text } from '@react-email/components'
-import { CtaButton } from './components/cta-button'
-import { Layout } from './components/layout'
-import { buttonWrap, heading, muted, paragraph } from './components/styles'
+import { CtaButton } from './_components/cta-button'
+import { FallbackLink } from './_components/fallback-link'
+import { Layout } from './_components/layout'
+import { Heading, Muted, Paragraph } from './_components/typography'
+
+export const subject = 'Confirm your new HayaseDB email'
 
 export interface ChangeEmailProps {
   url: string
 }
 
 export default function ChangeEmail({
-  url = 'https://example.com/change-email?token=preview',
+  url = 'https://example.com/auth/change-email?token=preview',
 }: ChangeEmailProps) {
   return (
-    <Layout preview="Confirm your new Hayasedb email">
-      <Text style={heading}>Confirm your new email</Text>
-      <Text style={paragraph}>
-        You requested to change the email address on your account. Confirm this
-        new address to complete the change.
-      </Text>
-      <Section style={buttonWrap}>
-        <CtaButton href={url}>Confirm new email</CtaButton>
-      </Section>
-      <Text style={muted}>
-        If you didn&apos;t request this change, please secure your account and
-        ignore this email.
-      </Text>
+    <Layout preview="Confirm the new email address for your HayaseDB account.">
+      <Heading>Confirm your new email</Heading>
+      <Paragraph>
+        You asked to change the email address on your HayaseDB account. Confirm
+        this new address to complete the change. This link expires in 1 hour.
+      </Paragraph>
+      <CtaButton href={url}>Confirm new email</CtaButton>
+      <FallbackLink url={url} />
+      <Muted>
+        If you didn&apos;t request this change, you can safely ignore this email
+        and your address will stay the same.
+      </Muted>
     </Layout>
   )
 }

@@ -1,8 +1,14 @@
 import * as React from 'react'
-import ChangeEmail from '../emails/change-email'
-import ResetPassword from '../emails/reset-password'
-import VerifyEmail from '../emails/verify-email'
-import Welcome from '../emails/welcome'
+import ChangeEmail, {
+  subject as changeEmailSubject,
+} from '../emails/change-email'
+import ResetPassword, {
+  subject as resetPasswordSubject,
+} from '../emails/reset-password'
+import VerifyEmail, {
+  subject as verifyEmailSubject,
+} from '../emails/verify-email'
+import Welcome, { subject as welcomeSubject } from '../emails/welcome'
 import { createResendDriver } from './driver/resend'
 import { createSmtpDriver } from './driver/smtp'
 import { renderEmail } from './render'
@@ -31,27 +37,23 @@ export function createMailer(config: MailConfig): Mailer {
     sendVerifyEmail: (to, url) =>
       deliver(
         to,
-        'Verify your Hayasedb email',
+        verifyEmailSubject,
         React.createElement(VerifyEmail, { url }),
       ),
     sendResetPassword: (to, url) =>
       deliver(
         to,
-        'Reset your Hayasedb password',
+        resetPasswordSubject,
         React.createElement(ResetPassword, { url }),
       ),
     sendChangeEmail: (to, url) =>
       deliver(
         to,
-        'Confirm your new Hayasedb email',
+        changeEmailSubject,
         React.createElement(ChangeEmail, { url }),
       ),
-    sendWelcome: (to, name) =>
-      deliver(
-        to,
-        'Welcome to Hayasedb',
-        React.createElement(Welcome, { name }),
-      ),
+    sendWelcome: (to, name, url) =>
+      deliver(to, welcomeSubject, React.createElement(Welcome, { name, url })),
     close: () => driver.close(),
   }
 }
