@@ -22,7 +22,7 @@ defineSlots<{
           variant="subtle"
         />
         <span class="text-highlighted min-w-0 truncate font-medium">
-          {{ change.entityLabel }}
+          {{ ENTITY_KIND_LABELS[change.entityKind] }}
         </span>
         <UBadge
           v-if="change.conflicted"

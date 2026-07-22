@@ -102,7 +102,7 @@ export const changesetListItemSchema = z.object({
   summary: z.string(),
   author: changesetAuthorSchema,
   changeCount: z.number().int(),
-  entityLabels: z.array(z.string()),
+  entityKinds: z.array(entityKindSchema),
   submittedAt: z.date().nullable(),
   decidedAt: z.date().nullable(),
   createdAt: z.date(),
@@ -121,7 +121,6 @@ export const changeDetailSchema = z.object({
   headRev: z.number().int().nullable(),
   conflicted: z.boolean(),
   appliedRevisionId: idSchema.nullable(),
-  entityLabel: z.string(),
 })
 
 export const changesetMessageSchema = z.object({

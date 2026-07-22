@@ -32,6 +32,11 @@ export const CHANGESET_STATUS_COLORS: Record<ChangesetStatus, BadgeColor> = {
   superseded: 'neutral',
 }
 
+export const ENTITY_KIND_LABELS: Record<EntityKind, string> = {
+  anime: 'Anime',
+  genre: 'Genre',
+}
+
 export const CHANGE_OP_LABELS: Record<ChangeOp, string> = {
   create: 'Create',
   update: 'Update',

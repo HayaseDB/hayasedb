@@ -17,10 +17,6 @@ export interface EntityKindHandler<
 
   serializeMany(tx: Tx, entityIds: string[]): Promise<Map<string, Doc>>
 
-  label(doc: Record<string, unknown>): string
-
-  readonly labelFields: readonly string[]
-
   readonly mediaLinkTable?: {
     readonly table: string
     readonly mediaIdColumn: string

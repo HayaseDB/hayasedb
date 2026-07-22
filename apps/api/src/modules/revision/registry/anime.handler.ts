@@ -20,8 +20,6 @@ const SCALAR_FIELDS = ANIME_FIELD_ORDER.filter(
 
 type ScalarField = Exclude<keyof AnimeDocument, 'genreIds' | 'media'>
 
-const ANIME_LABEL_FIELDS = ['slug', 'titleEnglish', 'titleRomaji'] as const
-
 function scalarPatch(
   doc: Partial<AnimeDocument>,
 ): Partial<Pick<AnimeDocument, ScalarField>> {
@@ -169,16 +167,6 @@ export const animeHandler: EntityKindHandler<AnimeDocument> = {
       })
     }
     return documents
-  },
-
-  labelFields: ANIME_LABEL_FIELDS,
-
-  label(doc: Record<string, unknown>): string {
-    for (const key of ANIME_LABEL_FIELDS) {
-      const value = doc[key]
-      if (typeof value === 'string' && value.length > 0) return value
-    }
-    return '(untitled)'
   },
 
   mediaLinkTable: {

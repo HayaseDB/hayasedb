@@ -8,8 +8,6 @@ import { schema } from '@hayasedb/db'
 import type { ChangeOp } from '@hayasedb/domain'
 import type { EntityKindHandler, Tx } from './types'
 
-const GENRE_LABEL_FIELDS = ['name'] as const
-
 export const genreHandler: EntityKindHandler<GenreDocument> = {
   kind: 'genre',
 
@@ -39,13 +37,6 @@ export const genreHandler: EntityKindHandler<GenreDocument> = {
       .from(schema.genre)
       .where(inArray(schema.genre.id, ids))
     return new Map(rows.map((row) => [row.id, { name: row.name }]))
-  },
-
-  labelFields: GENRE_LABEL_FIELDS,
-
-  label(doc: Record<string, unknown>): string {
-    const name = doc.name
-    return typeof name === 'string' && name.length > 0 ? name : '(unnamed)'
   },
 
   async validateRefs(): Promise<string[]> {

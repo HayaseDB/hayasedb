@@ -26,14 +26,6 @@ function asDocument(value: unknown): Record<string, unknown> {
     : {}
 }
 
-function changeLabel(change: ChangeRow): string {
-  const handler = entityHandler(change.entityKind)
-  return handler.label({
-    ...asDocument(change.oldValues),
-    ...asDocument(change.payload),
-  })
-}
-
 @Injectable()
 export class ChangesetDetailService {
   constructor(
@@ -206,7 +198,6 @@ export class ChangesetDetailService {
         headRev: entity?.headRev ?? null,
         conflicted: change.conflicted,
         appliedRevisionId: change.appliedRevisionId,
-        entityLabel: changeLabel(change),
       })
     }
 
@@ -310,7 +301,7 @@ export class ChangesetDetailService {
         ? (authors.get(row.authorId) ?? NULL_AUTHOR)
         : NULL_AUTHOR,
       changeCount: changes.length,
-      entityLabels: changes.map((change) => changeLabel(change)),
+      entityKinds: changes.map((change) => change.entityKind),
       submittedAt: row.submittedAt,
       decidedAt: row.decidedAt,
       createdAt: row.createdAt,

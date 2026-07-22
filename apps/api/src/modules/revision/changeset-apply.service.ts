@@ -96,11 +96,7 @@ export class ChangesetApplyService {
       const handler = entityHandler(change.entityKind)
       const payload = asDocument(change.payload)
       const existing = entityById.get(change.entityId)
-      const label = handler.label(
-        Object.keys(payload).length > 0
-          ? payload
-          : asDocument(change.oldValues),
-      )
+      const label = change.entityKind
 
       if (existing && existing.kind !== change.entityKind) {
         conflicts.push({

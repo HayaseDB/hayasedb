@@ -43,7 +43,11 @@ useSeoMeta({ title: 'My contributions' })
           {{ item.summary }}
         </span>
         <span class="text-muted truncate text-sm">
-          {{ item.entityLabels.join(', ') }}
+          {{
+            [...new Set(item.entityKinds)]
+              .map((kind) => ENTITY_KIND_LABELS[kind])
+              .join(', ')
+          }}
         </span>
         <UBadge
           :label="String(item.changeCount)"

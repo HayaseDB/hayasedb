@@ -51,7 +51,9 @@ const columns: TableColumn<ChangesetRow>[] = [
       h(
         'span',
         { class: 'text-muted text-sm' },
-        row.original.entityLabels.join(', '),
+        [...new Set(row.original.entityKinds)]
+          .map((kind) => ENTITY_KIND_LABELS[kind])
+          .join(', '),
       ),
   },
   {

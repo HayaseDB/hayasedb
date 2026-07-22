@@ -203,10 +203,7 @@ export class ContributionService {
           oldValues =
             change.op === 'delete'
               ? headDoc
-              : pickDocumentKeys(headDoc, [
-                  ...Object.keys(payload),
-                  ...handler.labelFields,
-                ])
+              : pickDocumentKeys(headDoc, Object.keys(payload))
         }
 
         changeRows.push({
