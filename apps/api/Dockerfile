@@ -3,26 +3,29 @@ ARG BUN_VERSION=1.3.14
 ARG TURBO_VERSION=2.10.5
 
 FROM oven/bun:${BUN_VERSION}-slim AS base
+ENV TURBO_TELEMETRY_DISABLED=1 \
+    DO_NOT_TRACK=1
 WORKDIR /app
 
 FROM base AS prepare
 ARG TURBO_VERSION
 COPY . .
-RUN bunx turbo@${TURBO_VERSION} prune @hayasedb/api --docker
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bunx turbo@${TURBO_VERSION} prune @hayasedb/api --docker
 
 FROM base AS builder
-ARG TURBO_VERSION
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --ignore-scripts
+    bun install --frozen-lockfile --ignore-scripts
 
 COPY --from=prepare /app/out/full/ .
-RUN bunx turbo@${TURBO_VERSION} run build
+RUN --mount=type=cache,target=/app/.turbo/cache \
+    bun run build
 
 FROM base AS prod-deps
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --production --ignore-scripts --linker=hoisted
+    bun install --frozen-lockfile --production --ignore-scripts --linker=hoisted
 
 FROM node:22-slim AS runner
 ENV NODE_ENV=production

@@ -10,6 +10,9 @@
 .github
 .vscode
 .idea
+.changeset
+compose*.yml
+**/.DS_Store
 **/*.log
 .env
 .env.*
