@@ -6,6 +6,7 @@ import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
+import { SystemService } from './system.service'
 
 const pkg = JSON.parse(
   readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
@@ -28,6 +29,8 @@ const commit = resolveCommit()
 
 @Controller()
 export class SystemController {
+  constructor(private readonly system: SystemService) {}
+
   @AllowAnonymous()
   @Implement(contract.system.ping)
   ping() {
@@ -46,5 +49,11 @@ export class SystemController {
       version: pkg.version,
       commit,
     }))
+  }
+
+  @AllowAnonymous()
+  @Implement(contract.system.stats)
+  stats() {
+    return implement(contract.system.stats).handler(() => this.system.stats())
   }
 }

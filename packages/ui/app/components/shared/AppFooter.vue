@@ -25,7 +25,7 @@ const legalLinks: NavigationMenuItem[] = [
         icon="i-simple-icons-github"
         color="neutral"
         variant="ghost"
-        to="https://github.com"
+        to="https://github.com/HayaseDB/hayasedb"
         target="_blank"
         aria-label="GitHub"
       />

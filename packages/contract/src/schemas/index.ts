@@ -1,6 +1,7 @@
 export * from './common'
 export * from './auth'
 export * from './media'
+export * from './system'
 export * from './genre'
 export * from './anime'
 export * from './entity-documents'
