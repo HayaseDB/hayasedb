@@ -1,5 +1,16 @@
 # @hayasedb/auth
 
+## 0.4.0
+
+### Patch Changes
+
+- a6cbd77: Improved mail templates design
+- Updated dependencies [279182a]
+- Updated dependencies [1279222]
+- Updated dependencies [913e24d]
+  - @hayasedb/db@0.4.0
+  - @hayasedb/contract@0.4.0
+
 ## 0.3.1
 
 ### Patch Changes

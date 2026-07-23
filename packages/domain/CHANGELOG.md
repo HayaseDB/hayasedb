@@ -1,5 +1,11 @@
 # @hayasedb/domain
 
+## 0.4.0
+
+### Minor Changes
+
+- 279182a: Added genre as a full entity kind with contribution support: genres can be proposed alongside anime in a single multi-entity changeset, entity labels replaced with kinds, and the entity_kind enum migrated accordingly
+
 ## 0.3.1
 
 ### Patch Changes
