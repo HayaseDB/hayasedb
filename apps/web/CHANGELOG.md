@@ -1,5 +1,31 @@
 # @hayasedb/web
 
+## 0.4.0
+
+### Minor Changes
+
+- 279182a: Added genre as a full entity kind with contribution support: genres can be proposed alongside anime in a single multi-entity changeset, entity labels replaced with kinds, and the entity_kind enum migrated accordingly
+- 1279222: Added a public Redis-cached stats endpoint and live landing page stats that poll while the tab is visible and animate between updates via NumberFlow
+- 1279222: Added the landing page with hero, anime cover marquee, features, stats and recently added sections, built on motion-v animations with reduced-motion support
+
+### Patch Changes
+
+- 913e24d: Expose version in endpoints and ui
+- 65584b9: Improved deployment and health checks via adding health endpoints for swarm and dockerfiles
+- 279182a: Added admin submission link in the web app and configurable admin URL
+- Updated dependencies [a6cbd77]
+- Updated dependencies [279182a]
+- Updated dependencies [1279222]
+- Updated dependencies [913e24d]
+- Updated dependencies [65584b9]
+- Updated dependencies [1279222]
+- Updated dependencies [279182a]
+  - @hayasedb/auth@0.4.0
+  - @hayasedb/domain@0.4.0
+  - @hayasedb/contract@0.4.0
+  - @hayasedb/nuxt@0.4.0
+  - @hayasedb/ui@0.4.0
+
 ## 0.3.1
 
 ### Patch Changes

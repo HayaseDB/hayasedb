@@ -1,5 +1,11 @@
 # @hayasedb/mail
 
+## 0.4.0
+
+### Patch Changes
+
+- a6cbd77: Improved mail templates design
+
 ## 0.3.1
 
 ## 0.3.0
