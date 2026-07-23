@@ -140,8 +140,9 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      SHUTDOWN_DRAIN_MS: ${SHUTDOWN_DRAIN_MS:-20000}
     networks: [internal, traefik-public]
-    stop_grace_period: 30s
+    stop_grace_period: 45s
     healthcheck:
       test:
         [
@@ -155,10 +156,11 @@ services:
       retries: 3
       start_period: 90s
     deploy:
-      replicas: 1
+      replicas: 2
       endpoint_mode: dnsrr
       update_config:
         parallelism: 1
+        delay: 15s
         order: start-first
         failure_action: rollback
         monitor: 60s
@@ -198,8 +200,9 @@ services:
       NITRO_HOST: 0.0.0.0
       NUXT_API_URL: http://api:3000
       NUXT_PUBLIC_ADMIN_URL: https://${ADMIN_DOMAIN}
+      SHUTDOWN_DRAIN_MS: ${SHUTDOWN_DRAIN_MS:-20000}
     networks: [internal, traefik-public]
-    stop_grace_period: 30s
+    stop_grace_period: 45s
     healthcheck:
       test:
         [
@@ -213,10 +216,11 @@ services:
       retries: 3
       start_period: 30s
     deploy:
-      replicas: 1
+      replicas: 2
       endpoint_mode: dnsrr
       update_config:
         parallelism: 1
+        delay: 15s
         order: start-first
         failure_action: rollback
         monitor: 60s
@@ -255,8 +259,9 @@ services:
       NITRO_PORT: '3002'
       NITRO_HOST: 0.0.0.0
       NUXT_API_URL: http://api:3000
+      SHUTDOWN_DRAIN_MS: ${SHUTDOWN_DRAIN_MS:-20000}
     networks: [internal, traefik-public]
-    stop_grace_period: 30s
+    stop_grace_period: 45s
     healthcheck:
       test:
         [
@@ -270,10 +275,11 @@ services:
       retries: 3
       start_period: 30s
     deploy:
-      replicas: 1
+      replicas: 2
       endpoint_mode: dnsrr
       update_config:
         parallelism: 1
+        delay: 15s
         order: start-first
         failure_action: rollback
         monitor: 60s

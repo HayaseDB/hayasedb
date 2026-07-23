@@ -9,6 +9,7 @@ import { runMigrations } from '@hayasedb/db'
 import { AppModule } from './app.module'
 import type { Auth } from './auth/auth'
 import type { Env } from './config/env.schema'
+import { startDraining } from './modules/health/shutdown-state'
 import { buildOpenApiSources } from './openapi'
 
 async function bootstrap() {
@@ -29,7 +30,19 @@ async function bootstrap() {
   }
 
   app.setGlobalPrefix('api')
-  app.enableShutdownHooks()
+  app.enableShutdownHooks(['SIGINT'])
+
+  const drainMs = Number(process.env.SHUTDOWN_DRAIN_MS ?? 0)
+  process.once('SIGTERM', () => {
+    startDraining()
+    Logger.log(`SIGTERM received, draining for ${drainMs}ms`, 'Shutdown')
+    setTimeout(() => {
+      app.close().then(
+        () => process.exit(0),
+        () => process.exit(1),
+      )
+    }, drainMs)
+  })
   app.enableCors({
     origin: [
       ...new Set([
