@@ -61,7 +61,8 @@
         "GITHUB_*",
         "DISCORD_*",
         "NUXT_*",
-        "NITRO_*"
+        "NITRO_*",
+        "SHUTDOWN_DRAIN_MS"
       ]
     }
   }
