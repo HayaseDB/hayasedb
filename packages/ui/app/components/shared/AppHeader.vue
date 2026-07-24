@@ -5,9 +5,10 @@ import type { AccountUser } from '@hayasedb/contract'
 withDefaults(
   defineProps<{
     user?: AccountUser | null
+    adminUrl?: string | null
     onSignOut?: () => unknown
   }>(),
-  { user: null, onSignOut: undefined },
+  { user: null, adminUrl: null, onSignOut: undefined },
 )
 
 const links: NavigationMenuItem[] = [
@@ -28,7 +29,12 @@ const links: NavigationMenuItem[] = [
     <UNavigationMenu :items="links" />
 
     <template #right>
-      <UserMenu :user="user" :on-sign-out="onSignOut" show-contributions />
+      <UserMenu
+        :user="user"
+        :admin-url="adminUrl"
+        :on-sign-out="onSignOut"
+        show-contributions
+      />
     </template>
 
     <template #body>

@@ -5,6 +5,7 @@ import { createAuth } from '@hayasedb/auth'
 import type { Mailer } from '@hayasedb/mail'
 import { eq } from 'drizzle-orm'
 import type { Env } from '../config/env.schema'
+import { trustedOrigins } from '../config/trusted-origins'
 import { type Redis, makeRedisSecondaryStorage } from '../redis/redis.factory'
 
 export type Auth = ReturnType<typeof createAuth>
@@ -23,21 +24,13 @@ export function authFactory(
   const discordClientSecret = config.get('DISCORD_CLIENT_SECRET', {
     infer: true,
   })
-  const apiURL = config.get('API_PUBLIC_URL', { infer: true })
-  const trustedOrigins = [
-    ...new Set([
-      ...config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
-      apiURL,
-    ]),
-  ]
-
   const appURL = config.get('WEB_PUBLIC_URL', { infer: true })
 
   return createAuth({
     db,
     secret: config.get('AUTH_SECRET', { infer: true }),
     appURL,
-    trustedOrigins,
+    trustedOrigins: trustedOrigins(config),
     trustedProxies: config.get('AUTH_TRUSTED_PROXIES', { infer: true }),
     secondaryStorage: makeRedisSecondaryStorage(redis),
     productionMode: config.get('NODE_ENV', { infer: true }) === 'production',

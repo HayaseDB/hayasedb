@@ -3,12 +3,20 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 
 withDefaults(defineProps<{ collapsed?: boolean }>(), { collapsed: false })
 
+const config = useRuntimeConfig()
 const { data: session } = await useAppSession()
 const user = computed(() => session.value?.user ?? null)
 const { signOut } = useAccountActions()
 
 const items = computed<DropdownMenuItem[][]>(() => [
   [{ label: user.value?.name ?? '', type: 'label', slot: 'account' }],
+  [
+    {
+      label: 'Back to website',
+      icon: 'i-lucide-globe',
+      to: config.public.webUrl,
+    },
+  ],
   [
     {
       label: 'Sign out',

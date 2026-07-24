@@ -7,12 +7,14 @@ const props = withDefaults(
     user?: AccountUser | null
     signInTo?: string
     showContributions?: boolean
+    adminUrl?: string | null
     onSignOut?: () => unknown
   }>(),
   {
     user: null,
     signInTo: '/login',
     showContributions: false,
+    adminUrl: null,
     onSignOut: undefined,
   },
 )
@@ -37,6 +39,18 @@ const items = computed<DropdownMenuItem[][]>(() => [
       : []),
     { label: 'Settings', icon: 'i-lucide-settings', to: '/settings' },
   ],
+  ...(props.adminUrl
+    ? [
+        [
+          {
+            label: 'Admin dashboard',
+            icon: 'i-lucide-shield',
+            to: props.adminUrl,
+            target: '_blank',
+          },
+        ],
+      ]
+    : []),
   [
     {
       label: 'Sign out',

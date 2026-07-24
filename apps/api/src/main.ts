@@ -9,6 +9,7 @@ import { runMigrations } from '@hayasedb/db'
 import { AppModule } from './app.module'
 import type { Auth } from './auth/auth'
 import type { Env } from './config/env.schema'
+import { trustedOrigins } from './config/trusted-origins'
 import { startDraining } from './modules/health/shutdown-state'
 import { buildOpenApiSources } from './openapi'
 
@@ -44,12 +45,7 @@ async function bootstrap() {
     }, drainMs)
   })
   app.enableCors({
-    origin: [
-      ...new Set([
-        ...config.get('AUTH_TRUSTED_ORIGINS', { infer: true }),
-        config.get('API_PUBLIC_URL', { infer: true }),
-      ]),
-    ],
+    origin: trustedOrigins(config),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization'],

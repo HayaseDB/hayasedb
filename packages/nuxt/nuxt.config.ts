@@ -25,6 +25,7 @@ export default defineNuxtConfig({
     public: {
       appVersion: '0.0.0',
       gitSha: resolveGitSha(),
+      webUrl: 'http://localhost:3001',
       adminUrl: 'http://localhost:3002',
     },
   },

@@ -19,7 +19,8 @@ const appEnv = z.object({
   API_HOST: z.string().default('0.0.0.0'),
   API_PORT: z.coerce.number().int().positive().default(3000),
   API_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
-  WEB_PUBLIC_URL: z.string().url(),
+  WEB_PUBLIC_URL: z.string().url().default('http://localhost:3001'),
+  ADMIN_PUBLIC_URL: z.string().url().default('http://localhost:3002'),
 })
 
 const dbEnv = z.object({
@@ -30,9 +31,7 @@ const dbEnv = z.object({
 
 const authEnv = z.object({
   AUTH_SECRET: z.string().min(32),
-  AUTH_TRUSTED_ORIGINS: csv(
-    'http://localhost:3001,http://localhost:3002,http://127.0.0.1:3001',
-  ),
+  AUTH_TRUSTED_ORIGINS: csv('http://127.0.0.1:3001'),
   AUTH_TRUSTED_PROXIES: csv(
     '127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16',
   ),
