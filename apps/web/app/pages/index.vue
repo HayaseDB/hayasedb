@@ -123,7 +123,9 @@ const ctaLinks = [
     <UPageHero title="HayaseDB">
       <template #headline>
         <Motion v-bind="heroMotion.badge">
-          <UBadge variant="subtle" size="lg">Open source</UBadge>
+          <UBadge icon="i-lucide-lock-open" variant="subtle" size="lg">
+            Open source
+          </UBadge>
         </Motion>
       </template>
       <template #title>
