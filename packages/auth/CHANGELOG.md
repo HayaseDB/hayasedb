@@ -1,5 +1,12 @@
 # @hayasedb/auth
 
+## 0.4.1
+
+### Patch Changes
+
+- @hayasedb/contract@0.4.1
+- @hayasedb/db@0.4.1
+
 ## 0.4.0
 
 ### Patch Changes
