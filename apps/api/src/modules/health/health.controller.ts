@@ -10,7 +10,6 @@ import type Redis from 'ioredis'
 import type postgres from 'postgres'
 import { DATABASE_CLIENT } from '../../database/database.constants'
 import { REDIS } from '../../redis/redis.constants'
-import { isDraining } from './shutdown-state'
 
 const PROBE_TIMEOUT_MS = 2_000
 
@@ -30,10 +29,6 @@ export class HealthController {
   @AllowAnonymous()
   @Get('ready')
   async ready() {
-    if (isDraining()) {
-      throw new ServiceUnavailableException({ status: 'draining' })
-    }
-
     const [database, redis] = await Promise.all([
       this.probe(() => this.db`SELECT 1`),
       this.probe(() => this.redis.ping()),

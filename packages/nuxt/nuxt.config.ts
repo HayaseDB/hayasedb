@@ -1,21 +1,7 @@
-import { execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const layerDir = dirname(fileURLToPath(import.meta.url))
-
-function resolveGitSha(): string {
-  if (process.env.GIT_SHA) return process.env.GIT_SHA.slice(0, 7)
-  try {
-    return execSync('git rev-parse --short HEAD', {
-      stdio: ['ignore', 'pipe', 'ignore'],
-    })
-      .toString()
-      .trim()
-  } catch {
-    return ''
-  }
-}
 
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/eslint'],
@@ -24,7 +10,7 @@ export default defineNuxtConfig({
     apiUrl: 'http://localhost:3000',
     public: {
       appVersion: '0.0.0',
-      gitSha: resolveGitSha(),
+      gitSha: process.env.GIT_SHA?.slice(0, 7) ?? '',
       webUrl: 'http://localhost:3001',
       adminUrl: 'http://localhost:3002',
     },

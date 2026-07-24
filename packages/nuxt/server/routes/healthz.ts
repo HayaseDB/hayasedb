@@ -1,9 +1,3 @@
-import { isDraining } from '../utils/shutdown-state'
-
-export default defineEventHandler((event) => {
-  if (isDraining()) {
-    setResponseStatus(event, 503)
-    return { status: 'draining' }
-  }
+export default defineEventHandler(() => {
   return { status: 'ok' }
 })

@@ -36,7 +36,6 @@ services:
       MAIL_SMTP_HOST: mailpit
       MAIL_SMTP_PORT: '1025'
       MAIL_SMTP_SECURE: 'false'
-      SHUTDOWN_DRAIN_MS: '0'
 
   web:
     build:
@@ -44,8 +43,6 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-}
-    environment:
-      SHUTDOWN_DRAIN_MS: '0'
 
   admin:
     build:
@@ -53,8 +50,6 @@ services:
       dockerfile: apps/admin/Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-}
-    environment:
-      SHUTDOWN_DRAIN_MS: '0'
 
 networks:
   traefik-public:

@@ -141,9 +141,8 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
-      SHUTDOWN_DRAIN_MS: ${SHUTDOWN_DRAIN_MS:-20000}
     networks: [internal, traefik-public]
-    stop_grace_period: 45s
+    stop_grace_period: 15s
     healthcheck:
       test:
         [
@@ -156,19 +155,19 @@ services:
       timeout: 5s
       retries: 3
       start_period: 90s
+      start_interval: 2s
     deploy:
       replicas: 1
       endpoint_mode: dnsrr
       update_config:
         parallelism: 1
-        delay: 15s
         order: start-first
         failure_action: rollback
-        monitor: 60s
+        monitor: 30s
       rollback_config:
         parallelism: 1
         order: start-first
-        monitor: 60s
+        monitor: 30s
       restart_policy:
         condition: any
         delay: 5s
@@ -182,8 +181,8 @@ services:
         - traefik.http.middlewares.${STACK_NAME}-api-retry.retry.initialinterval=250ms
         - traefik.http.services.${STACK_NAME}-api.loadbalancer.server.port=3000
         - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.path=/api/ready
-        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.interval=5s
-        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.timeout=3s
+        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.interval=3s
+        - traefik.http.services.${STACK_NAME}-api.loadbalancer.healthcheck.timeout=2s
 
   web:
     image: ghcr.io/hayasedb/hayasedb-web:${TAG:-latest}
@@ -202,9 +201,8 @@ services:
       NUXT_API_URL: http://api:3000
       NUXT_PUBLIC_WEB_URL: ${WEB_PUBLIC_URL:?WEB_PUBLIC_URL required}
       NUXT_PUBLIC_ADMIN_URL: ${ADMIN_PUBLIC_URL:?ADMIN_PUBLIC_URL required}
-      SHUTDOWN_DRAIN_MS: ${SHUTDOWN_DRAIN_MS:-20000}
     networks: [internal, traefik-public]
-    stop_grace_period: 45s
+    stop_grace_period: 15s
     healthcheck:
       test:
         [
@@ -217,19 +215,19 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+      start_interval: 2s
     deploy:
       replicas: 1
       endpoint_mode: dnsrr
       update_config:
         parallelism: 1
-        delay: 15s
         order: start-first
         failure_action: rollback
-        monitor: 60s
+        monitor: 30s
       rollback_config:
         parallelism: 1
         order: start-first
-        monitor: 60s
+        monitor: 30s
       restart_policy:
         condition: any
         delay: 5s
@@ -243,8 +241,8 @@ services:
         - traefik.http.middlewares.${STACK_NAME}-web-retry.retry.initialinterval=250ms
         - traefik.http.services.${STACK_NAME}-web.loadbalancer.server.port=3001
         - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.path=/healthz
-        - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.interval=5s
-        - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.timeout=3s
+        - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.interval=3s
+        - traefik.http.services.${STACK_NAME}-web.loadbalancer.healthcheck.timeout=2s
 
   admin:
     image: ghcr.io/hayasedb/hayasedb-admin:${TAG:-latest}
@@ -263,9 +261,8 @@ services:
       NUXT_API_URL: http://api:3000
       NUXT_PUBLIC_WEB_URL: ${WEB_PUBLIC_URL:?WEB_PUBLIC_URL required}
       NUXT_PUBLIC_ADMIN_URL: ${ADMIN_PUBLIC_URL:?ADMIN_PUBLIC_URL required}
-      SHUTDOWN_DRAIN_MS: ${SHUTDOWN_DRAIN_MS:-20000}
     networks: [internal, traefik-public]
-    stop_grace_period: 45s
+    stop_grace_period: 15s
     healthcheck:
       test:
         [
@@ -278,19 +275,19 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+      start_interval: 2s
     deploy:
       replicas: 1
       endpoint_mode: dnsrr
       update_config:
         parallelism: 1
-        delay: 15s
         order: start-first
         failure_action: rollback
-        monitor: 60s
+        monitor: 30s
       rollback_config:
         parallelism: 1
         order: start-first
-        monitor: 60s
+        monitor: 30s
       restart_policy:
         condition: any
         delay: 5s
@@ -304,8 +301,8 @@ services:
         - traefik.http.middlewares.${STACK_NAME}-admin-retry.retry.initialinterval=250ms
         - traefik.http.services.${STACK_NAME}-admin.loadbalancer.server.port=3002
         - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.path=/healthz
-        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.interval=5s
-        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.timeout=3s
+        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.interval=3s
+        - traefik.http.services.${STACK_NAME}-admin.loadbalancer.healthcheck.timeout=2s
 
 networks:
   traefik-public:
