@@ -1,5 +1,17 @@
 # @hayasedb/admin
 
+## 0.4.1
+
+### Patch Changes
+
+- 42573ee: remove graceful draining and speed up healthchecks
+- Updated dependencies [42573ee]
+  - @hayasedb/nuxt@0.4.1
+  - @hayasedb/auth@0.4.1
+  - @hayasedb/contract@0.4.1
+  - @hayasedb/domain@0.4.1
+  - @hayasedb/ui@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes
