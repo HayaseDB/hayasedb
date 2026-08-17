@@ -13,8 +13,8 @@
   "dependencies": {
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/domain": "workspace:*",
-    "@iconify-json/lucide": "^1.2.118",
-    "@iconify-json/simple-icons": "^1.2.91",
+    "@iconify-json/lucide": "^1.2.123",
+    "@iconify-json/simple-icons": "^1.2.93",
     "@number-flow/vue": "^0.5.2",
     "@nuxt/ui": "4.10.0",
     "@vueuse/core": "catalog:",
@@ -25,9 +25,9 @@
   "devDependencies": {
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
-    "@nuxt/eslint": "^1.9.0",
+    "@nuxt/eslint": "^1.17.0",
     "eslint": "catalog:",
-    "nuxt": "^4.5.0",
+    "nuxt": "^4.5.2",
     "typescript": "catalog:",
     "vue-tsc": "catalog:"
   }
