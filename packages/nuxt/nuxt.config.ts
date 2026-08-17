@@ -23,6 +23,10 @@ export default defineNuxtConfig({
     },
   },
 
+  experimental: {
+    checkOutdatedBuildInterval: 10_000,
+  },
+
   eslint: {
     config: {
       typescript: true,
