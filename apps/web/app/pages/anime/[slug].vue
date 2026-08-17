@@ -90,15 +90,25 @@ useSeoMeta({
     </div>
 
     <UContainer class="py-10" :class="{ 'relative -mt-24 sm:-mt-28': banner }">
-      <UButton
-        to="/explore"
-        variant="link"
-        color="neutral"
-        icon="i-lucide-arrow-left"
-        class="mb-4 -ml-2"
-      >
-        Back to explore
-      </UButton>
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <UButton
+          to="/explore"
+          variant="link"
+          color="neutral"
+          icon="i-lucide-arrow-left"
+          class="-ml-2"
+        >
+          Back to explore
+        </UButton>
+        <UButton
+          :to="`/contribute/anime/${detail.id}`"
+          label="Suggest edit"
+          icon="i-lucide-pencil"
+          color="neutral"
+          variant="outline"
+          size="sm"
+        />
+      </div>
 
       <div class="flex flex-col gap-6 sm:flex-row sm:items-start lg:gap-8">
         <div class="w-40 shrink-0 sm:w-48 lg:w-56">
@@ -123,23 +133,13 @@ useSeoMeta({
         </div>
 
         <div class="min-w-0 flex-1">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="flex min-w-0 flex-col gap-1">
-              <h1 class="text-highlighted text-2xl font-semibold lg:text-3xl">
-                {{ detail.titleEnglish }}
-              </h1>
-              <p v-if="detail.titleNative" class="text-muted text-sm">
-                {{ detail.titleNative }}
-              </p>
-            </div>
-            <UButton
-              :to="`/contribute/anime/${detail.id}`"
-              label="Suggest edit"
-              icon="i-lucide-pencil"
-              color="neutral"
-              variant="outline"
-              size="sm"
-            />
+          <div class="flex min-w-0 flex-col gap-1">
+            <h1 class="text-highlighted text-2xl font-semibold lg:text-3xl">
+              {{ detail.titleEnglish }}
+            </h1>
+            <p v-if="detail.titleNative" class="text-muted text-sm">
+              {{ detail.titleNative }}
+            </p>
           </div>
 
           <div class="mt-4">
