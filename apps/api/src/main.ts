@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { apiReference } from '@scalar/nestjs-api-reference'
 import { AuthService } from '@thallesp/nestjs-better-auth'
+import { API_KEY_HEADER } from '@hayasedb/contract'
 import { runMigrations } from '@hayasedb/db'
 import { AppModule } from './app.module'
 import type { Auth } from './auth/auth'
@@ -32,11 +33,23 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
   app.enableShutdownHooks()
 
+  const trustedProxies = config.get('AUTH_TRUSTED_PROXIES', { infer: true })
+  if (trustedProxies.length > 0) {
+    app.set('trust proxy', trustedProxies)
+  }
+
+  if (config.get('INTERNAL_API_TOKEN', { infer: true }).length === 0) {
+    Logger.warn(
+      'INTERNAL_API_TOKEN is unset: every request is treated as internal and the API key requirement is disabled',
+      'Bootstrap',
+    )
+  }
+
   app.enableCors({
     origin: trustedOrigins(config),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', API_KEY_HEADER],
   })
 
   const authApi = app.get<AuthService<Auth>>(AuthService).api

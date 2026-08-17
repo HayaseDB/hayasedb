@@ -15,7 +15,7 @@ export interface AnimeListInputs {
   page: Ref<number>
 }
 
-export function useAnimeListData(
+export async function useAnimeListData(
   key: string,
   pageSize: number,
   inputs: AnimeListInputs,
@@ -23,11 +23,7 @@ export function useAnimeListData(
   const api = useApiClient()
   const { genres } = useGenres()
 
-  const {
-    data,
-    status: reqStatus,
-    refresh,
-  } = useAsyncData(
+  const listData = useAsyncData(
     key,
     () =>
       api.anime.list({
@@ -53,6 +49,9 @@ export function useAnimeListData(
     },
   )
 
+  const { data } = await listData
+  const { status: reqStatus, refresh } = listData
+
   const items = computed(() => data.value?.items ?? [])
   const total = computed(() => data.value?.meta.total ?? 0)
   const pending = computed(() => reqStatus.value === 'pending')
@@ -71,7 +70,7 @@ export interface UseAnimeListOptions {
   }
 }
 
-export function useAnimeList(options: UseAnimeListOptions) {
+export async function useAnimeList(options: UseAnimeListOptions) {
   const pageSize = options.pageSize ?? 24
 
   const q = ref(options.initial?.q ?? '')
@@ -87,7 +86,7 @@ export function useAnimeList(options: UseAnimeListOptions) {
     page.value = 1
   })
 
-  const data = useAnimeListData(options.key, pageSize, {
+  const data = await useAnimeListData(options.key, pageSize, {
     debouncedQ,
     format,
     status,

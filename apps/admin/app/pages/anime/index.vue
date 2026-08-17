@@ -23,7 +23,7 @@ const {
   total,
   pending,
   refresh,
-} = useAnimeList({ key: 'admin-anime-list', pageSize: 20 })
+} = await useAnimeList({ key: 'admin-anime-list', pageSize: 20 })
 
 const actions = useAnimeActions()
 

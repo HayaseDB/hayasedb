@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
 import { contract } from '@hayasedb/contract'
-import { requireVerifiedUser } from '../../auth/require-verified-user'
+import { requireVerifiedUser } from '../../auth/require-user'
 import { ContributionService } from '../contribution/contribution.service'
 
 @Controller()

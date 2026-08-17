@@ -1,7 +1,9 @@
 import * as z from 'zod'
 import { base } from '../../base'
+import { apiKeyAllowed } from '../../meta'
 
 export const pingContract = base
+  .meta(apiKeyAllowed())
   .route({
     method: 'GET',
     path: '/ping',

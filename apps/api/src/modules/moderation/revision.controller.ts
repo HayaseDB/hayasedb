@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
 import { contract } from '@hayasedb/contract'
-import { requireAdminUser } from '../../auth/require-admin'
+import { requireAdminUser } from '../../auth/require-user'
 import { ModerationService } from './moderation.service'
 import { HistoryService } from '../history/history.service'
 

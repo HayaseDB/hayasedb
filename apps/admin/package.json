@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --dotenv ../../.env",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "check-types": "nuxt typecheck",
@@ -15,6 +15,7 @@
     "clean": "rm -rf .output .nuxt .nitro .turbo"
   },
   "dependencies": {
+    "@better-auth/api-key": "catalog:",
     "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/domain": "workspace:*",

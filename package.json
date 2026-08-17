@@ -24,6 +24,7 @@
       "drizzle-kit": "0.31.10",
       "postgres": "3.4.9",
       "better-auth": "1.6.23",
+      "@better-auth/api-key": "1.6.23",
       "ioredis": "5.11.1",
       "@orpc/contract": "2.0.0-beta.11",
       "@orpc/server": "2.0.0-beta.11",

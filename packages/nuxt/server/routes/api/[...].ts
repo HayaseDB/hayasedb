@@ -1,23 +1,24 @@
-const STRIPPED_HEADERS = new Set(['x-forwarded-host', 'x-forwarded-proto'])
+import { prepareProxyHeaders, resolveBffProfile } from '../../utils/bff'
 
 export default defineEventHandler((event) => {
-  const { apiUrl } = useRuntimeConfig(event)
-  const clientIp = getRequestIP(event, { xForwardedFor: true })
+  const config = useRuntimeConfig(event)
+  const profile = resolveBffProfile(config.bffProfile)
+  const pathname = event.path.split('?')[0]!
 
-  const proxyHeaders = getProxyRequestHeaders(event) as Record<
-    string,
-    string | undefined
-  >
-
-  const headers: Record<string, string> = {}
-  for (const [name, value] of Object.entries(proxyHeaders)) {
-    if (value !== undefined && !STRIPPED_HEADERS.has(name.toLowerCase())) {
-      headers[name] = value
+  if (!profile.allows(event.method, pathname)) {
+    if (import.meta.dev) {
+      const hint = pathname.startsWith('/api/auth/')
+        ? 'admin auth routes are only proxied by the admin app'
+        : `add .meta(bff('${profile.audience}')) to the contract if this is intended`
+      console.warn(
+        `[bff] blocked ${event.method} ${pathname} (profile: ${profile.audience}): ${hint}`,
+      )
     }
+    throw createError({ statusCode: 404, statusMessage: 'Not Found' })
   }
-  if (clientIp) headers['x-forwarded-for'] = clientIp
 
-  return proxyRequest(event, apiUrl + event.path, {
-    fetchOptions: { headers, redirect: 'manual' },
+  return proxyRequest(event, config.apiUrl + event.path, {
+    headers: prepareProxyHeaders(event, config.internalToken),
+    fetchOptions: { redirect: 'manual' },
   })
 })

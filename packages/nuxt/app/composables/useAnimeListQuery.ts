@@ -47,7 +47,7 @@ interface QueryPatch {
   sort?: AnimeSortKey
 }
 
-export function useAnimeListQuery(options: UseAnimeListQueryOptions) {
+export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
   const route = useRoute()
   const router = useRouter()
   const pageSize = options.pageSize ?? 24
@@ -122,7 +122,7 @@ export function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     sortKey.value.split('-')[1] === 'asc' ? 'asc' : 'desc',
   )
 
-  const data = useAnimeListData(options.key, pageSize, {
+  const data = await useAnimeListData(options.key, pageSize, {
     debouncedQ: urlQ,
     format,
     status,

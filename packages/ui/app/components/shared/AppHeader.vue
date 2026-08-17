@@ -34,6 +34,7 @@ const links: NavigationMenuItem[] = [
         :admin-url="adminUrl"
         :on-sign-out="onSignOut"
         show-contributions
+        show-api-keys
       />
     </template>
 

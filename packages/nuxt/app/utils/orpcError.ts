@@ -14,6 +14,16 @@ export function isUnauthorizedError(error: unknown): boolean {
   return orpcErrorCode(error) === 'UNAUTHORIZED'
 }
 
+export function isRateLimitedError(error: unknown): boolean {
+  if (orpcErrorCode(error) === 'TOO_MANY_REQUESTS') return true
+  return (
+    !!error &&
+    typeof error === 'object' &&
+    'status' in error &&
+    (error as { status?: unknown }).status === 429
+  )
+}
+
 export function orpcErrorMessage(error: unknown): string | undefined {
   if (error && typeof error === 'object' && 'message' in error) {
     const message = (error as { message?: unknown }).message

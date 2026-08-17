@@ -1,5 +1,6 @@
 import * as z from 'zod'
 import { base } from '../../base'
+import { bff } from '../../meta'
 import {
   changesetListItemSchema,
   listChangesetsInputSchema,
@@ -7,6 +8,7 @@ import {
 } from '../../schemas'
 
 export const listChangesetsContract = base
+  .meta(bff('web', 'admin'))
   .route({
     method: 'GET',
     path: '/changesets',

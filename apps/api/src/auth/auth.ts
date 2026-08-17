@@ -5,6 +5,7 @@ import { createAuth } from '@hayasedb/auth'
 import type { Mailer } from '@hayasedb/mail'
 import { eq } from 'drizzle-orm'
 import type { Env } from '../config/env.schema'
+import { sharedCookieDomain } from '../config/cookie-domain'
 import { trustedOrigins } from '../config/trusted-origins'
 import { type Redis, makeRedisSecondaryStorage } from '../redis/redis.factory'
 
@@ -32,6 +33,7 @@ export function authFactory(
     appURL,
     trustedOrigins: trustedOrigins(config),
     trustedProxies: config.get('AUTH_TRUSTED_PROXIES', { infer: true }),
+    cookieDomain: sharedCookieDomain(config),
     secondaryStorage: makeRedisSecondaryStorage(redis),
     productionMode: config.get('NODE_ENV', { infer: true }) === 'production',
     errorCallbackURL: `${appURL}/login`,

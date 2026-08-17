@@ -14,7 +14,7 @@ const {
   items,
   total,
   pending,
-} = useAnimeListQuery({ key: 'explore-anime' })
+} = await useAnimeListQuery({ key: 'explore-anime' })
 
 useSeoMeta({
   title: () => {

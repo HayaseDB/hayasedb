@@ -1,8 +1,10 @@
 import * as z from 'zod'
 import { base } from '../../base'
+import { bff } from '../../meta'
 import { idSchema } from '../../schemas'
 
 export const removeAnimeContract = base
+  .meta(bff('admin'))
   .route({
     method: 'DELETE',
     path: '/anime/{id}',

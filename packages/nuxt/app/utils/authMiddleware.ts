@@ -6,10 +6,23 @@ export interface AuthMiddlewareOptions {
 export function createAuthMiddleware(opts: AuthMiddlewareOptions = {}) {
   const protectedPaths = opts.protectedPaths ?? ['/settings']
 
-  const authPaths = ['/login', '/register']
+  const guestPaths = ['/login', '/register']
 
   return defineNuxtRouteMiddleware(async (to) => {
-    if (authPaths.includes(to.path) || to.path.startsWith('/auth/')) return
+    if (guestPaths.includes(to.path)) {
+      const { data: session } = await useAppSession()
+      const user = session.value?.user
+      const authorized =
+        user && (!opts.requireAdmin || (user.role === 'admin' && !user.banned))
+      if (authorized) {
+        return navigateTo(safeRedirectPath(to.query.redirect), {
+          replace: true,
+        })
+      }
+      return
+    }
+
+    if (to.path.startsWith('/auth/')) return
 
     const isProtected =
       opts.requireAdmin ||

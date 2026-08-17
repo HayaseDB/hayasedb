@@ -3,7 +3,7 @@ import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
-import { requireAdminUser } from '../../auth/require-admin'
+import { isAdminRequest, requireAdminUser } from '../../auth/require-user'
 import { AnimeService } from './anime.service'
 import { MediaService } from '../media/media.service'
 
@@ -19,7 +19,7 @@ export class AnimeController {
   list() {
     return implement(contract.anime.list).handler(({ input, context }) =>
       this.anime.list(input, {
-        isAdmin: context.request.user?.role === 'admin',
+        isAdmin: isAdminRequest(context.request),
       }),
     )
   }
@@ -29,7 +29,7 @@ export class AnimeController {
   getBySlug() {
     return implement(contract.anime.getBySlug).handler(({ input, context }) =>
       this.anime.getBySlug(input.slug, {
-        includeDeleted: context.request.user?.role === 'admin',
+        includeDeleted: isAdminRequest(context.request),
       }),
     )
   }
@@ -39,7 +39,7 @@ export class AnimeController {
   getById() {
     return implement(contract.anime.getById).handler(({ input, context }) =>
       this.anime.getById(input.id, {
-        includeDeleted: context.request.user?.role === 'admin',
+        includeDeleted: isAdminRequest(context.request),
       }),
     )
   }

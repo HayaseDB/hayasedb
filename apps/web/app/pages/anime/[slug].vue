@@ -9,6 +9,13 @@ const { data: anime, error } = await useAsyncData(
   { watch: [slug] },
 )
 
+if (isRateLimitedError(error.value)) {
+  throw createError({
+    statusCode: 429,
+    statusMessage: 'Too many requests, please try again in a moment.',
+  })
+}
+
 if (error.value || !anime.value) {
   throw createError({ statusCode: 404, statusMessage: 'Anime not found' })
 }

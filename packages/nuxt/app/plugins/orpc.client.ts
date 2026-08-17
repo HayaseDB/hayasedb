@@ -1,4 +1,5 @@
 import { createApiClient } from '../utils/orpc'
+import { notifyRateLimited } from '../utils/rateLimitNotice'
 import { handleUnauthenticated } from '../utils/sessionInvalidation'
 
 export default defineNuxtPlugin(() => {
@@ -7,6 +8,7 @@ export default defineNuxtPlugin(() => {
       api: createApiClient({
         origin: window.location.origin,
         onUnauthorized: () => void handleUnauthenticated(useNuxtApp().$auth),
+        onRateLimited: notifyRateLimited,
       }),
     },
   }

@@ -8,6 +8,8 @@ declare module 'express' {
   interface Request {
     session: Session | null
     user: Session['user'] | null
+    internal: boolean
+    apiKeyAuth: boolean
   }
 }
 

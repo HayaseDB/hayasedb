@@ -2,8 +2,11 @@ import { Controller } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
 import { contract } from '@hayasedb/contract'
-import { requireAdminUser } from '../../auth/require-admin'
-import { requireVerifiedUser } from '../../auth/require-verified-user'
+import {
+  isAdminRequest,
+  requireAdminUser,
+  requireVerifiedUser,
+} from '../../auth/require-user'
 import { ModerationService } from './moderation.service'
 import { ContributionService } from '../contribution/contribution.service'
 
@@ -42,7 +45,7 @@ export class ChangesetController {
   get() {
     return implement(contract.changeset.get).handler(({ input, context }) => {
       const userId = requireVerifiedUser(context)
-      const isAdmin = context.request.user?.role === 'admin'
+      const isAdmin = isAdminRequest(context.request)
       return this.contributions.get(input.id, userId, isAdmin)
     })
   }
@@ -72,7 +75,7 @@ export class ChangesetController {
     return implement(contract.changeset.addMessage).handler(
       ({ input, context }) => {
         const userId = requireVerifiedUser(context)
-        const isAdmin = context.request.user?.role === 'admin'
+        const isAdmin = isAdminRequest(context.request)
         return this.contributions.addMessage(
           input.id,
           userId,

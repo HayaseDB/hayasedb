@@ -120,6 +120,7 @@ services:
       WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:?WEB_PUBLIC_URL required}
       ADMIN_PUBLIC_URL: ${ADMIN_PUBLIC_URL:?ADMIN_PUBLIC_URL required}
       AUTH_SECRET: ${AUTH_SECRET}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?INTERNAL_API_TOKEN required}
       AUTH_TRUSTED_ORIGINS: ${AUTH_TRUSTED_ORIGINS:-}
       AUTH_TRUSTED_PROXIES: ${AUTH_TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
       MINIO_ENDPOINT: minio
@@ -199,8 +200,10 @@ services:
       NITRO_PORT: '3001'
       NITRO_HOST: 0.0.0.0
       NUXT_API_URL: http://api:3000
+      NUXT_INTERNAL_TOKEN: ${INTERNAL_API_TOKEN:?INTERNAL_API_TOKEN required}
       NUXT_PUBLIC_WEB_URL: ${WEB_PUBLIC_URL:?WEB_PUBLIC_URL required}
       NUXT_PUBLIC_ADMIN_URL: ${ADMIN_PUBLIC_URL:?ADMIN_PUBLIC_URL required}
+      NUXT_PUBLIC_API_DOCS_URL: ${API_PUBLIC_URL:?API_PUBLIC_URL required}/docs
     networks: [internal, traefik-public]
     stop_grace_period: 15s
     healthcheck:
@@ -259,8 +262,10 @@ services:
       NITRO_PORT: '3002'
       NITRO_HOST: 0.0.0.0
       NUXT_API_URL: http://api:3000
+      NUXT_INTERNAL_TOKEN: ${INTERNAL_API_TOKEN:?INTERNAL_API_TOKEN required}
       NUXT_PUBLIC_WEB_URL: ${WEB_PUBLIC_URL:?WEB_PUBLIC_URL required}
       NUXT_PUBLIC_ADMIN_URL: ${ADMIN_PUBLIC_URL:?ADMIN_PUBLIC_URL required}
+      NUXT_PUBLIC_API_DOCS_URL: ${API_PUBLIC_URL:?API_PUBLIC_URL required}/docs
     networks: [internal, traefik-public]
     stop_grace_period: 15s
     healthcheck:

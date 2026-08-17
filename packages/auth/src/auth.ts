@@ -1,3 +1,4 @@
+import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin, openAPI } from 'better-auth/plugins'
@@ -35,6 +36,7 @@ export interface AuthOptions {
   appURL: string
   trustedOrigins?: string[]
   trustedProxies?: string[]
+  cookieDomain?: string
   secondaryStorage?: SecondaryStorage
   productionMode?: boolean
   github?: GithubProviderOptions
@@ -148,6 +150,12 @@ export function createAuth(opts: AuthOptions) {
     },
     advanced: {
       useSecureCookies: production,
+      ...(opts.cookieDomain && {
+        crossSubDomainCookies: {
+          enabled: true,
+          domain: opts.cookieDomain,
+        },
+      }),
       ipAddress: {
         ipAddressHeaders: ['x-forwarded-for'],
         trustedProxies: opts.trustedProxies,
@@ -156,7 +164,24 @@ export function createAuth(opts: AuthOptions) {
     onAPIError: opts.errorCallbackURL
       ? { errorURL: opts.errorCallbackURL }
       : undefined,
-    plugins: [admin(), openAPI({ disableDefaultReference: true })],
+    plugins: [
+      admin(),
+      openAPI({ disableDefaultReference: true }),
+      apiKey({
+        defaultPrefix: 'hyd_',
+        requireName: true,
+        enableSessionForAPIKeys: true,
+        customAPIKeyGetter: (ctx) =>
+          ctx.path === '/get-session'
+            ? (ctx.headers?.get('x-api-key') ?? null)
+            : null,
+        rateLimit: {
+          enabled: true,
+          timeWindow: 1000 * 60 * 60,
+          maxRequests: 1000,
+        },
+      }),
+    ],
   })
 }
 

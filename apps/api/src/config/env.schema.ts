@@ -31,6 +31,10 @@ const dbEnv = z.object({
 
 const authEnv = z.object({
   AUTH_SECRET: z.string().min(32),
+  INTERNAL_API_TOKEN: csv('').refine(
+    (tokens) => tokens.every((token) => token.length >= 32),
+    'Each INTERNAL_API_TOKEN entry must be at least 32 characters',
+  ),
   AUTH_TRUSTED_ORIGINS: csv('http://127.0.0.1:3001'),
   AUTH_TRUSTED_PROXIES: csv(
     '127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16',
@@ -82,6 +86,15 @@ export const envSchema = appEnv
         code: 'custom',
         path: ['MAIL_RESEND_API_KEY'],
         message: 'MAIL_RESEND_API_KEY is required when MAIL_DRIVER is "resend"',
+      })
+    }
+
+    if (env.NODE_ENV === 'production' && env.INTERNAL_API_TOKEN.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['INTERNAL_API_TOKEN'],
+        message:
+          'INTERNAL_API_TOKEN is required in production: without it every request is treated as internal and the API key requirement is disabled',
       })
     }
   })

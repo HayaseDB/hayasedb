@@ -1,12 +1,17 @@
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { REQUEST } from '@nestjs/core'
+import { APP_FILTER, APP_GUARD, REQUEST } from '@nestjs/core'
 import { ORPCModule } from '@orpc/nest'
-import { AuthModule } from '@thallesp/nestjs-better-auth'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { AuthGuard, AuthModule } from '@thallesp/nestjs-better-auth'
 import type { Database } from '@hayasedb/db'
 import type { Mailer } from '@hayasedb/mail'
 import type { Request } from 'express'
+import { ApiAccessGuard } from './auth/api-access.guard'
 import { authFactory } from './auth/auth'
+import { BetterAuthErrorFilter } from './auth/better-auth-error.filter'
+import { throttlerOptions } from './auth/throttler'
+import { RedisThrottlerStorage } from './redis/throttler-storage'
 import { ConfigModule } from './config/config.module'
 import type { Env } from './config/env.schema'
 import { DatabaseModule } from './database/database.module'
@@ -45,6 +50,7 @@ import type { Redis } from './redis/redis.factory'
         mailer: Mailer,
       ) => ({
         auth: authFactory(config, db, redis, mailer),
+        disableGlobalAuthGuard: true,
         disableTrustedOriginsCors: true,
         bodyParser: {
           json: { limit: '2mb', type: ['application/json', 'text/plain'] },
@@ -53,12 +59,22 @@ import type { Redis } from './redis/redis.factory'
         },
       }),
     }),
+    ThrottlerModule.forRootAsync({
+      inject: [RedisThrottlerStorage],
+      useFactory: throttlerOptions,
+    }),
     HealthModule,
     SystemModule,
     AccountModule,
     AnimeModule,
     GenreModule,
     ModerationModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: ApiAccessGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_FILTER, useClass: BetterAuthErrorFilter },
   ],
 })
 export class AppModule {}

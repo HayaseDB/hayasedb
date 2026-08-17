@@ -12,7 +12,7 @@ export function useAuthActions() {
 
   const loading = ref(false)
 
-  const redirectTarget = () => (route.query.redirect as string) || '/'
+  const redirectTarget = () => safeRedirectPath(route.query.redirect)
 
   async function signInEmail(
     input: SignInEmailInput,

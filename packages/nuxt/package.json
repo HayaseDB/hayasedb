@@ -13,6 +13,7 @@
   "dependencies": {
     "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
+    "@better-auth/api-key": "catalog:",
     "@hayasedb/domain": "workspace:*",
     "@nuxt/ui": "4.10.0",
     "@orpc/client": "catalog:",

@@ -5,7 +5,7 @@ import { AuthService } from '@thallesp/nestjs-better-auth'
 import { fromNodeHeaders } from 'better-auth/node'
 import { contract } from '@hayasedb/contract'
 import type { Auth } from '../../auth/auth'
-import { requireVerifiedUser } from '../../auth/require-verified-user'
+import { requireVerifiedUser } from '../../auth/require-user'
 import { AvatarService } from './avatar.service'
 
 @Controller()

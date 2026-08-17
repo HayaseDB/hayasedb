@@ -27,6 +27,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@better-auth/api-key": "catalog:",
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/db": "workspace:*",
     "better-auth": "catalog:",

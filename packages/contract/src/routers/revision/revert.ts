@@ -1,8 +1,10 @@
 import * as z from 'zod'
 import { base } from '../../base'
+import { bff } from '../../meta'
 import { changesetDetailSchema, idSchema } from '../../schemas'
 
 export const revertToRevisionContract = base
+  .meta(bff('admin'))
   .route({
     method: 'POST',
     path: '/revisions/{id}/revert',

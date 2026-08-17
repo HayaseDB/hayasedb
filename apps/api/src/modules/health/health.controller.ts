@@ -8,11 +8,14 @@ import {
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
 import type Redis from 'ioredis'
 import type postgres from 'postgres'
+import { OpenEndpoint } from '../../auth/api-access.guard'
 import { DATABASE_CLIENT } from '../../database/database.constants'
 import { REDIS } from '../../redis/redis.constants'
 
 const PROBE_TIMEOUT_MS = 2_000
 
+@OpenEndpoint()
+@AllowAnonymous()
 @Controller()
 export class HealthController {
   constructor(
@@ -20,13 +23,11 @@ export class HealthController {
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
-  @AllowAnonymous()
   @Get('health')
   health() {
     return { status: 'ok' as const, ts: Date.now() }
   }
 
-  @AllowAnonymous()
   @Get('ready')
   async ready() {
     const [database, redis] = await Promise.all([

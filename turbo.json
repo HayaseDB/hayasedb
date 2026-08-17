@@ -7,7 +7,8 @@
       "dependsOn": ["^build", "^prepare"],
       "inputs": ["$TURBO_DEFAULT$", "!.nuxt/**", "!.output/**", "!dist/**"],
       "outputs": ["dist/**"],
-      "env": ["NODE_ENV", "GIT_SHA"]
+      "env": ["NODE_ENV", "GIT_SHA"],
+      "passThroughEnv": ["INTERNAL_API_TOKEN"]
     },
     "prepare": {
       "dependsOn": ["^build"],
@@ -48,6 +49,7 @@
       "dependsOn": ["^build"],
       "passThroughEnv": [
         "NODE_ENV",
+        "INTERNAL_API_TOKEN",
         "DATABASE_URL",
         "POSTGRES_*",
         "REDIS_*",

@@ -2,7 +2,9 @@ import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 
 export const SYSTEM_STATS_KEY = 'system-stats'
 
-const POLL_INTERVAL_MS = 30_000
+const POLL_INTERVAL_MS = 60_000
+
+const BACKOFF_MS = 5 * 60_000
 
 export function useSystemStats() {
   const api = useApiClient()
@@ -10,12 +12,20 @@ export function useSystemStats() {
 
   if (import.meta.client) {
     const visibility = useDocumentVisibility()
-    const { pause, resume } = useIntervalFn(
-      () => void result.refresh(),
-      POLL_INTERVAL_MS,
-    )
+
+    let backoffUntil = 0
+    const { pause, resume } = useIntervalFn(() => {
+      if (Date.now() < backoffUntil) return
+      void result.refresh()
+    }, POLL_INTERVAL_MS)
+
+    watch(result.error, (error) => {
+      if (isRateLimitedError(error)) backoffUntil = Date.now() + BACKOFF_MS
+    })
+
     watch(visibility, (state) => {
       if (state === 'visible') {
+        if (Date.now() < backoffUntil) return
         void result.refresh()
         resume()
       } else {

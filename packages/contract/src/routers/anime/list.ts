@@ -1,5 +1,6 @@
 import * as z from 'zod'
 import { base } from '../../base'
+import { apiKeyAllowed, bff } from '../../meta'
 import {
   animeListItemSchema,
   listAnimeInputSchema,
@@ -7,6 +8,8 @@ import {
 } from '../../schemas'
 
 export const listAnimeContract = base
+  .meta(apiKeyAllowed())
+  .meta(bff('web', 'admin'))
   .route({
     method: 'GET',
     path: '/anime',

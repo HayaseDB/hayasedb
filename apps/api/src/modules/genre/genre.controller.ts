@@ -3,7 +3,7 @@ import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
-import { requireAdminUser } from '../../auth/require-admin'
+import { requireAdminUser } from '../../auth/require-user'
 import { GenreService } from './genre.service'
 
 @Controller()

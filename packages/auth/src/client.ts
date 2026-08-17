@@ -1,3 +1,4 @@
+import { apiKeyClient } from '@better-auth/api-key/client'
 import { createAuthClient } from 'better-auth/vue'
 import { adminClient, inferAdditionalFields } from 'better-auth/client/plugins'
 import type { Auth } from './auth'
@@ -10,7 +11,7 @@ type ErrorContext = Parameters<
 >[0]
 
 const clientConfig = {
-  plugins: [adminClient(), inferAdditionalFields<Auth>()],
+  plugins: [adminClient(), apiKeyClient(), inferAdditionalFields<Auth>()],
 }
 
 export type AppAuthClient = ReturnType<

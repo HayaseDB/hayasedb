@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/eslint'],
 
   runtimeConfig: {
+    bffProfile: 'admin',
     public: {
       appVersion: pkg.version,
     },

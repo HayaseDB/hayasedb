@@ -7,6 +7,7 @@ const props = withDefaults(
     user?: AccountUser | null
     signInTo?: string
     showContributions?: boolean
+    showApiKeys?: boolean
     adminUrl?: string | null
     onSignOut?: () => unknown
   }>(),
@@ -14,6 +15,7 @@ const props = withDefaults(
     user: null,
     signInTo: '/login',
     showContributions: false,
+    showApiKeys: false,
     adminUrl: null,
     onSignOut: undefined,
   },
@@ -34,6 +36,15 @@ const items = computed<DropdownMenuItem[][]>(() => [
             label: 'My contributions',
             icon: 'i-lucide-git-pull-request-arrow',
             to: '/contributions',
+          },
+        ]
+      : []),
+    ...(props.showApiKeys
+      ? [
+          {
+            label: 'API keys',
+            icon: 'i-lucide-key-round',
+            to: '/api-keys',
           },
         ]
       : []),

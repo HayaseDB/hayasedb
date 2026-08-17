@@ -1,8 +1,10 @@
 import * as z from 'zod'
 import { base } from '../../base'
+import { bff } from '../../meta'
 import { removeGenreInputSchema } from '../../schemas'
 
 export const removeGenreContract = base
+  .meta(bff('admin'))
   .route({
     method: 'DELETE',
     path: '/genres/{id}',
