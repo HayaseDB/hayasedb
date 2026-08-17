@@ -25,9 +25,9 @@
   "devDependencies": {
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
-    "@nuxt/eslint": "^1.9.0",
+    "@nuxt/eslint": "^1.17.0",
     "eslint": "catalog:",
-    "nuxt": "^4.5.0",
+    "nuxt": "^4.5.2",
     "typescript": "catalog:",
     "vue-tsc": "catalog:"
   }
