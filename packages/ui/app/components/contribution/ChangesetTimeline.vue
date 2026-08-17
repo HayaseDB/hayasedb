@@ -161,7 +161,12 @@ async function submit() {
         }"
       >
         <template #date="{ item }">
-          <NuxtTime v-if="item.date" :datetime="item.date" relative locale="en" />
+          <NuxtTime
+            v-if="item.date"
+            :datetime="item.date"
+            relative
+            locale="en"
+          />
         </template>
         <template #title="{ item }">
           <span>{{ item.username }}</span>
