@@ -1,5 +1,18 @@
 # @hayasedb/ui
 
+## 0.6.0
+
+### Minor Changes
+
+- 6e3fd5e: Pre-bundled all scanned icons into the client bundle so they render instantly without runtime fetching, and replaced client-formatted dates with the hydration-safe NuxtTime component
+
+### Patch Changes
+
+- 7585079: Pin nuxt to 4.5.1: 4.5.2 regressed template-scope typing so auto-imported utils used only inside a template failed vue-tsc with TS2339
+- e5ae7d9: Show the description "Show more" toggle only when the clamped text actually overflows, measured from the rendered element instead of a character-count guess
+- @hayasedb/contract@0.6.0
+  - @hayasedb/domain@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes

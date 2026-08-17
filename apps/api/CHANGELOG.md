@@ -1,5 +1,15 @@
 # @hayasedb/api
 
+## 0.6.0
+
+### Patch Changes
+
+- @hayasedb/auth@0.6.0
+  - @hayasedb/contract@0.6.0
+  - @hayasedb/db@0.6.0
+  - @hayasedb/domain@0.6.0
+  - @hayasedb/mail@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes

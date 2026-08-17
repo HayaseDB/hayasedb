@@ -1,5 +1,14 @@
 # @hayasedb/nuxt
 
+## 0.6.0
+
+### Patch Changes
+
+- 7585079: Pin nuxt to 4.5.1: 4.5.2 regressed template-scope typing so auto-imported utils used only inside a template failed vue-tsc with TS2339
+- @hayasedb/auth@0.6.0
+  - @hayasedb/contract@0.6.0
+  - @hayasedb/domain@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
