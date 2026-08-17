@@ -56,6 +56,7 @@ async function bootstrap() {
   const sources = await buildOpenApiSources(
     authApi,
     config.get('API_PUBLIC_URL', { infer: true }),
+    config.get('NODE_ENV', { infer: true }) !== 'production',
   )
   app.use('/docs', apiReference({ showDeveloperTools: 'never', sources }))
 

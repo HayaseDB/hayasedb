@@ -38,6 +38,7 @@ const info = (title: string, description: string): OpenApiInfo => ({
 export async function buildOpenApiSources(
   authApi: Auth['api'],
   publicUrl: string,
+  includeInternal: boolean,
 ): Promise<OpenApiSource[]> {
   const apiServers = [{ url: `${publicUrl}/api` }]
 
@@ -45,23 +46,30 @@ export async function buildOpenApiSources(
     converters: [new ZodToJsonSchemaConverter()],
   })
 
-  const [publicApi, internalApi, auth] = (await Promise.all([
-    generator.generate(contract, {
-      base: {
-        info: info(
-          'Public API',
-          `Read-only anime data for third-party applications. Every request requires an API key sent in the ${API_KEY_HEADER} header: requests without one are rejected with 401. Create a key from your account settings. Keys are limited to 60 requests per minute.`,
-        ),
-        servers: apiServers,
-        components: {
-          securitySchemes: {
-            apiKey: { type: 'apiKey', in: 'header', name: API_KEY_HEADER },
-          },
+  const publicApi = (await generator.generate(contract, {
+    base: {
+      info: info(
+        'Public API',
+        `Read-only anime data for third-party applications. Every request requires an API key sent in the ${API_KEY_HEADER} header: requests without one are rejected with 401. Create a key from your account settings. Keys are limited to 60 requests per minute.`,
+      ),
+      servers: apiServers,
+      components: {
+        securitySchemes: {
+          apiKey: { type: 'apiKey', in: 'header', name: API_KEY_HEADER },
         },
-        security: [{ apiKey: [] }],
       },
-      filter: (procedure) => isApiKeyAllowed(procedure),
-    }),
+      security: [{ apiKey: [] }],
+    },
+    filter: (procedure) => isApiKeyAllowed(procedure),
+  })) as unknown as OpenApiDocument
+
+  const sources: OpenApiSource[] = [
+    { slug: 'public', title: 'Public API', content: publicApi, default: true },
+  ]
+
+  if (!includeInternal) return sources
+
+  const [internalApi, auth] = (await Promise.all([
     generator.generate(contract, {
       base: {
         info: info(
@@ -82,7 +90,7 @@ export async function buildOpenApiSources(
       },
     }),
     authApi.generateOpenAPISchema(),
-  ])) as unknown as [OpenApiDocument, OpenApiDocument, OpenApiDocument]
+  ])) as unknown as [OpenApiDocument, OpenApiDocument]
 
   auth.info = info(
     'Authentication',
@@ -90,9 +98,9 @@ export async function buildOpenApiSources(
   )
   auth.servers = [{ url: `${publicUrl}/api/auth` }]
 
-  return [
-    { slug: 'public', title: 'Public API', content: publicApi, default: true },
+  sources.push(
     { slug: 'internal', title: 'Internal API', content: internalApi },
     { slug: 'auth', title: 'Authentication', content: auth },
-  ]
+  )
+  return sources
 }

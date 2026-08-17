@@ -2,9 +2,9 @@ services:
   postgres:
     image: postgres:18
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required}
     volumes:
       - pgdata:/var/lib/postgresql
     networks: [internal]
@@ -41,8 +41,8 @@ services:
     image: minio/minio:RELEASE.2025-04-08T15-41-24Z
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY required}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY required}
     volumes:
       - minio-data:/data
     networks: [internal, traefik-public]
@@ -119,7 +119,7 @@ services:
       API_PUBLIC_URL: ${API_PUBLIC_URL:?API_PUBLIC_URL required}
       WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:?WEB_PUBLIC_URL required}
       ADMIN_PUBLIC_URL: ${ADMIN_PUBLIC_URL:?ADMIN_PUBLIC_URL required}
-      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET required}
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?INTERNAL_API_TOKEN required}
       AUTH_TRUSTED_ORIGINS: ${AUTH_TRUSTED_ORIGINS:-}
       AUTH_TRUSTED_PROXIES: ${AUTH_TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
@@ -191,8 +191,16 @@ services:
       - sh
       - -c
       - |
-        until node -e "fetch('http://api:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; do
-          echo 'waiting for api readiness...'; sleep 3
+        until node -e "
+          const want = (process.env.GIT_SHA || '').slice(0, 7)
+          fetch('http://api:3000/api/version', {
+            headers: { 'x-internal-token': process.env.NUXT_INTERNAL_TOKEN || '' },
+          })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+            .then((v) => process.exit(!want || v.commit === want ? 0 : 1))
+            .catch(() => process.exit(1))
+        "; do
+          echo 'waiting for api readiness on the same release...'; sleep 3
         done
         exec node .output/server/index.mjs
     environment:
@@ -217,7 +225,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 120s
       start_interval: 2s
     deploy:
       replicas: 1
@@ -253,8 +261,16 @@ services:
       - sh
       - -c
       - |
-        until node -e "fetch('http://api:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; do
-          echo 'waiting for api readiness...'; sleep 3
+        until node -e "
+          const want = (process.env.GIT_SHA || '').slice(0, 7)
+          fetch('http://api:3000/api/version', {
+            headers: { 'x-internal-token': process.env.NUXT_INTERNAL_TOKEN || '' },
+          })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+            .then((v) => process.exit(!want || v.commit === want ? 0 : 1))
+            .catch(() => process.exit(1))
+        "; do
+          echo 'waiting for api readiness on the same release...'; sleep 3
         done
         exec node .output/server/index.mjs
     environment:
@@ -279,7 +295,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 120s
       start_interval: 2s
     deploy:
       replicas: 1
