@@ -17,6 +17,7 @@
     "@iconify-json/simple-icons": "^1.2.91",
     "@number-flow/vue": "^0.5.2",
     "@nuxt/ui": "4.10.0",
+    "@vueuse/core": "catalog:",
     "motion-v": "^2.3.0",
     "tailwindcss": "^4.3.3",
     "zod": "catalog:"

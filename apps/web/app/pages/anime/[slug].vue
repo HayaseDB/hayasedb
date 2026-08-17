@@ -59,9 +59,8 @@ function openCoverLightbox() {
 }
 
 const descriptionExpanded = ref(false)
-const isLongDescription = computed(
-  () => (detail.value.description?.length ?? 0) > 400,
-)
+const descriptionEl = useTemplateRef<HTMLElement>('descriptionEl')
+const descriptionClamped = useClampOverflow(descriptionEl, descriptionExpanded)
 watch(slug, () => {
   descriptionExpanded.value = false
 })
@@ -146,16 +145,15 @@ useSeoMeta({
           <div class="mt-4">
             <p
               v-if="detail.description"
+              ref="descriptionEl"
               class="text-toned max-w-3xl text-sm leading-relaxed"
-              :class="{
-                'line-clamp-6': isLongDescription && !descriptionExpanded,
-              }"
+              :class="{ 'line-clamp-6': !descriptionExpanded }"
             >
               {{ detail.description }}
             </p>
             <p v-else class="text-muted text-sm">No description yet.</p>
             <UButton
-              v-if="isLongDescription"
+              v-if="descriptionClamped"
               :label="descriptionExpanded ? 'Show less' : 'Show more'"
               :trailing-icon="
                 descriptionExpanded
