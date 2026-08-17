@@ -1,5 +1,19 @@
 # @hayasedb/auth
 
+## 0.5.0
+
+### Minor Changes
+
+- 46900d5: Added API keys for direct API access: keys are created and managed on the new web settings page, authenticate requests via the x-api-key header, and are permitted per route through contract metadata
+- 46900d5: Shared the auth session across the web and admin apps by deriving the cookie domain from the configured frontend URLs, and login pages now redirect already signed-in users to their destination
+
+### Patch Changes
+
+- Updated dependencies [46900d5]
+- Updated dependencies [46900d5]
+  - @hayasedb/db@0.5.0
+  - @hayasedb/contract@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,25 @@
 # @hayasedb/web
 
+## 0.5.0
+
+### Minor Changes
+
+- 46900d5: Added API keys for direct API access: keys are created and managed on the new web settings page, authenticate requests via the x-api-key header, and are permitted per route through contract metadata
+- 46900d5: Closed the Nuxt API proxy behind a contract-derived per-app allowlist that answers 404 for unlisted routes, strips untrusted headers and injects the internal service token
+- d78eb7c: Added new-deployment detection to both apps: the client polls the Nuxt build manifest and shows a persistent toast with a reload action when a newer build is live
+
+### Patch Changes
+
+- Updated dependencies [46900d5]
+- Updated dependencies [46900d5]
+- Updated dependencies [d78eb7c]
+- Updated dependencies [46900d5]
+  - @hayasedb/auth@0.5.0
+  - @hayasedb/contract@0.5.0
+  - @hayasedb/nuxt@0.5.0
+  - @hayasedb/ui@0.5.0
+  - @hayasedb/domain@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes
