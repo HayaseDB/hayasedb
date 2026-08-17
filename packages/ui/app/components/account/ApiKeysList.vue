@@ -75,11 +75,11 @@ const isExpired = (key: ApiKeyRow) =>
         </p>
       </div>
       <span class="text-muted text-xs">
-        {{
-          key.lastRequest
-            ? `Last used ${formatRelativeTime(key.lastRequest)}`
-            : 'Never used'
-        }}
+        <template v-if="key.lastRequest">
+          Last used
+          <NuxtTime :datetime="key.lastRequest" relative locale="en" />
+        </template>
+        <template v-else>Never used</template>
       </span>
       <UTooltip
         :text="
@@ -89,7 +89,8 @@ const isExpired = (key: ApiKeyRow) =>
         "
       >
         <span class="text-muted text-xs">
-          {{ `Created ${formatRelativeTime(key.createdAt)}` }}
+          Created
+          <NuxtTime :datetime="key.createdAt" relative locale="en" />
         </span>
       </UTooltip>
       <UButton

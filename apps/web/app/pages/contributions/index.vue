@@ -57,7 +57,13 @@ useSeoMeta({ title: 'My contributions' })
         />
         <UTooltip :text="formatDateTime(item.submittedAt)">
           <span class="text-muted text-xs">
-            {{ formatRelativeTime(item.submittedAt) }}
+            <NuxtTime
+              v-if="item.submittedAt"
+              :datetime="item.submittedAt"
+              relative
+              locale="en"
+            />
+            <template v-else>—</template>
           </span>
         </UTooltip>
       </NuxtLink>

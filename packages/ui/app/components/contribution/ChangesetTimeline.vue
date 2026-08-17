@@ -44,7 +44,7 @@ const items = computed<TimelineItem[]>(() =>
     const base = {
       value: entry.id,
       username: entry.actor.name ?? props.unknownAuthorLabel,
-      date: formatRelativeTime(entry.date),
+      date: new Date(entry.date).toISOString(),
     }
     switch (entry.type) {
       case 'submitted':
@@ -160,6 +160,9 @@ async function submit() {
             'px-3 py-2 ring ring-default mt-2 rounded-md text-default whitespace-pre-line',
         }"
       >
+        <template #date="{ item }">
+          <NuxtTime v-if="item.date" :datetime="item.date" relative locale="en" />
+        </template>
         <template #title="{ item }">
           <span>{{ item.username }}</span>
           <span class="text-muted font-normal">&nbsp;{{ item.action }}</span>

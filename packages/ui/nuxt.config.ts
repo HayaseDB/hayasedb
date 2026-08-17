@@ -27,6 +27,11 @@ export default defineNuxtConfig({
   },
   icon: {
     localApiEndpoint: '/_nuxt_icon',
+    clientBundle: {
+      scan: {
+        globInclude: ['**/*.{vue,jsx,tsx,ts,md,mdc,mdx,yml,yaml}'],
+      },
+    },
   },
   eslint: {
     config: {

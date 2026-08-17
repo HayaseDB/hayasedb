@@ -21,9 +21,6 @@ defineSlots<{
 
 const author = computed(() => ({
   name: props.changeset.author.name ?? props.unknownAuthorLabel,
-  description: props.changeset.submittedAt
-    ? `Submitted ${formatRelativeTime(props.changeset.submittedAt)}`
-    : undefined,
   avatar: {
     src: props.changeset.author.image ?? undefined,
     alt: props.changeset.author.name ?? 'User',
@@ -35,9 +32,6 @@ const reviewer = computed(() => {
   if (!person) return null
   return {
     name: person.name ?? props.unknownAuthorLabel,
-    description: props.changeset.decidedAt
-      ? `Reviewed ${formatRelativeTime(props.changeset.decidedAt)}`
-      : undefined,
     avatar: { src: person.image ?? undefined, alt: person.name ?? 'User' },
   }
 })
@@ -85,7 +79,16 @@ onUnmounted(() => clearTimeout(copyTimer))
       <div class="flex min-w-0 flex-col gap-2">
         <dt class="text-muted text-sm font-medium">Author</dt>
         <dd class="min-w-0">
-          <UUser v-bind="author" size="md" />
+          <UUser v-bind="author" size="md">
+            <template v-if="changeset.submittedAt" #description>
+              Submitted
+              <NuxtTime
+                :datetime="changeset.submittedAt"
+                relative
+                locale="en"
+              />
+            </template>
+          </UUser>
         </dd>
       </div>
 
@@ -94,7 +97,12 @@ onUnmounted(() => clearTimeout(copyTimer))
       <div class="flex min-w-0 flex-col gap-2">
         <dt class="text-muted text-sm font-medium">{{ decidedByLabel }}</dt>
         <dd class="text-dimmed min-w-0 text-sm">
-          <UUser v-if="reviewer" v-bind="reviewer" size="md" />
+          <UUser v-if="reviewer" v-bind="reviewer" size="md">
+            <template v-if="changeset.decidedAt" #description>
+              Reviewed
+              <NuxtTime :datetime="changeset.decidedAt" relative locale="en" />
+            </template>
+          </UUser>
           <template v-else>Not reviewed yet</template>
         </dd>
       </div>

@@ -29,6 +29,7 @@ const emptyLabel = computed(
 )
 
 const ChangesetStatusBadge = resolveComponent('ChangesetStatusBadge')
+const NuxtTime = resolveComponent('NuxtTime')
 const UBadge = resolveComponent('UBadge')
 const UUser = resolveComponent('UUser')
 const UTooltip = resolveComponent('UTooltip')
@@ -98,11 +99,12 @@ const columns: TableColumn<ChangesetRow>[] = [
         UTooltip,
         { text: formatDateTime(row.original.submittedAt) },
         () =>
-          h(
-            'span',
-            { class: 'text-muted text-sm' },
-            formatRelativeTime(row.original.submittedAt),
-          ),
+          h(NuxtTime, {
+            class: 'text-muted text-sm',
+            datetime: row.original.submittedAt,
+            relative: true,
+            locale: 'en',
+          }),
       )
     },
   },

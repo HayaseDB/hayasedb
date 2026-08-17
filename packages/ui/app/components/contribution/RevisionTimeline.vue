@@ -53,9 +53,16 @@ const latestRev = computed(
         <span class="text-highlighted text-sm font-medium">
           {{ revision.editor?.name ?? 'System' }}
         </span>
-        <span class="text-muted text-xs">{{
-          formatDateTime(revision.createdAt)
-        }}</span>
+        <NuxtTime
+          class="text-muted text-xs"
+          :datetime="revision.createdAt"
+          year="numeric"
+          month="short"
+          day="numeric"
+          hour="2-digit"
+          minute="2-digit"
+          locale="en"
+        />
         <span class="flex-1" />
         <UButton
           v-if="onRevert && revision.rev !== latestRev"
