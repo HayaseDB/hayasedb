@@ -1,5 +1,15 @@
 # @hayasedb/db
 
+## 0.5.0
+
+### Minor Changes
+
+- 46900d5: Added API keys for direct API access: keys are created and managed on the new web settings page, authenticate requests via the x-api-key header, and are permitted per route through contract metadata
+
+### Patch Changes
+
+- @hayasedb/domain@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,25 @@
 # @hayasedb/api
 
+## 0.5.0
+
+### Minor Changes
+
+- 46900d5: Added API keys for direct API access: keys are created and managed on the new web settings page, authenticate requests via the x-api-key header, and are permitted per route through contract metadata
+- 8d07a33: Scoped the production docs page to the public API reference only, keeping the internal and authentication specs available in development
+- 46900d5: Shared the auth session across the web and admin apps by deriving the cookie domain from the configured frontend URLs, and login pages now redirect already signed-in users to their destination
+- 46900d5: Added Redis-backed API rate limiting with separate buckets per client ip (600/min) and per API key (60/min), returning standard rate limit and Retry-After headers
+
+### Patch Changes
+
+- Updated dependencies [46900d5]
+- Updated dependencies [46900d5]
+- Updated dependencies [46900d5]
+  - @hayasedb/auth@0.5.0
+  - @hayasedb/db@0.5.0
+  - @hayasedb/contract@0.5.0
+  - @hayasedb/domain@0.5.0
+  - @hayasedb/mail@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes
