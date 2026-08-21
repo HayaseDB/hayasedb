@@ -146,7 +146,7 @@ useSeoMeta({
             <p
               v-if="detail.description"
               ref="descriptionEl"
-              class="text-toned max-w-3xl text-sm leading-relaxed"
+              class="text-toned text-sm leading-relaxed"
               :class="{ 'line-clamp-6': !descriptionExpanded }"
             >
               {{ detail.description }}
@@ -174,7 +174,7 @@ useSeoMeta({
             :genres="genreItems"
           />
 
-          <div v-if="galleryItems.length" class="mt-8 max-w-3xl">
+          <div v-if="galleryItems.length" class="mt-8">
             <h2 class="text-highlighted mb-4 text-lg font-semibold">Gallery</h2>
             <AnimeGallery :items="galleryItems" />
           </div>
