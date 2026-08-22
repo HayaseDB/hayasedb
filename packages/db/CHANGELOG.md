@@ -1,5 +1,11 @@
 # @hayasedb/db
 
+## 0.7.0
+
+### Patch Changes
+
+- @hayasedb/domain@0.7.0
+
 ## 0.6.0
 
 ### Patch Changes

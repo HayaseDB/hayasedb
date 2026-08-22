@@ -1,5 +1,13 @@
 # @hayasedb/ui
 
+## 0.7.0
+
+### Patch Changes
+
+- Updated dependencies [7f27c2c]
+  - @hayasedb/contract@0.7.0
+  - @hayasedb/domain@0.7.0
+
 ## 0.6.0
 
 ### Minor Changes
