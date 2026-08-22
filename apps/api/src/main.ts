@@ -4,11 +4,9 @@ import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { apiReference } from '@scalar/nestjs-api-reference'
-import { AuthService } from '@thallesp/nestjs-better-auth'
 import { API_KEY_HEADER } from '@hayasedb/contract'
 import { runMigrations } from '@hayasedb/db'
 import { AppModule } from './app.module'
-import type { Auth } from './auth/auth'
 import type { Env } from './config/env.schema'
 import { trustedOrigins } from './config/trusted-origins'
 import { buildOpenApiSources } from './openapi'
@@ -33,6 +31,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
   app.enableShutdownHooks()
 
+  app.useBodyParser('json', {
+    limit: '2mb',
+    type: ['application/json', 'text/plain'],
+  })
+  app.useBodyParser('urlencoded', { limit: '2mb', extended: true })
+
   const trustedProxies = config.get('AUTH_TRUSTED_PROXIES', { infer: true })
   if (trustedProxies.length > 0) {
     app.set('trust proxy', trustedProxies)
@@ -52,9 +56,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', API_KEY_HEADER],
   })
 
-  const authApi = app.get<AuthService<Auth>>(AuthService).api
   const sources = await buildOpenApiSources(
-    authApi,
     config.get('API_PUBLIC_URL', { infer: true }),
     config.get('NODE_ENV', { infer: true }) !== 'production',
   )

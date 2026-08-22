@@ -20,9 +20,12 @@ const trustedOrigins = (process.env.AUTH_TRUSTED_ORIGINS ?? '')
 
 const { db } = createDb(required('DATABASE_URL'))
 
+const appURL = required('WEB_PUBLIC_URL')
+
 export const auth = createAuth({
   db,
   secret: required('AUTH_SECRET'),
-  appURL: required('WEB_PUBLIC_URL'),
+  appURL,
+  errorCallbackURL: `${appURL}/login`,
   trustedOrigins,
 })

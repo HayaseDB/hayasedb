@@ -42,34 +42,13 @@ export class AccountController {
   @Implement(contract.account.setPassword)
   setPassword() {
     return implement(contract.account.setPassword).handler(
-      async ({ input, context, errors }) => {
-        const userId = requireVerifiedUser(context)
-
-        const headers = fromNodeHeaders(context.request.headers)
-
-        try {
-          await this.auth.api.setPassword({
-            body: { newPassword: input.newPassword },
-            headers,
-          })
-          return { success: true }
-        } catch (error) {
-          if (
-            error instanceof Error &&
-            'body' in error &&
-            (error as { body?: { code?: string } }).body?.code ===
-              'PASSWORD_ALREADY_SET'
-          ) {
-            throw errors.CONFLICT({
-              message: 'You already have a password set.',
-            })
-          }
-          this.logger.error(
-            `Set password failed for user ${userId}`,
-            error instanceof Error ? error.stack : String(error),
-          )
-          throw errors.INTERNAL_SERVER_ERROR()
-        }
+      async ({ input, context }) => {
+        requireVerifiedUser(context)
+        await this.auth.api.setPassword({
+          body: { newPassword: input.newPassword },
+          headers: fromNodeHeaders(context.request.headers),
+        })
+        return { success: true }
       },
     )
   }

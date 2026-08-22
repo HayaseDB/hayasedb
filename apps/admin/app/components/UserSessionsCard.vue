@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { LazyConfirmModal } from '#components'
-import type { AdminUserSession } from '@hayasedb/auth/client'
+import type { ApiClient } from '#imports'
+
+type AdminUserSession = Awaited<
+  ReturnType<ApiClient['auth']['admin']['listUserSessions']>
+>[number]
 
 const props = withDefaults(
   defineProps<{

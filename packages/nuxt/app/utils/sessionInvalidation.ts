@@ -1,30 +1,25 @@
-import type { AppAuthClient } from '@hayasedb/auth'
+import { refreshAppSession } from '../composables/useSessionSync'
 
-let inFlight: Promise<boolean> | null = null
+let inFlight: Promise<void> | null = null
 
-async function invalidate(auth: AppAuthClient): Promise<boolean> {
-  const { data } = await auth.getSession({
-    query: { disableCookieCache: true },
-  })
-  if (data?.user) return false
+async function invalidate(): Promise<void> {
+  const { data: session } = useNuxtData('app-session')
+  if (!session.value) return
 
-  await auth.signOut().catch(() => {})
-  await refreshNuxtData('app-session')
+  await refreshAppSession()
+  if (session.value) return
 
   useToast().add({
     title: 'Session expired',
     description: 'Please sign in again to continue.',
     color: 'warning',
   })
-
-  await navigateTo('/login')
-  return true
 }
 
-export function handleUnauthenticated(auth: AppAuthClient): Promise<boolean> {
-  if (import.meta.server) return Promise.resolve(false)
+export function handleUnauthenticated(): Promise<void> {
+  if (import.meta.server) return Promise.resolve()
 
-  inFlight ??= invalidate(auth).finally(() => {
+  inFlight ??= invalidate().finally(() => {
     inFlight = null
   })
 

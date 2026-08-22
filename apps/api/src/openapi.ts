@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { OpenAPIGenerator } from '@orpc/openapi'
+import type { OpenAPIDocument } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import {
   API_KEY_HEADER,
@@ -8,7 +9,6 @@ import {
   contract,
   isApiKeyAllowed,
 } from '@hayasedb/contract'
-import type { Auth } from './auth/auth'
 
 const VERSION = (
   JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as {
@@ -17,15 +17,11 @@ const VERSION = (
 ).version
 
 type OpenApiInfo = { title: string; version: string; description: string }
-type OpenApiDocument = {
-  info?: Partial<OpenApiInfo>
-  servers?: { url: string }[]
-}
 
 export type OpenApiSource = {
   slug: string
   title: string
-  content: OpenApiDocument
+  content: OpenAPIDocument
   default?: boolean
 }
 
@@ -35,8 +31,9 @@ const info = (title: string, description: string): OpenApiInfo => ({
   description,
 })
 
+const shouldHoistDef = (defName: string) => defName !== 'UndefinedError'
+
 export async function buildOpenApiSources(
-  authApi: Auth['api'],
   publicUrl: string,
   includeInternal: boolean,
 ): Promise<OpenApiSource[]> {
@@ -46,7 +43,7 @@ export async function buildOpenApiSources(
     converters: [new ZodToJsonSchemaConverter()],
   })
 
-  const publicApi = (await generator.generate(contract, {
+  const publicApi = await generator.generate(contract, {
     base: {
       info: info(
         'Public API',
@@ -61,7 +58,8 @@ export async function buildOpenApiSources(
       security: [{ apiKey: [] }],
     },
     filter: (procedure) => isApiKeyAllowed(procedure),
-  })) as unknown as OpenApiDocument
+    shouldHoistDef,
+  })
 
   const sources: OpenApiSource[] = [
     { slug: 'public', title: 'Public API', content: publicApi, default: true },
@@ -69,38 +67,31 @@ export async function buildOpenApiSources(
 
   if (!includeInternal) return sources
 
-  const [internalApi, auth] = (await Promise.all([
-    generator.generate(contract, {
-      base: {
-        info: info(
-          'Internal API',
-          `The complete HayaseDB contract, including session-authenticated and admin-only endpoints. Consumed by the HayaseDB web and admin clients, which relay requests with the ${INTERNAL_TOKEN_HEADER} header. That header exempts a request from the API key requirement but not from rate limiting (internal traffic is metered per client IP), and confers no identity: session cookies still determine what the caller may do.`,
-        ),
-        servers: apiServers,
-        components: {
-          securitySchemes: {
-            internalToken: {
-              type: 'apiKey',
-              in: 'header',
-              name: INTERNAL_TOKEN_HEADER,
-            },
+  const internalApi = await generator.generate(contract, {
+    base: {
+      info: info(
+        'Internal API',
+        `The complete HayaseDB contract, including session-authenticated and admin-only endpoints. Consumed by the HayaseDB web and admin clients, which relay requests with the ${INTERNAL_TOKEN_HEADER} header. That header exempts a request from the API key requirement but not from rate limiting (internal traffic is metered per client IP), and confers no identity: session cookies still determine what the caller may do.`,
+      ),
+      servers: apiServers,
+      components: {
+        securitySchemes: {
+          internalToken: {
+            type: 'apiKey',
+            in: 'header',
+            name: INTERNAL_TOKEN_HEADER,
           },
         },
-        security: [{ internalToken: [] }],
       },
-    }),
-    authApi.generateOpenAPISchema(),
-  ])) as unknown as [OpenApiDocument, OpenApiDocument]
+      security: [{ internalToken: [] }],
+    },
+    shouldHoistDef,
+  })
 
-  auth.info = info(
-    'Authentication',
-    'Session, account, and API-key management endpoints served by Better Auth.',
-  )
-  auth.servers = [{ url: `${publicUrl}/api/auth` }]
-
-  sources.push(
-    { slug: 'internal', title: 'Internal API', content: internalApi },
-    { slug: 'auth', title: 'Authentication', content: auth },
-  )
+  sources.push({
+    slug: 'internal',
+    title: 'Internal API',
+    content: internalApi,
+  })
   return sources
 }

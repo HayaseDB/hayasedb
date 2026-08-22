@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
-import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
+import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { requireAdminUser } from '../../auth/require-user'
 import { GenreService } from './genre.service'
@@ -18,6 +18,7 @@ export class GenreController {
     }))
   }
 
+  @Roles(['admin'])
   @Implement(contract.genre.create)
   create() {
     return implement(contract.genre.create).handler(({ input, context }) => {
@@ -26,6 +27,7 @@ export class GenreController {
     })
   }
 
+  @Roles(['admin'])
   @Implement(contract.genre.update)
   update() {
     return implement(contract.genre.update).handler(({ input, context }) => {
@@ -34,6 +36,7 @@ export class GenreController {
     })
   }
 
+  @Roles(['admin'])
   @Implement(contract.genre.remove)
   remove() {
     return implement(contract.genre.remove).handler(

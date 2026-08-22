@@ -7,11 +7,8 @@ export default defineEventHandler((event) => {
 
   if (!profile.allows(event.method, pathname)) {
     if (import.meta.dev) {
-      const hint = pathname.startsWith('/api/auth/')
-        ? 'admin auth routes are only proxied by the admin app'
-        : `add .meta(bff('${profile.audience}')) to the contract if this is intended`
       console.warn(
-        `[bff] blocked ${event.method} ${pathname} (profile: ${profile.audience}): ${hint}`,
+        `[bff] blocked ${event.method} ${pathname} (profile: ${profile.audience}): add .meta(bff('${profile.audience}')) to the contract if this is intended`,
       )
     }
     throw createError({ statusCode: 404, statusMessage: 'Not Found' })

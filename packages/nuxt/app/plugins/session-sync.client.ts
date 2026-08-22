@@ -6,6 +6,7 @@ import {
 
 export default defineNuxtPlugin(() => {
   const { data: session } = useNuxtData('app-session')
+  const router = useRouter()
 
   const refresh = () => refreshAppSession({ broadcast: false })
 
@@ -17,4 +18,14 @@ export default defineNuxtPlugin(() => {
 
   useEventListener(document, 'visibilitychange', refreshIfAuthenticated)
   useEventListener(window, 'focus', refreshIfAuthenticated)
+
+  watch(
+    () => session.value?.session.id,
+    (sessionId, previousSessionId) => {
+      if (previousSessionId !== undefined && sessionId !== previousSessionId) {
+        const { path, query, hash } = router.currentRoute.value
+        void router.replace({ path, query, hash, force: true })
+      }
+    },
+  )
 })

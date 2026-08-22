@@ -1,7 +1,8 @@
 import { refDebounced } from '@vueuse/core'
+import type { AdminListUsersInput } from '@hayasedb/contract'
 
 export type AdminUserFilter = 'admins' | 'banned'
-export type AdminUserSortBy = 'name' | 'createdAt'
+export type AdminUserSortBy = NonNullable<AdminListUsersInput['sortBy']>
 
 export interface UseAdminUsersOptions {
   key: string
@@ -9,7 +10,7 @@ export interface UseAdminUsersOptions {
 }
 
 export function useAdminUsers(options: UseAdminUsersOptions) {
-  const auth = useAuth()
+  const api = useApiClient()
   const pageSize = options.pageSize ?? 20
 
   const q = ref('')
@@ -30,40 +31,27 @@ export function useAdminUsers(options: UseAdminUsersOptions) {
     refresh,
   } = useAsyncData(
     options.key,
-    async () => {
+    () => {
       const search = debouncedQ.value.trim()
-      const { data: result, error } = await auth.admin.listUsers({
-        query: {
-          ...(search
-            ? {
-                searchValue: search,
-                searchField: search.includes('@') ? 'email' : 'name',
-                searchOperator: 'contains',
-              }
-            : {}),
-          ...(filter.value === 'admins'
-            ? {
-                filterField: 'role',
-                filterValue: 'admin',
-                filterOperator: 'eq',
-              }
-            : {}),
-          ...(filter.value === 'banned'
-            ? { filterField: 'banned', filterValue: true, filterOperator: 'eq' }
-            : {}),
-          sortBy: sortBy.value,
-          sortDirection: sortDirection.value,
-          limit: pageSize,
-          offset: (page.value - 1) * pageSize,
-        },
+      return api.auth.admin.listUsers({
+        ...(search
+          ? {
+              searchValue: search,
+              searchField: search.includes('@') ? 'email' : 'name',
+              searchOperator: 'contains',
+            }
+          : {}),
+        ...(filter.value === 'admins'
+          ? { filterField: 'role', filterValue: 'admin', filterOperator: 'eq' }
+          : {}),
+        ...(filter.value === 'banned'
+          ? { filterField: 'banned', filterValue: true, filterOperator: 'eq' }
+          : {}),
+        sortBy: sortBy.value,
+        sortDirection: sortDirection.value,
+        limit: pageSize,
+        offset: (page.value - 1) * pageSize,
       })
-      if (error) {
-        throw createError({
-          statusCode: error.status ?? 500,
-          statusMessage: error.message ?? 'Failed to load users',
-        })
-      }
-      return result
     },
     { watch: [...filters, page] },
   )

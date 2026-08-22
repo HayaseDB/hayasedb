@@ -145,12 +145,6 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
       },
-      "peerDependencies": {
-        "vue": "^3.5.0",
-      },
-      "optionalPeers": [
-        "vue",
-      ],
     },
     "packages/contract": {
       "name": "@hayasedb/contract",
@@ -243,8 +237,6 @@
       "name": "@hayasedb/nuxt",
       "version": "0.6.0",
       "dependencies": {
-        "@better-auth/api-key": "catalog:",
-        "@hayasedb/auth": "workspace:*",
         "@hayasedb/contract": "workspace:*",
         "@hayasedb/domain": "workspace:*",
         "@iconify-json/lucide": "^1.2.118",
@@ -254,7 +246,6 @@
         "@orpc/contract": "catalog:",
         "@orpc/openapi": "catalog:",
         "@vueuse/core": "catalog:",
-        "better-auth": "catalog:",
       },
       "devDependencies": {
         "@hayasedb/eslint-config": "workspace:*",

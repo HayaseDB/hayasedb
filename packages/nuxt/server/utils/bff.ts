@@ -6,9 +6,6 @@ import {
   createBffMatcher,
 } from '@hayasedb/contract'
 
-const AUTH_PREFIX = '/api/auth'
-const ADMIN_AUTH_PREFIX = '/api/auth/admin'
-
 const UNTRUSTED_HEADERS = new Set([
   'x-forwarded-host',
   'x-forwarded-proto',
@@ -22,19 +19,14 @@ export interface BffProfile {
   allows(method: string, pathname: string): boolean
 }
 
-const isWithin = (pathname: string, prefix: string) =>
-  pathname === prefix || pathname.startsWith(`${prefix}/`)
-
 function createProfile(audience: BffAudience): BffProfile {
   const matcher = createBffMatcher(audience)
 
   return {
     audience,
     allows: (method, pathname) =>
-      isWithin(pathname, AUTH_PREFIX)
-        ? audience === 'admin' || !isWithin(pathname, ADMIN_AUTH_PREFIX)
-        : pathname.startsWith('/api/') &&
-          matcher.matches(method, pathname.slice(4)),
+      pathname.startsWith('/api/') &&
+      matcher.matches(method, pathname.slice(4)),
   }
 }
 

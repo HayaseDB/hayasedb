@@ -1,5 +1,6 @@
 import { accountContract } from './account'
 import { animeContract } from './anime'
+import { authContract } from './auth'
 import { changesetContract } from './changeset'
 import { genreContract } from './genre'
 import { mediaContract } from './media'
@@ -8,6 +9,7 @@ import { systemContract } from './system'
 
 export const contract = {
   system: systemContract,
+  auth: authContract,
   account: accountContract,
   anime: animeContract,
   genre: genreContract,
@@ -20,6 +22,7 @@ export type Contract = typeof contract
 
 export * from './account'
 export * from './anime'
+export * from './auth'
 export * from './changeset'
 export * from './genre'
 export * from './media'

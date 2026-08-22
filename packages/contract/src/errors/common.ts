@@ -1,6 +1,7 @@
 import * as z from 'zod'
 
 export const commonErrors = {
+  BAD_REQUEST: { message: 'Invalid request' },
   UNAUTHORIZED: { message: 'Authentication required' },
   FORBIDDEN: { message: 'Insufficient permissions' },
   NOT_FOUND: { message: 'Resource not found' },
@@ -16,5 +17,6 @@ export const commonErrors = {
       ),
     }),
   },
+  TOO_MANY_REQUESTS: { message: 'Too many requests' },
   INTERNAL_SERVER_ERROR: { message: 'Something went wrong' },
 } as const

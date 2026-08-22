@@ -6,249 +6,203 @@ import type {
   UpdateProfileSchema,
 } from '@hayasedb/contract'
 
-interface AuthActionError {
-  status?: number
-  code?: string
-  message?: string
-}
-
-interface RunOptions {
-  operation: () => Promise<{ error: AuthActionError | null }>
-  success: { title: string; description: string }
-  errorTitle: string
-  onError?: (error: AuthActionError) => boolean
-}
-
 export function useAccountActions() {
-  const auth = useAuth()
   const api = useApiClient()
   const toast = useToast()
-  const router = useRouter()
-
-  const loading = ref(false)
+  const { loading, run } = useApiAction()
 
   const origin = () => useRequestURL().origin
 
-  async function run(options: RunOptions): Promise<boolean> {
-    loading.value = true
-    try {
-      const { error } = await options.operation()
-
-      if (error) {
-        if (options.onError?.(error)) return true
-        toast.add({
-          title: options.errorTitle,
-          description: error.message ?? 'Please try again.',
-          color: 'error',
-        })
-        return false
-      }
-
-      toast.add({ ...options.success, color: 'success' })
-      return true
-    } finally {
-      loading.value = false
-    }
-  }
-
-  function updateProfile(input: UpdateProfileSchema): Promise<boolean> {
-    return run({
-      operation: () => auth.updateUser({ name: input.name }),
-      success: {
-        title: 'Profile updated',
-        description: 'Your changes have been saved.',
-      },
-      errorTitle: 'Update failed',
-    })
+  async function updateProfile(input: UpdateProfileSchema): Promise<boolean> {
+    return Boolean(
+      await run(() => api.auth.updateUser({ name: input.name }), {
+        title: 'Update failed',
+        success: {
+          title: 'Profile updated',
+          description: 'Your changes have been saved.',
+        },
+      }),
+    )
   }
 
   async function uploadAvatar(file: File): Promise<boolean> {
-    loading.value = true
-    try {
-      await api.account.uploadAvatar({ file })
-
-      toast.add({
-        title: 'Avatar updated',
-        description: 'Your new profile picture has been saved.',
-        color: 'success',
-      })
-      return true
-    } catch (error) {
-      toast.add({
+    return Boolean(
+      await run(() => api.account.uploadAvatar({ file }), {
         title: 'Upload failed',
-        description:
-          error instanceof Error ? error.message : 'Please try again.',
-        color: 'error',
-      })
-      return false
-    } finally {
-      loading.value = false
-    }
+        success: {
+          title: 'Avatar updated',
+          description: 'Your new profile picture has been saved.',
+        },
+      }),
+    )
   }
 
-  function changeEmail(input: ChangeEmailSchema): Promise<boolean> {
-    return run({
-      operation: () =>
-        auth.changeEmail({
-          newEmail: input.email,
-          callbackURL: `${origin()}/`,
-        }),
-      success: {
-        title: 'Check your inbox',
-        description:
-          'Confirm the change from the link sent to your new address.',
-      },
-      errorTitle: 'Email change failed',
-    })
+  async function changeEmail(input: ChangeEmailSchema): Promise<boolean> {
+    return Boolean(
+      await run(
+        () =>
+          api.auth.changeEmail({
+            newEmail: input.email,
+            callbackURL: `${origin()}/`,
+          }),
+        {
+          title: 'Email change failed',
+          success: {
+            title: 'Check your inbox',
+            description:
+              'Confirm the change from the link sent to your new address.',
+          },
+        },
+      ),
+    )
   }
 
-  function changePassword(input: ChangePasswordSchema): Promise<boolean> {
-    return run({
-      operation: () =>
-        auth.changePassword({
-          currentPassword: input.currentPassword,
-          newPassword: input.newPassword,
-          revokeOtherSessions: true,
-        }),
-      success: {
-        title: 'Password updated',
-        description: 'Your password has been changed.',
-      },
-      errorTitle: 'Password change failed',
-    })
+  async function changePassword(input: ChangePasswordSchema): Promise<boolean> {
+    return Boolean(
+      await run(
+        () =>
+          api.auth.changePassword({
+            currentPassword: input.currentPassword,
+            newPassword: input.newPassword,
+            revokeOtherSessions: true,
+          }),
+        {
+          title: 'Password change failed',
+          success: {
+            title: 'Password updated',
+            description: 'Your password has been changed.',
+          },
+        },
+      ),
+    )
   }
 
   async function setPassword(input: SetPasswordSchema): Promise<boolean> {
-    loading.value = true
-    try {
-      await api.account.setPassword({ newPassword: input.newPassword })
-
-      toast.add({
-        title: 'Password set',
-        description: 'You can now sign in with email and password.',
-        color: 'success',
-      })
-      return true
-    } catch (error) {
-      toast.add({
-        title: 'Could not set password',
-        description:
-          error instanceof Error ? error.message : 'Please try again.',
-        color: 'error',
-      })
-      return false
-    } finally {
-      loading.value = false
-    }
+    return Boolean(
+      await run(
+        () => api.account.setPassword({ newPassword: input.newPassword }),
+        {
+          title: 'Could not set password',
+          success: {
+            title: 'Password set',
+            description: 'You can now sign in with email and password.',
+          },
+        },
+      ),
+    )
   }
 
-  function resendVerification(email: string): Promise<boolean> {
-    return run({
-      operation: () =>
-        auth.sendVerificationEmail({ email, callbackURL: `${origin()}/` }),
-      success: {
-        title: 'Verification sent',
-        description: 'Check your inbox to confirm your email.',
-      },
-      errorTitle: 'Could not send email',
-      onError: (error) => {
-        if (
-          error.code ===
-          'YOU_CAN_ONLY_SEND_A_VERIFICATION_EMAIL_TO_AN_UNVERIFIED_EMAIL'
-        ) {
+  async function resendVerification(email: string): Promise<boolean> {
+    let alreadyVerified = false
+    const result = await run(
+      () =>
+        api.auth.sendVerificationEmail({ email, callbackURL: `${origin()}/` }),
+      {
+        title: 'Could not send email',
+        success: {
+          title: 'Verification sent',
+          description: 'Check your inbox to confirm your email.',
+        },
+        onError: (error) => {
+          if (!isConflictError(error)) return false
+          alreadyVerified = true
           toast.add({
             title: 'Already verified',
             description: 'Your email address is already confirmed.',
             color: 'success',
           })
           return true
-        }
-        return false
+        },
       },
-    })
+    )
+    return Boolean(result) || alreadyVerified
   }
 
-  function revokeSession(token: string): Promise<boolean> {
-    return run({
-      operation: () => auth.revokeSession({ token }),
-      success: {
-        title: 'Session revoked',
-        description: 'That device has been signed out.',
-      },
-      errorTitle: 'Could not revoke session',
-    })
+  async function revokeSession(token: string): Promise<boolean> {
+    return Boolean(
+      await run(() => api.auth.revokeSession({ token }), {
+        title: 'Could not revoke session',
+        success: {
+          title: 'Session revoked',
+          description: 'That device has been signed out.',
+        },
+      }),
+    )
   }
 
-  function revokeOtherSessions(): Promise<boolean> {
-    return run({
-      operation: () => auth.revokeOtherSessions(),
-      success: {
-        title: 'Other sessions revoked',
-        description: 'All other devices have been signed out.',
-      },
-      errorTitle: 'Could not revoke sessions',
-    })
+  async function revokeOtherSessions(): Promise<boolean> {
+    return Boolean(
+      await run(() => api.auth.revokeOtherSessions(), {
+        title: 'Could not revoke sessions',
+        success: {
+          title: 'Other sessions revoked',
+          description: 'All other devices have been signed out.',
+        },
+      }),
+    )
   }
 
   async function linkSocial(provider: SocialProvider): Promise<void> {
     loading.value = true
-    try {
-      await auth.linkSocial({
-        provider,
-        callbackURL: `${origin()}/`,
-        errorCallbackURL: `${origin()}/`,
+    const result = await callApi(
+      () =>
+        api.auth.linkSocial({
+          provider,
+          callbackURL: `${origin()}/`,
+          errorCallbackURL: `${origin()}/`,
+        }),
+      { title: 'Could not link account' },
+    )
+    if (result?.url) {
+      window.location.href = result.url
+      return
+    }
+    loading.value = false
+    if (result) {
+      toast.add({
+        title: 'Could not link account',
+        description: 'The provider did not return a sign-in link.',
+        color: 'error',
       })
-    } catch (error) {
-      loading.value = false
-      throw error
     }
   }
 
-  function unlinkAccount(
+  async function unlinkAccount(
     providerId: string,
     accountId?: string,
   ): Promise<boolean> {
-    return run({
-      operation: () => auth.unlinkAccount({ providerId, accountId }),
-      success: {
-        title: 'Account unlinked',
-        description: 'The sign-in method has been removed.',
-      },
-      errorTitle: 'Could not unlink account',
-    })
+    return Boolean(
+      await run(() => api.auth.unlinkAccount({ providerId, accountId }), {
+        title: 'Could not unlink account',
+        success: {
+          title: 'Account unlinked',
+          description: 'The sign-in method has been removed.',
+        },
+      }),
+    )
   }
 
   async function signOut(): Promise<void> {
-    await auth.signOut()
-    await refreshNuxtData('app-session')
-    await router.push('/login')
+    const result = await run(() => api.auth.signOut(), {
+      title: 'Sign out failed',
+    })
+    if (!result) return
+
+    await refreshAppSession()
   }
 
   async function deleteAccount(): Promise<boolean> {
-    loading.value = true
-    try {
-      const { error } = await auth.deleteUser({})
-
-      if (error) {
-        toast.add({
-          title: 'Could not delete account',
-          description: error.message ?? 'Please try again.',
-          color: 'error',
-        })
-        return false
-      }
-
-      toast.add({
+    const deleted = await run(() => api.auth.deleteUser({}), {
+      title: 'Could not delete account',
+      success: {
         title: 'Account deleted',
         description: 'Your account and data have been permanently removed.',
-        color: 'success',
-      })
-      await refreshNuxtData('app-session')
-      await router.push('/login')
-      return true
-    } finally {
-      loading.value = false
-    }
+      },
+    })
+    if (!deleted) return false
+
+    await refreshAppSession()
+    return true
   }
 
   return {

@@ -11,7 +11,7 @@ import {
 } from '@hayasedb/contract'
 
 const route = useRoute()
-const auth = useAuth()
+const api = useApiClient()
 const id = computed(() => String(route.params.id))
 
 const {
@@ -20,13 +20,7 @@ const {
   refresh,
 } = await useAsyncData(
   () => `admin-user-${id.value}`,
-  async () => {
-    const { data, error: getError } = await auth.admin.getUser({
-      query: { id: id.value },
-    })
-    if (getError || !data) return null
-    return data
-  },
+  () => api.auth.admin.getUser({ id: id.value }).catch(() => null),
   { watch: [id] },
 )
 
@@ -49,12 +43,10 @@ const isSelf = computed(() => session.value?.user.id === id.value)
 
 const { data: sessionsData, refresh: refreshSessions } = await useAsyncData(
   () => `admin-user-sessions-${id.value}`,
-  async () => {
-    const { data } = await auth.admin.listUserSessions({
-      userId: id.value,
-    })
-    return data?.sessions ?? []
-  },
+  async () =>
+    (await api.auth.admin
+      .listUserSessions({ id: id.value })
+      .catch(() => null)) ?? [],
   { watch: [id] },
 )
 const sessions = computed(() => sessionsData.value ?? [])

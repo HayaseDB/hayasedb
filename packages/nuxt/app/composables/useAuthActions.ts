@@ -5,12 +5,11 @@ import type {
 } from '@hayasedb/contract'
 
 export function useAuthActions() {
-  const auth = useAuth()
+  const api = useApiClient()
   const route = useRoute()
   const router = useRouter()
   const toast = useToast()
-
-  const loading = ref(false)
+  const { loading, run } = useApiAction()
 
   const redirectTarget = () => safeRedirectPath(route.query.redirect)
 
@@ -20,21 +19,17 @@ export function useAuthActions() {
   ): Promise<boolean> {
     loading.value = true
     try {
-      const { data, error } = await auth.signIn.email(input)
+      const result = await callApi(() => api.auth.signInEmail(input), {
+        title: 'Sign in failed',
+      })
+      if (!result) return false
 
-      if (error || !data) {
-        toast.add({
-          title: 'Sign in failed',
-          description: error?.message ?? 'Please try again.',
-          color: 'error',
-        })
-        return false
-      }
+      await refreshAppSession()
 
       if (requireAdmin) {
-        const { data: session } = await auth.getSession()
-        if (session?.user.role !== 'admin' || session.user.banned) {
-          await auth.signOut()
+        const { data: session } = useAppSession()
+        if (session.value?.user.role !== 'admin' || session.value.user.banned) {
+          await useAccountActions().signOut()
           toast.add({
             title: 'Access denied',
             description: 'This account is not an administrator.',
@@ -44,7 +39,6 @@ export function useAuthActions() {
         }
       }
 
-      await refreshNuxtData('app-session')
       await router.push(redirectTarget())
       return true
     } finally {
@@ -53,128 +47,100 @@ export function useAuthActions() {
   }
 
   async function signUpEmail(input: SignUpEmailInput): Promise<boolean> {
-    loading.value = true
-    try {
-      const { data, error } = await auth.signUp.email(input)
-
-      if (error || !data) {
-        toast.add({
-          title: 'Sign up failed',
-          description: error?.message ?? 'Please try again.',
-          color: 'error',
-        })
-        return false
-      }
-
-      toast.add({
+    const result = await run(() => api.auth.signUpEmail(input), {
+      title: 'Sign up failed',
+      success: {
         title: 'Check your inbox',
         description: `We sent a verification link to ${input.email}.`,
-        color: 'info',
-      })
-      await refreshNuxtData('app-session')
-      await router.push(redirectTarget())
-      return true
-    } finally {
-      loading.value = false
-    }
+      },
+    })
+    if (!result) return false
+
+    await refreshAppSession()
+    await router.push(redirectTarget())
+    return true
   }
 
   async function signInSocial(provider: SocialProvider): Promise<void> {
     loading.value = true
-    try {
-      const origin = window.location.origin
-      await auth.signIn.social({
-        provider,
-        callbackURL: `${origin}${redirectTarget()}`,
-        errorCallbackURL: `${origin}/login`,
+    const origin = window.location.origin
+    const result = await callApi(
+      () =>
+        api.auth.signInSocial({
+          provider,
+          callbackURL: `${origin}${redirectTarget()}`,
+          errorCallbackURL: `${origin}/login`,
+        }),
+      { title: 'Sign in failed' },
+    )
+    if (result?.url) {
+      window.location.href = result.url
+      return
+    }
+    loading.value = false
+    if (result) {
+      toast.add({
+        title: 'Sign in failed',
+        description: 'The provider did not return a sign-in link.',
+        color: 'error',
       })
-    } catch (error) {
-      loading.value = false
-      throw error
     }
   }
 
   async function verifyEmail(token: string): Promise<boolean> {
-    loading.value = true
-    try {
-      const { error } = await auth.verifyEmail({ query: { token } })
-
-      if (error) {
-        toast.add({
-          title: 'Verification failed',
-          description: error.message ?? 'This link is invalid or has expired.',
-          color: 'error',
-        })
-        return false
-      }
-
-      toast.add({
+    const result = await run(() => api.auth.verifyEmail({ token }), {
+      title: 'Verification failed',
+      fallback: 'This link is invalid or has expired.',
+      success: {
         title: 'Email verified',
         description: 'Your email address has been confirmed.',
-        color: 'success',
-      })
-      await refreshAppSession()
-      return true
-    } finally {
-      loading.value = false
-    }
+      },
+    })
+    if (!result) return false
+
+    await refreshAppSession()
+    return true
   }
 
   async function requestPasswordReset(email: string): Promise<boolean> {
-    loading.value = true
-    try {
-      const { error } = await auth.requestPasswordReset({
-        email,
-        redirectTo: '/auth/reset-password',
-      })
-
-      if (error) {
-        toast.add({
+    return Boolean(
+      await run(
+        () =>
+          api.auth.requestPasswordReset({
+            email,
+            redirectTo: '/auth/reset-password',
+          }),
+        {
           title: 'Request failed',
-          description: error.message ?? 'Please try again.',
-          color: 'error',
-        })
-        return false
-      }
-
-      toast.add({
-        title: 'Check your inbox',
-        description: 'If that email is registered, a reset link is on its way.',
-        color: 'success',
-      })
-      return true
-    } finally {
-      loading.value = false
-    }
+          success: {
+            title: 'Check your inbox',
+            description:
+              'If that email is registered, a reset link is on its way.',
+          },
+        },
+      ),
+    )
   }
 
   async function resetPassword(
     token: string,
     newPassword: string,
   ): Promise<boolean> {
-    loading.value = true
-    try {
-      const { error } = await auth.resetPassword({ token, newPassword })
+    const result = await run(
+      () => api.auth.resetPassword({ token, newPassword }),
+      {
+        title: 'Reset failed',
+        fallback: 'This link is invalid or has expired.',
+        success: {
+          title: 'Password updated',
+          description: 'You can now sign in with your new password.',
+        },
+      },
+    )
+    if (!result) return false
 
-      if (error) {
-        toast.add({
-          title: 'Reset failed',
-          description: error.message ?? 'This link is invalid or has expired.',
-          color: 'error',
-        })
-        return false
-      }
-
-      toast.add({
-        title: 'Password updated',
-        description: 'You can now sign in with your new password.',
-        color: 'success',
-      })
-      await router.push('/login')
-      return true
-    } finally {
-      loading.value = false
-    }
+    await router.push('/login')
+    return true
   }
 
   return {

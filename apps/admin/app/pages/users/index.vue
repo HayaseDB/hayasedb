@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import type { AdminUser } from '@hayasedb/auth/client'
+import type { ApiClient } from '#imports'
 import {
   LazyConfirmModal,
   LazyUserBanModal,
   LazyUserCreateModal,
 } from '#components'
+
+type AdminUser = Awaited<
+  ReturnType<ApiClient['auth']['admin']['listUsers']>
+>['users'][number]
 
 useSeoMeta({ title: 'Users' })
 

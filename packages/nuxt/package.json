@@ -11,9 +11,7 @@
     "clean": "rm -rf .nuxt .turbo"
   },
   "dependencies": {
-    "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
-    "@better-auth/api-key": "catalog:",
     "@hayasedb/domain": "workspace:*",
     "@iconify-json/lucide": "^1.2.118",
     "@iconify-json/simple-icons": "^1.2.91",
@@ -21,8 +19,7 @@
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
-    "@vueuse/core": "catalog:",
-    "better-auth": "catalog:"
+    "@vueuse/core": "catalog:"
   },
   "devDependencies": {
     "@hayasedb/eslint-config": "workspace:*",

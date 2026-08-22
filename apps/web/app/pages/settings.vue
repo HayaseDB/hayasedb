@@ -14,7 +14,7 @@ const { data: session, refresh: refreshSession } = await useAppSession()
 const user = computed(() => session.value?.user ?? null)
 const currentToken = computed(() => session.value?.session?.token ?? null)
 
-const auth = useAuth()
+const api = useApiClient()
 
 const userId = computed(() => user.value?.id)
 
@@ -22,11 +22,7 @@ const { data: sessions, refresh: refreshSessions } = await useAsyncData(
   'account-sessions',
   async () => {
     if (!user.value) return []
-    try {
-      return (await auth.listSessions()).data ?? []
-    } catch {
-      return []
-    }
+    return (await api.auth.listSessions().catch(() => null)) ?? []
   },
   { watch: [userId] },
 )
@@ -34,11 +30,7 @@ const { data: accounts, refresh: refreshAccounts } = await useAsyncData(
   'account-accounts',
   async () => {
     if (!user.value) return []
-    try {
-      return (await auth.listAccounts()).data ?? []
-    } catch {
-      return []
-    }
+    return (await api.auth.listAccounts().catch(() => null)) ?? []
   },
   { watch: [userId] },
 )

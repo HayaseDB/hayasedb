@@ -7,10 +7,6 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.mjs"
-    },
-    "./client": {
-      "types": "./src/client.ts",
-      "default": "./dist/client.mjs"
     }
   },
   "main": "./dist/index.mjs",
@@ -32,14 +28,6 @@
     "@hayasedb/db": "workspace:*",
     "better-auth": "catalog:",
     "zod": "catalog:"
-  },
-  "peerDependencies": {
-    "vue": "^3.5.0"
-  },
-  "peerDependenciesMeta": {
-    "vue": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@better-auth/cli": "1.4.22",

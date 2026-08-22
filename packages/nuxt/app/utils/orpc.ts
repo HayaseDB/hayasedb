@@ -21,15 +21,16 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   const link = new OpenAPILink(contract, {
     url: '/api',
     ...linkOptions,
-    interceptors: [
-      onError((error) => {
-        if (onUnauthorized && isUnauthorizedError(error)) onUnauthorized()
-        if (onRateLimited && isRateLimitedError(error)) onRateLimited()
-      }),
-    ],
     fetch: (url, init) =>
       globalThis.fetch(url, { ...init, credentials: 'include' }),
   })
 
-  return createORPCClient(link) as ApiClient
+  return createORPCClient(link, {
+    interceptors: [
+      onError((error) => {
+        if (onRateLimited && isRateLimitedError(error)) onRateLimited()
+        if (onUnauthorized && isUnauthorizedError(error)) onUnauthorized()
+      }),
+    ],
+  }) as ApiClient
 }

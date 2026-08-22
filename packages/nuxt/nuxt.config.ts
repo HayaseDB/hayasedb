@@ -41,17 +41,14 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
-        '@better-auth/api-key/client',
         '@orpc/client',
         '@orpc/contract',
         '@orpc/openapi/extensions/route',
         '@orpc/openapi/fetch',
         '@vueuse/core',
-        'better-auth/client/plugins',
-        'better-auth/vue',
         'zod',
       ],
-      exclude: ['@hayasedb/auth', '@hayasedb/contract', '@hayasedb/domain'],
+      exclude: ['@hayasedb/contract', '@hayasedb/domain'],
     },
   },
 })

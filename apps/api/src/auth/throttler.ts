@@ -4,11 +4,13 @@ import type {
   ThrottlerModuleOptions,
   ThrottlerStorage,
 } from '@nestjs/throttler'
+import { Throttle } from '@nestjs/throttler'
 import type { Request } from 'express'
 import { getApiKey, hasApiKey } from './api-access.guard'
 
 const IP_LIMIT = 600
 const API_KEY_LIMIT = 60
+const TTL = 60_000
 
 const requestOf = (context: ExecutionContext): Request =>
   context.switchToHttp().getRequest<Request>()
@@ -20,9 +22,10 @@ export const throttlerOptions = (
   storage: ThrottlerStorage,
 ): ThrottlerModuleOptions => ({
   storage,
+  errorMessage: 'Too many requests',
   throttlers: [
     {
-      ttl: 60_000,
+      ttl: TTL,
       limit: (context) =>
         hasApiKey(requestOf(context)) ? API_KEY_LIMIT : IP_LIMIT,
       skipIf: (context) => context.getType() !== 'http',
@@ -37,3 +40,13 @@ export const throttlerOptions = (
     },
   ],
 })
+
+export const RouteThrottle = (limit: number) =>
+  Throttle({
+    default: {
+      limit,
+      ttl: TTL,
+      generateKey: (context, tracker) =>
+        `${context.getClass().name}:${context.getHandler().name}:${tracker}`,
+    },
+  })

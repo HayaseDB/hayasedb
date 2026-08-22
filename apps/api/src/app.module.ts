@@ -1,15 +1,18 @@
-import { Module } from '@nestjs/common'
+import { Logger, Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, REQUEST } from '@nestjs/core'
 import { ORPCModule } from '@orpc/nest'
+import { ORPCError, onError } from '@orpc/server'
+import { RethrowHandlerPlugin } from '@orpc/server/plugins'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { AuthGuard, AuthModule } from '@thallesp/nestjs-better-auth'
 import type { Database } from '@hayasedb/db'
 import type { Mailer } from '@hayasedb/mail'
 import type { Request } from 'express'
 import { ApiAccessGuard } from './auth/api-access.guard'
+import { HttpExceptionFilter } from './orpc/http-exception.filter'
+import { mapAuthError } from './auth/map-auth-error'
 import { authFactory } from './auth/auth'
-import { BetterAuthErrorFilter } from './auth/better-auth-error.filter'
 import { throttlerOptions } from './auth/throttler'
 import { RedisThrottlerStorage } from './redis/throttler-storage'
 import { ConfigModule } from './config/config.module'
@@ -19,6 +22,7 @@ import { DRIZZLE } from './database/database.constants'
 import { MailModule } from './mail/mail.module'
 import { MAILER } from './mail/mail.constants'
 import { AccountModule } from './modules/account/account.module'
+import { AuthApiModule } from './modules/auth/auth.module'
 import { AnimeModule } from './modules/anime/anime.module'
 import { GenreModule } from './modules/genre/genre.module'
 import { ModerationModule } from './modules/moderation/moderation.module'
@@ -29,6 +33,8 @@ import { RedisModule } from './redis/redis.module'
 import { REDIS } from './redis/redis.constants'
 import type { Redis } from './redis/redis.factory'
 
+const orpcLogger = new Logger('ORPC')
+
 @Module({
   imports: [
     ConfigModule,
@@ -36,12 +42,31 @@ import type { Redis } from './redis/redis.factory'
     RedisModule,
     MailModule,
     ORPCModule.forRootAsync({
-      useFactory: (request: Request): { context: ORPCContext } => ({
-        context: { request },
+      useFactory: (request: Request) => ({
+        context: { request } satisfies ORPCContext,
+        interceptors: [
+          onError((error) => {
+            if (error instanceof ORPCError) return
+            const mapped = mapAuthError(error)
+            if (mapped) throw mapped
+            orpcLogger.error(
+              error instanceof Error ? error.message : String(error),
+              error instanceof Error ? error.stack : undefined,
+            )
+            throw new ORPCError('INTERNAL_SERVER_ERROR')
+          }),
+        ],
+        plugins: [
+          new RethrowHandlerPlugin({
+            filter: (error) => !(error instanceof ORPCError),
+          }),
+        ],
       }),
       inject: [REQUEST],
     }),
     AuthModule.forRootAsync({
+      disableControllers: true,
+      disableGlobalAuthGuard: true,
       inject: [ConfigService, DRIZZLE, REDIS, MAILER],
       useFactory: (
         config: ConfigService<Env, true>,
@@ -50,13 +75,7 @@ import type { Redis } from './redis/redis.factory'
         mailer: Mailer,
       ) => ({
         auth: authFactory(config, db, redis, mailer),
-        disableGlobalAuthGuard: true,
         disableTrustedOriginsCors: true,
-        bodyParser: {
-          json: { limit: '2mb', type: ['application/json', 'text/plain'] },
-          urlencoded: { limit: '2mb', extended: true },
-          rawBody: true,
-        },
       }),
     }),
     ThrottlerModule.forRootAsync({
@@ -66,15 +85,16 @@ import type { Redis } from './redis/redis.factory'
     HealthModule,
     SystemModule,
     AccountModule,
+    AuthApiModule,
     AnimeModule,
     GenreModule,
     ModerationModule,
   ],
   providers: [
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_GUARD, useClass: ApiAccessGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
-    { provide: APP_FILTER, useClass: BetterAuthErrorFilter },
   ],
 })
 export class AppModule {}

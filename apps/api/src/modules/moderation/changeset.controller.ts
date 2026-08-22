@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
+import { Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import {
   isAdminRequest,
@@ -33,6 +34,7 @@ export class ChangesetController {
     })
   }
 
+  @Roles(['admin'])
   @Implement(contract.changeset.stats)
   stats() {
     return implement(contract.changeset.stats).handler(({ context }) => {
@@ -86,6 +88,7 @@ export class ChangesetController {
     )
   }
 
+  @Roles(['admin'])
   @Implement(contract.changeset.approve)
   approve() {
     return implement(contract.changeset.approve).handler(
@@ -96,6 +99,7 @@ export class ChangesetController {
     )
   }
 
+  @Roles(['admin'])
   @Implement(contract.changeset.reject)
   reject() {
     return implement(contract.changeset.reject).handler(
@@ -106,6 +110,7 @@ export class ChangesetController {
     )
   }
 
+  @Roles(['admin'])
   @Implement(contract.changeset.revert)
   revert() {
     return implement(contract.changeset.revert).handler(

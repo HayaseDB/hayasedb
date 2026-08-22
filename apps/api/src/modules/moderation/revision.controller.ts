@@ -1,11 +1,13 @@
 import { Controller } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
+import { Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { requireAdminUser } from '../../auth/require-user'
 import { ModerationService } from './moderation.service'
 import { HistoryService } from '../history/history.service'
 
+@Roles(['admin'])
 @Controller()
 export class RevisionController {
   constructor(

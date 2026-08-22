@@ -11,6 +11,7 @@ function sessionChannel(): BroadcastChannel | undefined {
 export async function refreshAppSession({
   broadcast = true,
 }: { broadcast?: boolean } = {}): Promise<void> {
+  invalidateAppSessionCache()
   await refreshNuxtData('app-session')
   if (broadcast) sessionChannel()?.postMessage(SIGNAL)
 }

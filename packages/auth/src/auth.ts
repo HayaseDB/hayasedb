@@ -1,7 +1,7 @@
 import { apiKey } from '@better-auth/api-key'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { admin, openAPI } from 'better-auth/plugins'
+import { admin } from 'better-auth/plugins'
 import { PASSWORD_MAX, PASSWORD_MIN } from '@hayasedb/contract'
 import type { Database } from '@hayasedb/db'
 
@@ -41,7 +41,7 @@ export interface AuthOptions {
   productionMode?: boolean
   github?: GithubProviderOptions
   discord?: DiscordProviderOptions
-  errorCallbackURL?: string
+  errorCallbackURL: string
   mailer?: AuthMailer
   onDeleteUser?: (user: { id: string; email: string }) => Promise<void> | void
 }
@@ -161,12 +161,9 @@ export function createAuth(opts: AuthOptions) {
         trustedProxies: opts.trustedProxies,
       },
     },
-    onAPIError: opts.errorCallbackURL
-      ? { errorURL: opts.errorCallbackURL }
-      : undefined,
+    onAPIError: { errorURL: opts.errorCallbackURL },
     plugins: [
       admin(),
-      openAPI({ disableDefaultReference: true }),
       apiKey({
         defaultPrefix: 'hyd_',
         requireName: true,

@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common'
 import { Implement } from '@orpc/nest'
 import { implement } from '@orpc/server'
-import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
+import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { isAdminRequest, requireAdminUser } from '../../auth/require-user'
 import { AnimeService } from './anime.service'
@@ -44,6 +44,7 @@ export class AnimeController {
     )
   }
 
+  @Roles(['admin'])
   @Implement(contract.anime.create)
   create() {
     return implement(contract.anime.create).handler(({ input, context }) => {
@@ -52,6 +53,7 @@ export class AnimeController {
     })
   }
 
+  @Roles(['admin'])
   @Implement(contract.anime.update)
   update() {
     return implement(contract.anime.update).handler(({ input, context }) => {
@@ -60,6 +62,7 @@ export class AnimeController {
     })
   }
 
+  @Roles(['admin'])
   @Implement(contract.anime.remove)
   remove() {
     return implement(contract.anime.remove).handler(
@@ -71,6 +74,7 @@ export class AnimeController {
     )
   }
 
+  @Roles(['admin'])
   @Implement(contract.anime.addMedia)
   addMedia() {
     return implement(contract.anime.addMedia).handler(
@@ -89,6 +93,7 @@ export class AnimeController {
     )
   }
 
+  @Roles(['admin'])
   @Implement(contract.anime.removeMedia)
   removeMedia() {
     return implement(contract.anime.removeMedia).handler(
@@ -99,6 +104,7 @@ export class AnimeController {
     )
   }
 
+  @Roles(['admin'])
   @Implement(contract.anime.reorderMedia)
   reorderMedia() {
     return implement(contract.anime.reorderMedia).handler(
