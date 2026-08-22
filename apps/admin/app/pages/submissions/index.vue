@@ -97,14 +97,24 @@ const columns: TableColumn<ChangesetRow>[] = [
       }
       return h(
         UTooltip,
-        { text: formatDateTime(row.original.submittedAt) },
-        () =>
-          h(NuxtTime, {
-            class: 'text-muted text-sm',
-            datetime: row.original.submittedAt,
-            relative: true,
-            locale: 'en',
-          }),
+        {},
+        {
+          default: () =>
+            h(NuxtTime, {
+              class: 'text-muted text-sm',
+              datetime: row.original.submittedAt,
+              relative: true,
+              locale: 'en',
+            }),
+          content: () =>
+            h(NuxtTime, {
+              class: 'text-xs',
+              datetime: row.original.submittedAt,
+              dateStyle: 'medium',
+              timeStyle: 'short',
+              locale: 'en',
+            }),
+        },
       )
     },
   },

@@ -20,6 +20,7 @@ const props = withDefaults(
 )
 
 const router = useRouter()
+const api = useApiClient()
 const actions = useContributionActions()
 
 const summaryMaxLength = changesetSummarySchema.maxLength ?? undefined
@@ -48,13 +49,46 @@ function prefillProposedGenres(): ProposedGenre[] {
     .filter((genre) => genre.name.length > 0)
 }
 
-function baseline(): AnimeFormState {
-  const next = buildAnimeFormState(props.anime)
+const prefillSelfId = computed(
+  () => props.anime?.id ?? prefillAnimeChange.value?.entityId ?? null,
+)
+
+function prefillRelations(next: AnimeFormState) {
+  const selfId = prefillSelfId.value
+  if (!props.prefill || !selfId) return
+  const labelOf = (animeId: string) =>
+    props.prefill?.display.refs.anime?.[animeId]
+  for (const change of props.prefill.changes) {
+    if (change.entityKind !== 'anime') continue
+    const relations = (change.payload as Record<string, unknown>).relations
+    if (!isPayloadRelationList(relations)) continue
+    applyRelationPayloadToState(
+      next,
+      change.entityId,
+      selfId,
+      relations,
+      labelOf,
+    )
+  }
+}
+
+const baseline = () => buildAnimeFormState(props.anime)
+
+function initialState(): AnimeFormState {
+  const next = baseline()
   if (prefillPayload.value) applyPayloadToState(next, prefillPayload.value)
+  prefillRelations(next)
   return next
 }
 
-const state = reactive(baseline())
+const relationBaseline = computed(() => baseline().relationEdges)
+
+async function searchAnime(q: string) {
+  const { items } = await api.anime.list({ q, limit: 10 })
+  return items
+}
+
+const state = reactive(initialState())
 const proposedGenres = ref<ProposedGenre[]>(prefillProposedGenres())
 
 function proposeGenre(name: string) {
@@ -67,7 +101,7 @@ const {
   changedFields,
   isDirty: isFieldsDirty,
   reset,
-} = useDirtyState(state, baseline)
+} = useDirtyState(state, baseline, initialState)
 
 const mediaPrefill = computed(() => {
   const payload = prefillPayload.value
@@ -96,6 +130,10 @@ async function submit(data: CreateAnimeInput) {
     {
       data,
       changedFields: changedFields.value,
+      relations: {
+        edges: state.relationEdges,
+        baseline: relationBaseline.value,
+      },
       mediaDirty: media.isDirty.value,
       summary: summary.value,
       buildDocumentMedia: (upload) => media.buildDocumentMedia(upload),
@@ -120,7 +158,10 @@ async function submit(data: CreateAnimeInput) {
     :changed-fields="changedFields"
     :saving="actions.saving.value"
     submit-label="Submit for review"
+    :self-id="anime?.id ?? null"
     :on-submit="submit"
+    :on-search-anime="searchAnime"
+    :relation-baseline="relationBaseline"
   >
     <template #footer-leading>
       <UInput

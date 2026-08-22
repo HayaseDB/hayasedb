@@ -29,8 +29,9 @@ const navItems = computed<NavigationMenuItem[][]>(() => [
 </script>
 
 <template>
-  <UDashboardGroup storage="local" storage-key="admin-sidebar">
+  <UDashboardGroup storage="cookie" storage-key="admin-sidebar">
     <UDashboardSidebar
+      id="main"
       collapsible
       resizable
       :ui="{

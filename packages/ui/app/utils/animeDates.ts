@@ -1,17 +1,12 @@
-const animeDateFormatter = new Intl.DateTimeFormat('en', {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-})
+import { formatFuzzyDate, type FuzzyDate } from '@hayasedb/domain'
 
-export function formatAnimeDate(value?: string | null): string | null {
-  return value ? animeDateFormatter.format(new Date(value)) : null
+export function formatAnimeDate(value?: FuzzyDate | null): string | null {
+  return value ? formatFuzzyDate(value) : null
 }
 
 export function formatAnimeDateRange(
-  start?: string | null,
-  end?: string | null,
+  start?: FuzzyDate | null,
+  end?: FuzzyDate | null,
 ): string | null {
   const from = formatAnimeDate(start)
   const to = formatAnimeDate(end)

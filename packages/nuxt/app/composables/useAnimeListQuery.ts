@@ -37,6 +37,10 @@ function positiveInt(value: unknown): number | undefined {
   return Number.isInteger(parsed) && parsed >= 1 ? parsed : undefined
 }
 
+function yearParam(value: unknown): number | undefined {
+  return positiveInt(value)
+}
+
 const DEFAULT_SORT_KEY: AnimeSortKey = 'recent-desc'
 
 interface QueryPatch {
@@ -44,6 +48,7 @@ interface QueryPatch {
   format?: AnimeFormat
   status?: AnimeStatus
   genreId?: string
+  year?: number
   sort?: AnimeSortKey
 }
 
@@ -59,6 +64,7 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
       format: enumParam(route.query.format, ANIME_FORMATS),
       status: enumParam(route.query.status, ANIME_STATUSES),
       genreId: firstParam(route.query.genreId),
+      year: yearParam(route.query.year),
       sort: enumParam(route.query.sort, ANIME_SORT_KEYS),
       ...patch,
     }
@@ -67,6 +73,7 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     if (next.format) query.format = next.format
     if (next.status) query.status = next.status
     if (next.genreId) query.genreId = next.genreId
+    if (next.year) query.year = String(next.year)
     if (next.sort && next.sort !== DEFAULT_SORT_KEY) query.sort = next.sort
     return query
   }
@@ -94,6 +101,12 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
       void navigate({ genreId: value })
     },
   })
+  const year = computed({
+    get: () => yearParam(route.query.year),
+    set: (value: number | undefined) => {
+      void navigate({ year: value })
+    },
+  })
   const sortKey = computed({
     get: (): AnimeSortKey =>
       enumParam(route.query.sort, ANIME_SORT_KEYS) ?? DEFAULT_SORT_KEY,
@@ -115,8 +128,8 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     if (value !== q.value) q.value = value
   })
 
-  const sort = computed<ListAnimeInput['sort']>(() =>
-    sortKey.value.startsWith('title') ? 'title' : 'recent',
+  const sort = computed<ListAnimeInput['sort']>(
+    () => sortKey.value.split('-')[0] as ListAnimeInput['sort'],
   )
   const order = computed<ListAnimeInput['order']>(() =>
     sortKey.value.split('-')[1] === 'asc' ? 'asc' : 'desc',
@@ -127,13 +140,21 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     format,
     status,
     genreId,
+    year,
     sort,
     order,
     page,
   })
 
   const hasFilters = computed(
-    () => !!(urlQ.value || format.value || status.value || genreId.value),
+    () =>
+      !!(
+        urlQ.value ||
+        format.value ||
+        status.value ||
+        genreId.value ||
+        year.value
+      ),
   )
 
   function resetFilters() {
@@ -152,6 +173,7 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     format,
     status,
     genreId,
+    year,
     sortKey,
     page,
     pageSize,

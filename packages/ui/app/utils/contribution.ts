@@ -1,6 +1,7 @@
 import {
   ENTITY_FIELD_META,
   fieldOrderFor,
+  isoToFuzzy,
   stableStringify,
   unorderedStringify,
   type AnimeFieldKey,
@@ -60,6 +61,7 @@ export const ANIME_FIELD_LABELS = {
   startDate: 'Start date',
   endDate: 'End date',
   genreIds: 'Genres',
+  relations: 'Relations',
   media: 'Images',
 } satisfies Record<AnimeFieldKey, string> & Record<keyof AnimeDocument, string>
 
@@ -68,6 +70,7 @@ const ANIME_ENUM_LABELS: Readonly<
 > = {
   format: ANIME_FORMAT_LABELS,
   status: ANIME_STATUS_LABELS,
+  kind: ANIME_RELATION_VIEW_LABELS,
   type: ANIME_MEDIA_TYPE_LABELS,
 }
 
@@ -157,6 +160,11 @@ function identity(
   positional?: readonly string[],
 ): string {
   if (isEmptyValue(value)) return 'null'
+
+  if (meta?.as === 'fuzzydate' && typeof value === 'string') {
+    const parsed = isoToFuzzy(value)
+    if (Number.isFinite(parsed.year)) return stableStringify(parsed)
+  }
 
   if (meta?.unordered) return unorderedStringify(value)
 

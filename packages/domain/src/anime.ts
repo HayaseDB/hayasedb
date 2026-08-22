@@ -1,4 +1,12 @@
-export const ANIME_FORMATS = ['TV', 'MOVIE', 'OVA', 'ONA', 'SPECIAL'] as const
+export const ANIME_FORMATS = [
+  'TV',
+  'TV_SHORT',
+  'MOVIE',
+  'OVA',
+  'ONA',
+  'SPECIAL',
+  'MUSIC',
+] as const
 export const ANIME_STATUSES = [
   'FINISHED',
   'RELEASING',
@@ -12,6 +20,8 @@ export const ANIME_SORT_KEYS = [
   'recent-asc',
   'title-asc',
   'title-desc',
+  'start-desc',
+  'start-asc',
 ] as const
 
 export type AnimeFormat = (typeof ANIME_FORMATS)[number]

@@ -35,10 +35,11 @@ const isEmpty = computed(() => {
     :field="field"
     :value="value"
   />
-  <DiffDate v-else-if="resolved?.as === 'date'" :value="value" />
+  <DiffDate v-else-if="resolved?.as === 'fuzzydate'" :value="value" />
   <DiffRefBadges
     v-else-if="resolved?.as === 'ref' && resolved.ref"
     :target="resolved.ref"
+    :ref-path="resolved.refPath === 'self' ? undefined : resolved.refPath"
     :value="value"
   />
   <DiffMedia v-else-if="resolved?.as === 'media'" :value="value" />

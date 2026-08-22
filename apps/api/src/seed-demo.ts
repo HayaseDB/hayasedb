@@ -3,9 +3,14 @@ import { Logger } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
 import { type Database, schema } from '@hayasedb/db'
 import {
+  ANIME_FORMATS,
   ANIME_STATUSES,
+  canonicalizeRelation,
   type AnimeFormat,
+  type AnimeRelationKind,
+  type AnimeRelationViewKind,
   type AnimeStatus,
+  type FuzzyDate,
 } from '@hayasedb/domain'
 import { AppModule } from './app.module'
 import { DRIZZLE } from './database/database.constants'
@@ -20,10 +25,18 @@ const PER_PAGE = 50
 type Format = AnimeFormat
 type Status = AnimeStatus
 
+interface AniListFuzzyDate {
+  year: number | null
+  month: number | null
+  day: number | null
+}
+
 interface AniListMedia {
   id: number
   format: string | null
   status: string | null
+  startDate: AniListFuzzyDate | null
+  endDate: AniListFuzzyDate | null
   title: {
     romaji: string | null
     english: string | null
@@ -31,6 +44,9 @@ interface AniListMedia {
   }
   description: string | null
   genres: string[]
+  relations: {
+    edges: Array<{ relationType: string | null; node: { id: number } | null }>
+  } | null
   coverImage: { extraLarge: string | null } | null
   bannerImage: string | null
   characters: {
@@ -40,17 +56,29 @@ interface AniListMedia {
 
 const GALLERY_PER_ANIME = 6
 
-const FORMAT_MAP: Record<string, Format> = {
-  TV: 'TV',
-  TV_SHORT: 'TV',
-  MOVIE: 'MOVIE',
-  SPECIAL: 'SPECIAL',
-  OVA: 'OVA',
-  ONA: 'ONA',
-  MUSIC: 'SPECIAL',
+const VALID_FORMAT = new Set<string>(ANIME_FORMATS)
+const VALID_STATUS = new Set<string>(ANIME_STATUSES)
+
+const RELATION_MAP: Record<string, AnimeRelationViewKind> = {
+  SEQUEL: 'SEQUEL',
+  PREQUEL: 'PREQUEL',
+  SIDE_STORY: 'SIDE_STORY',
+  SPIN_OFF: 'SPIN_OFF',
+  PARENT: 'PARENT_STORY',
+  SUMMARY: 'SUMMARY',
+  ALTERNATIVE: 'ALTERNATIVE',
+  CHARACTER: 'CHARACTER',
+  OTHER: 'OTHER',
 }
 
-const VALID_STATUS = new Set<Status>(ANIME_STATUSES)
+function toFuzzy(date: AniListFuzzyDate | null): FuzzyDate | null {
+  if (!date || date.year === null) return null
+  return {
+    year: date.year,
+    month: date.month,
+    day: date.month === null ? null : date.day,
+  }
+}
 
 const QUERY = `
 query ($page: Int, $perPage: Int) {
@@ -60,9 +88,12 @@ query ($page: Int, $perPage: Int) {
       id
       format
       status
+      startDate { year month day }
+      endDate { year month day }
       title { romaji english native }
       description(asHtml: false)
       genres
+      relations { edges { relationType node { id } } }
       coverImage { extraLarge }
       bannerImage
       characters(sort: [ROLE, RELEVANCE], perPage: ${GALLERY_PER_ANIME}) {
@@ -76,7 +107,7 @@ function slugify(input: string): string {
   return input
     .toLowerCase()
     .normalize('NFKD')
-    .replace(/[^\w\s-]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
@@ -182,10 +213,31 @@ async function main() {
       return row.id
     }
 
+    const animeIdByAniList = new Map<number, string>()
+    const pendingRelations: Array<{
+      anilistId: number
+      animeId: string
+      edges: NonNullable<AniListMedia['relations']>['edges']
+    }> = []
+    const queueRelations = (entry: AniListMedia, animeId: string) => {
+      if (entry.relations?.edges.length) {
+        pendingRelations.push({
+          anilistId: entry.id,
+          animeId,
+          edges: entry.relations.edges,
+        })
+      }
+    }
+
     for (const entry of list) {
-      const format = entry.format ? FORMAT_MAP[entry.format] : undefined
-      const status = (entry.status as Status) ?? undefined
-      if (!format || !status || !VALID_STATUS.has(status)) {
+      const format = entry.format as Format | null
+      const status = entry.status as Status | null
+      if (
+        !format ||
+        !status ||
+        !VALID_FORMAT.has(format) ||
+        !VALID_STATUS.has(status)
+      ) {
         logger.warn(
           `Skipping ${entry.title.romaji ?? entry.id} (unsupported format/status: ${entry.format}/${entry.status})`,
         )
@@ -204,6 +256,8 @@ async function main() {
         .limit(1)
       if (existing[0]) {
         logger.log(`Already seeded: ${slug}`)
+        animeIdByAniList.set(entry.id, existing[0].id)
+        queueRelations(entry, existing[0].id)
         continue
       }
 
@@ -215,6 +269,8 @@ async function main() {
           slug,
           format,
           status,
+          startDate: toFuzzy(entry.startDate),
+          endDate: toFuzzy(entry.endDate),
           titleRomaji: entry.title.romaji ?? undefined,
           titleEnglish: entry.title.english ?? undefined,
           titleNative: entry.title.native ?? undefined,
@@ -224,6 +280,8 @@ async function main() {
         null,
       )
       const animeId = created.id
+      animeIdByAniList.set(entry.id, animeId)
+      queueRelations(entry, animeId)
       logger.log(`Created ${slug}`)
 
       const coverUrl = entry.coverImage?.extraLarge
@@ -282,6 +340,36 @@ async function main() {
         }
       }
     }
+
+    const relationsBySource = new Map<string, Set<string>>()
+    for (const pending of pendingRelations) {
+      for (const edge of pending.edges) {
+        const view = edge.relationType ? RELATION_MAP[edge.relationType] : null
+        const otherId = edge.node ? animeIdByAniList.get(edge.node.id) : null
+        if (!view || !otherId || otherId === pending.animeId) continue
+        const canonical = canonicalizeRelation(pending.animeId, otherId, view)
+        const set = relationsBySource.get(canonical.sourceId) ?? new Set()
+        set.add(`${canonical.targetId}:${canonical.kind}`)
+        relationsBySource.set(canonical.sourceId, set)
+      }
+    }
+    for (const [sourceId, keys] of relationsBySource) {
+      const current = await anime.getById(sourceId, { includeDeleted: true })
+      const relations = current.relations
+        .filter((r) => r.owned)
+        .map((r) => canonicalizeRelation(sourceId, r.anime.id, r.kind))
+        .map((r) => ({ targetId: r.targetId, kind: r.kind }))
+      for (const key of keys) {
+        const [targetId, kind] = key.split(':') as [string, AnimeRelationKind]
+        if (
+          !relations.some((r) => r.targetId === targetId && r.kind === kind)
+        ) {
+          relations.push({ targetId, kind })
+        }
+      }
+      await anime.update({ id: sourceId, relations }, null)
+    }
+    logger.log(`Linked relations for ${relationsBySource.size} anime.`)
 
     logger.log('Demo seed complete.')
   } finally {

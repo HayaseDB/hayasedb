@@ -1,28 +1,26 @@
 import {
   ANIME_FORMATS,
   ANIME_MEDIA_TYPES,
+  ANIME_RELATION_KINDS,
   ANIME_STATUSES,
+  SYMMETRIC_RELATION_KINDS,
 } from '@hayasedb/domain'
 import { relations, sql } from 'drizzle-orm'
 import {
-  date,
+  check,
   index,
   integer,
   pgEnum,
   pgTable,
   primaryKey,
+  smallint,
   text,
-  timestamp,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
+import { createdAt, timestamps, uuidV7Pk } from './_columns'
 import { entity } from './contribution'
 import { mediaAsset } from './media'
-
-const uuidV7Pk = () =>
-  uuid('id')
-    .primaryKey()
-    .default(sql`uuidv7()`)
 
 export const animeFormat = pgEnum('anime_format', ANIME_FORMATS)
 
@@ -30,26 +28,85 @@ export const animeStatus = pgEnum('anime_status', ANIME_STATUSES)
 
 export const animeMediaType = pgEnum('anime_media_type', ANIME_MEDIA_TYPES)
 
-export const anime = pgTable('anime', {
-  id: uuidV7Pk().references(() => entity.id),
-  slug: text('slug').notNull().unique(),
-  format: animeFormat('format'),
-  status: animeStatus('status'),
-  titleRomaji: text('title_romaji'),
-  titleEnglish: text('title_english'),
-  titleNative: text('title_native'),
-  description: text('description'),
-  startDate: date('start_date'),
-  endDate: date('end_date'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-})
+export const animeRelationKind = pgEnum(
+  'anime_relation_kind',
+  ANIME_RELATION_KINDS,
+)
+
+const symmetricKindList = sql.raw(
+  SYMMETRIC_RELATION_KINDS.map((kind) => `'${kind}'`).join(', '),
+)
+
+export const anime = pgTable(
+  'anime',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .references(() => entity.id),
+    slug: text('slug').notNull().unique(),
+    format: animeFormat('format'),
+    status: animeStatus('status'),
+    titleRomaji: text('title_romaji'),
+    titleEnglish: text('title_english'),
+    titleNative: text('title_native'),
+    description: text('description'),
+    startYear: smallint('start_year'),
+    startMonth: smallint('start_month'),
+    startDay: smallint('start_day'),
+    endYear: smallint('end_year'),
+    endMonth: smallint('end_month'),
+    endDay: smallint('end_day'),
+    ...timestamps(),
+  },
+  (table) => [
+    index('anime_status_idx').on(table.status),
+    index('anime_format_idx').on(table.format),
+    index('anime_start_idx').on(
+      table.startYear,
+      table.startMonth,
+      table.startDay,
+    ),
+    index('anime_created_at_idx').on(table.createdAt),
+    check(
+      'anime_start_date_check',
+      sql`(${table.startMonth} is null or (${table.startYear} is not null and ${table.startMonth} between 1 and 12)) and (${table.startDay} is null or (${table.startMonth} is not null and ${table.startDay} between 1 and 31))`,
+    ),
+    check(
+      'anime_end_date_check',
+      sql`(${table.endMonth} is null or (${table.endYear} is not null and ${table.endMonth} between 1 and 12)) and (${table.endDay} is null or (${table.endMonth} is not null and ${table.endDay} between 1 and 31))`,
+    ),
+  ],
+)
+
+export const animeRelation = pgTable(
+  'anime_relation',
+  {
+    sourceId: uuid('source_id')
+      .notNull()
+      .references(() => anime.id, { onDelete: 'cascade' }),
+    targetId: uuid('target_id')
+      .notNull()
+      .references(() => anime.id, { onDelete: 'cascade' }),
+    kind: animeRelationKind('kind').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.sourceId, table.targetId, table.kind] }),
+    index('anime_relation_target_id_idx').on(table.targetId),
+    check(
+      'anime_relation_not_self_check',
+      sql`${table.sourceId} <> ${table.targetId}`,
+    ),
+    check(
+      'anime_relation_symmetric_order_check',
+      sql`${table.kind} not in (${symmetricKindList}) or ${table.sourceId} < ${table.targetId}`,
+    ),
+  ],
+)
 
 export const genre = pgTable('genre', {
-  id: uuidV7Pk().references(() => entity.id),
+  id: uuid('id')
+    .primaryKey()
+    .references(() => entity.id),
   name: text('name').notNull().unique(),
 })
 
@@ -81,7 +138,7 @@ export const animeMedia = pgTable(
       .references(() => mediaAsset.id, { onDelete: 'restrict' }),
     type: animeMediaType('type').notNull(),
     position: integer('position').default(0).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: createdAt(),
   },
   (table) => [
     index('anime_media_anime_id_type_idx').on(
@@ -100,6 +157,21 @@ export const animeMedia = pgTable(
 export const animeRelations = relations(anime, ({ many }) => ({
   genres: many(animeGenre),
   media: many(animeMedia),
+  outgoingRelations: many(animeRelation, { relationName: 'source' }),
+  incomingRelations: many(animeRelation, { relationName: 'target' }),
+}))
+
+export const animeRelationRelations = relations(animeRelation, ({ one }) => ({
+  source: one(anime, {
+    fields: [animeRelation.sourceId],
+    references: [anime.id],
+    relationName: 'source',
+  }),
+  target: one(anime, {
+    fields: [animeRelation.targetId],
+    references: [anime.id],
+    relationName: 'target',
+  }),
 }))
 
 export const genreRelations = relations(genre, ({ many }) => ({

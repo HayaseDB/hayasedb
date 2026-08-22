@@ -26,6 +26,7 @@ export interface EntityKindHandler<
     tx: Tx,
     payload: Record<string, unknown>,
     siblingCreates: ReadonlyMap<string, EntityKind>,
+    entityId: string,
   ): Promise<string[]>
 
   checkUniqueness(

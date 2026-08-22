@@ -3,21 +3,42 @@ import {
   ANIME_FIELD_ORDER,
   ANIME_FORMATS,
   ANIME_MEDIA_TYPES,
+  ANIME_RELATION_KINDS,
+  ANIME_RELATION_VIEW_KINDS,
   ANIME_STATUSES,
+  daysInMonth,
+  isoToFuzzy,
   type AnimeFormat,
   type AnimeMediaType,
+  type AnimeRelationKind,
+  type AnimeRelationViewKind,
   type AnimeStatus,
+  type FuzzyDate,
 } from '@hayasedb/domain'
 import * as z from 'zod'
-import { idSchema, paginationInputSchema, timestampsSchema } from './common'
+import {
+  idSchema,
+  paginationInputSchema,
+  queryBooleanSchema,
+  timestampsSchema,
+} from './common'
 import { genreSchema } from './genre'
 import { mediaFileSchema } from './media'
 
 export const animeFormatSchema = z.enum(ANIME_FORMATS)
 export const animeStatusSchema = z.enum(ANIME_STATUSES)
 export const animeMediaTypeSchema = z.enum(ANIME_MEDIA_TYPES)
+export const animeRelationKindSchema = z.enum(ANIME_RELATION_KINDS)
+export const animeRelationViewKindSchema = z.enum(ANIME_RELATION_VIEW_KINDS)
 
-export type { AnimeFormat, AnimeMediaType, AnimeStatus }
+export type {
+  AnimeFormat,
+  AnimeMediaType,
+  AnimeRelationKind,
+  AnimeRelationViewKind,
+  AnimeStatus,
+  FuzzyDate,
+}
 
 export const slugSchema = z
   .string()
@@ -42,9 +63,41 @@ export const animeDescriptionSchema = z.preprocess(
   z.string().trim().max(5000, 'Description is too long').nullish(),
 )
 
+export const animeYearSchema = z.number().int()
+
+export const fuzzyDateSchema = z
+  .object({
+    year: animeYearSchema,
+    month: z
+      .number()
+      .int()
+      .min(1)
+      .max(12)
+      .nullish()
+      .transform((value) => value ?? null),
+    day: z
+      .number()
+      .int()
+      .min(1)
+      .max(31)
+      .nullish()
+      .transform((value) => value ?? null),
+  })
+  .refine((date) => date.day === null || date.month !== null, {
+    message: 'A day needs a month',
+    path: ['day'],
+  })
+  .refine(
+    (date) =>
+      date.day === null ||
+      date.month === null ||
+      date.day <= daysInMonth(date.year, date.month),
+    { message: 'Day does not exist in that month', path: ['day'] },
+  )
+
 export const releaseDateSchema = z.preprocess(
   blankToNull,
-  z.iso.date().nullish(),
+  z.union([fuzzyDateSchema, z.iso.date().transform(isoToFuzzy)]).nullish(),
 )
 
 export const animeMediaSchema = z.object({
@@ -66,7 +119,26 @@ const animeCoreSchema = z.object({
   titleRomaji: z.string().nullable(),
   titleEnglish: z.string().nullable(),
   titleNative: z.string().nullable(),
+  startDate: fuzzyDateSchema.nullable(),
   ...timestampsSchema.shape,
+})
+
+export const animeRelationTargetSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  format: animeFormatSchema.nullable(),
+  status: animeStatusSchema.nullable(),
+  titleRomaji: z.string().nullable(),
+  titleEnglish: z.string().nullable(),
+  startYear: z.number().int().nullable(),
+  coverUrl: z.string().nullable(),
+  coverBlurhash: z.string().nullable(),
+})
+
+export const animeRelationSchema = z.object({
+  kind: animeRelationViewKindSchema,
+  owned: z.boolean(),
+  anime: animeRelationTargetSchema,
 })
 
 export const animeListItemSchema = animeCoreSchema.extend({
@@ -77,15 +149,15 @@ export const animeListItemSchema = animeCoreSchema.extend({
 
 export const animeDetailSchema = animeCoreSchema.extend({
   description: z.string().nullable(),
-  startDate: z.string().nullable(),
-  endDate: z.string().nullable(),
+  endDate: fuzzyDateSchema.nullable(),
   genres: z.array(genreSchema),
+  relations: z.array(animeRelationSchema),
   media: z.array(animeMediaSchema),
   headRev: z.number().int(),
   deletedAt: z.date().nullable(),
 })
 
-export const animeSortSchema = z.enum(['recent', 'title'])
+export const animeSortSchema = z.enum(['recent', 'title', 'start'])
 export const sortOrderSchema = z.enum(['asc', 'desc'])
 
 export const listAnimeInputSchema = paginationInputSchema.extend({
@@ -93,11 +165,32 @@ export const listAnimeInputSchema = paginationInputSchema.extend({
   format: animeFormatSchema.optional(),
   status: animeStatusSchema.optional(),
   genreId: idSchema.optional(),
+  startYear: z.coerce.number().pipe(animeYearSchema).optional(),
   sort: animeSortSchema.default('recent'),
   order: sortOrderSchema.default('desc'),
   limit: z.coerce.number().int().min(1).max(100).default(24),
-  includeDeleted: z.coerce.boolean().default(false),
+  includeDeleted: queryBooleanSchema.default(false),
 })
+
+export const animeDocumentRelationSchema = z.object({
+  targetId: idSchema,
+  kind: animeRelationKindSchema,
+})
+
+export const animeDocumentRelationListSchema = z
+  .array(animeDocumentRelationSchema)
+  .max(50, 'Too many relations')
+  .superRefine((items, ctx) => {
+    const seen = new Set<string>()
+    for (const item of items) {
+      const key = `${item.targetId}:${item.kind}`
+      if (seen.has(key)) {
+        ctx.addIssue({ code: 'custom', message: 'Duplicate relation' })
+        return
+      }
+      seen.add(key)
+    }
+  })
 
 export const createAnimeInputSchema = z.object({
   slug: slugSchema,
@@ -112,9 +205,10 @@ export const createAnimeInputSchema = z.object({
   genreIds: z.array(idSchema).optional(),
 })
 
-export const updateAnimeInputSchema = createAnimeInputSchema
-  .partial()
-  .extend({ id: idSchema })
+export const updateAnimeInputSchema = createAnimeInputSchema.partial().extend({
+  id: idSchema,
+  relations: animeDocumentRelationListSchema.optional(),
+})
 
 export const addAnimeMediaInputSchema = z.object({
   animeId: idSchema,
@@ -151,6 +245,7 @@ export const animeDocumentMediaListSchema = z
 
 export const animeDocumentSchema = createAnimeInputSchema.extend({
   genreIds: z.array(idSchema).max(50),
+  relations: animeDocumentRelationListSchema.optional(),
   media: animeDocumentMediaListSchema,
 })
 
@@ -159,6 +254,9 @@ export const animeDocumentPatchSchema = animeDocumentSchema.partial()
 export type AnimeDocument = z.output<typeof animeDocumentSchema>
 export type AnimeDocumentPatch = z.output<typeof animeDocumentPatchSchema>
 export type AnimeDocumentMedia = z.output<typeof animeDocumentMediaSchema>
+export type AnimeDocumentRelation = z.output<typeof animeDocumentRelationSchema>
+export type AnimeRelation = z.output<typeof animeRelationSchema>
+export type AnimeRelationTarget = z.output<typeof animeRelationTargetSchema>
 
 const _metaCoversSchema: Record<keyof AnimeDocument, unknown> = ANIME_FIELD_META
 

@@ -47,6 +47,7 @@ const resendLabel = computed(() =>
             year="numeric"
             month="long"
             day="numeric"
+            locale="en"
           />
         </p>
       </div>

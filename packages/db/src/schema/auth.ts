@@ -1,12 +1,6 @@
 import { relations } from 'drizzle-orm'
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  index,
-} from 'drizzle-orm/pg-core'
+import { pgTable, text, boolean, integer, index } from 'drizzle-orm/pg-core'
+import { timestamptz } from './_columns'
 import { userAvatar } from './media'
 
 export const user = pgTable('user', {
@@ -15,25 +9,25 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
+  createdAt: timestamptz('created_at').defaultNow().notNull(),
+  updatedAt: timestamptz('updated_at')
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   role: text('role'),
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
-  banExpires: timestamp('ban_expires'),
+  banExpires: timestamptz('ban_expires'),
 })
 
 export const session = pgTable(
   'session',
   {
     id: text('id').primaryKey(),
-    expiresAt: timestamp('expires_at').notNull(),
+    expiresAt: timestamptz('expires_at').notNull(),
     token: text('token').notNull().unique(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamptz('created_at').defaultNow().notNull(),
+    updatedAt: timestamptz('updated_at')
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text('ip_address'),
@@ -58,12 +52,12 @@ export const account = pgTable(
     accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
     idToken: text('id_token'),
-    accessTokenExpiresAt: timestamp('access_token_expires_at'),
-    refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+    accessTokenExpiresAt: timestamptz('access_token_expires_at'),
+    refreshTokenExpiresAt: timestamptz('refresh_token_expires_at'),
     scope: text('scope'),
     password: text('password'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamptz('created_at').defaultNow().notNull(),
+    updatedAt: timestamptz('updated_at')
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -76,9 +70,9 @@ export const verification = pgTable(
     id: text('id').primaryKey(),
     identifier: text('identifier').notNull(),
     value: text('value').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    expiresAt: timestamptz('expires_at').notNull(),
+    createdAt: timestamptz('created_at').defaultNow().notNull(),
+    updatedAt: timestamptz('updated_at')
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -100,17 +94,17 @@ export const apikey = pgTable(
     key: text('key').notNull(),
     refillInterval: integer('refill_interval'),
     refillAmount: integer('refill_amount'),
-    lastRefillAt: timestamp('last_refill_at'),
+    lastRefillAt: timestamptz('last_refill_at'),
     enabled: boolean('enabled').default(true),
     rateLimitEnabled: boolean('rate_limit_enabled').default(true),
     rateLimitTimeWindow: integer('rate_limit_time_window').default(3600000),
     rateLimitMax: integer('rate_limit_max').default(1000),
     requestCount: integer('request_count').default(0),
     remaining: integer('remaining'),
-    lastRequest: timestamp('last_request'),
-    expiresAt: timestamp('expires_at'),
-    createdAt: timestamp('created_at').notNull(),
-    updatedAt: timestamp('updated_at').notNull(),
+    lastRequest: timestamptz('last_request'),
+    expiresAt: timestamptz('expires_at'),
+    createdAt: timestamptz('created_at').notNull(),
+    updatedAt: timestamptz('updated_at').notNull(),
     permissions: text('permissions'),
     metadata: text('metadata'),
   },

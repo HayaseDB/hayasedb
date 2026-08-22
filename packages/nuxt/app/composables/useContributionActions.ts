@@ -1,10 +1,10 @@
 import type {
   AnimeDocumentMedia,
+  AnimeDocumentRelation,
   ChangeInput,
   CreateAnimeInput,
 } from '@hayasedb/contract'
-
-type AnimeFormField = keyof CreateAnimeInput
+import type { AnimeFormField, AnimeRelationInput } from '#imports'
 
 export interface ProposedGenre {
   id: string
@@ -14,6 +14,7 @@ export interface ProposedGenre {
 export interface ContributionSubmit {
   data: CreateAnimeInput
   changedFields: AnimeFormField[]
+  relations: AnimeRelationInput
   mediaDirty: boolean
   summary: string
   buildDocumentMedia: (
@@ -26,6 +27,7 @@ export interface ContributionSubmit {
 export function useContributionActions() {
   const api = useApiClient()
   const toast = useToast()
+  const relationPlan = useAnimeRelationPlan()
 
   const saving = ref(false)
   const withdrawing = ref(false)
@@ -54,14 +56,24 @@ export function useContributionActions() {
         selectedGenreIds.has(genre.id),
       )
 
+      const changed = new Set<string>(input.changedFields)
+      const selfId = anime?.id ?? crypto.randomUUID()
+      const relationsDirty = !anime || changed.has('relationEdges')
+      const relations = relationsDirty
+        ? await relationPlan.plan(selfId, input.relations)
+        : null
+
       let animeChange: ChangeInput
       if (anime) {
-        const changed = new Set<string>(input.changedFields)
         const patch = Object.fromEntries(
           Object.entries(input.data).filter(([key]) => changed.has(key)),
-        ) as Partial<CreateAnimeInput> & { media?: AnimeDocumentMedia[] }
+        ) as Partial<CreateAnimeInput> & {
+          media?: AnimeDocumentMedia[]
+          relations?: AnimeDocumentRelation[]
+        }
         if (input.mediaDirty) patch.media = media
-        if (Object.keys(patch).length === 0) {
+        if (relations?.ownChanged) patch.relations = relations.own
+        if (Object.keys(patch).length === 0 && !relations?.foreign.length) {
           toast.add({ title: 'No changes to submit', color: 'warning' })
           return false
         }
@@ -76,14 +88,25 @@ export function useContributionActions() {
         animeChange = {
           op: 'create',
           entityKind: 'anime',
-          entityId: crypto.randomUUID(),
+          entityId: selfId,
           payload: {
             ...input.data,
             genreIds: input.data.genreIds ?? [],
+            relations: relations?.own ?? [],
             media,
           },
         }
       }
+
+      const relationChanges: ChangeInput[] = (relations?.foreign ?? []).map(
+        (other) => ({
+          op: 'update',
+          entityKind: 'anime',
+          entityId: other.animeId,
+          baseRev: other.headRev,
+          payload: { relations: other.relations },
+        }),
+      )
 
       const genreChanges: ChangeInput[] = proposedGenres.map((genre) => ({
         op: 'create',
@@ -94,7 +117,7 @@ export function useContributionActions() {
 
       const changeset = await api.changeset.submit({
         summary: input.summary.trim(),
-        changes: [...genreChanges, animeChange],
+        changes: [...genreChanges, animeChange, ...relationChanges],
         supersedesId: input.supersedesId,
       })
       toast.add({

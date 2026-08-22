@@ -10,6 +10,7 @@ export interface AnimeListInputs {
   format: Ref<AnimeFormat | undefined>
   status: Ref<AnimeStatus | undefined>
   genreId: Ref<string | undefined>
+  year?: Ref<number | undefined>
   sort: Ref<ListAnimeInput['sort']>
   order: Ref<ListAnimeInput['order']>
   page: Ref<number>
@@ -31,6 +32,7 @@ export async function useAnimeListData(
         format: inputs.format.value,
         status: inputs.status.value,
         genreId: inputs.genreId.value,
+        startYear: inputs.year?.value,
         sort: inputs.sort.value,
         order: inputs.order.value,
         limit: pageSize,
@@ -42,6 +44,7 @@ export async function useAnimeListData(
         inputs.format,
         inputs.status,
         inputs.genreId,
+        ...(inputs.year ? [inputs.year] : []),
         inputs.sort,
         inputs.order,
         inputs.page,

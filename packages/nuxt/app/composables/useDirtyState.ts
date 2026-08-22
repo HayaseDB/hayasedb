@@ -3,6 +3,7 @@ import { unorderedStringify } from '@hayasedb/domain'
 export function useDirtyState<T extends object>(
   state: T,
   createBaseline: () => T,
+  createInitial: () => T = createBaseline,
 ) {
   const baseline = ref(createBaseline()) as Ref<T>
 
@@ -16,9 +17,9 @@ export function useDirtyState<T extends object>(
 
   const isDirty = computed(() => changedFields.value.length > 0)
 
-  function reset(next: T = createBaseline()) {
-    Object.assign(state, next)
-    baseline.value = next
+  function reset() {
+    Object.assign(state, createInitial())
+    baseline.value = createBaseline()
   }
 
   return { changedFields, isDirty, reset }

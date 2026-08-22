@@ -1,10 +1,12 @@
 import type { CreateAnimeInput } from '@hayasedb/contract'
+import type { AnimeRelationInput } from '#imports'
 
-export type AnimeFormField = keyof CreateAnimeInput
+export type AnimeFormField = keyof CreateAnimeInput | 'relationEdges'
 
 export interface AnimeFormSubmit {
   data: CreateAnimeInput
   changedFields: AnimeFormField[]
+  relations: AnimeRelationInput
   commitMedia: (animeId: string) => Promise<void>
 }
 
@@ -12,6 +14,7 @@ export function useAnimeActions() {
   const api = useApiClient()
   const toast = useToast()
   const router = useRouter()
+  const relationPlan = useAnimeRelationPlan()
 
   const saving = ref(false)
 
@@ -40,9 +43,23 @@ export function useAnimeActions() {
     }
   }
 
+  async function applyRelations(
+    animeId: string,
+    relations: AnimeRelationInput,
+  ): Promise<void> {
+    const { own, ownChanged, foreign } = await relationPlan.plan(
+      animeId,
+      relations,
+    )
+    if (ownChanged) await api.anime.update({ id: animeId, relations: own })
+    for (const other of foreign) {
+      await api.anime.update({ id: other.animeId, relations: other.relations })
+    }
+  }
+
   async function update(
     anime: { id: string },
-    { data, changedFields, commitMedia }: AnimeFormSubmit,
+    { data, changedFields, relations, commitMedia }: AnimeFormSubmit,
   ): Promise<void> {
     const changed = new Set<string>(changedFields)
     const patch = Object.fromEntries(
@@ -51,12 +68,22 @@ export function useAnimeActions() {
     if (Object.keys(patch).length > 0) {
       await api.anime.update({ id: anime.id, ...patch })
     }
+    if (changed.has('relationEdges')) {
+      await applyRelations(anime.id, relations)
+    }
     await commitMedia(anime.id)
     toast.add({ title: 'Saved', color: 'success' })
   }
 
-  async function create({ data, commitMedia }: AnimeFormSubmit): Promise<void> {
+  async function create({
+    data,
+    relations,
+    commitMedia,
+  }: AnimeFormSubmit): Promise<void> {
     const created = await api.anime.create(data)
+    if (relations.edges.length > 0) {
+      await applyRelations(created.id, { edges: relations.edges, baseline: [] })
+    }
     await commitMedia(created.id)
     toast.add({ title: 'Anime created', color: 'success' })
     await router.push(`/anime/${created.id}`)

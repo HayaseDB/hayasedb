@@ -81,17 +81,23 @@ const isExpired = (key: ApiKeyRow) =>
         </template>
         <template v-else>Never used</template>
       </span>
-      <UTooltip
-        :text="
-          key.expiresAt
-            ? `Expires ${formatDateTime(key.expiresAt)}`
-            : 'Never expires'
-        "
-      >
+      <UTooltip>
         <span class="text-muted text-xs">
           Created
           <NuxtTime :datetime="key.createdAt" relative locale="en" />
         </span>
+        <template #content>
+          <span v-if="key.expiresAt" class="text-xs">
+            Expires
+            <NuxtTime
+              :datetime="key.expiresAt"
+              date-style="medium"
+              time-style="short"
+              locale="en"
+            />
+          </span>
+          <span v-else class="text-xs">Never expires</span>
+        </template>
       </UTooltip>
       <UButton
         color="error"

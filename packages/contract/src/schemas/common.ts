@@ -1,6 +1,8 @@
 import * as z from 'zod'
 
-export const idSchema = z.uuid()
+export const idSchema = z.uuid().toLowerCase()
+
+export const queryBooleanSchema = z.union([z.boolean(), z.stringbool()])
 
 export const timestampsSchema = z.object({
   createdAt: z.date(),

@@ -30,6 +30,19 @@ export class DisplayService {
         .where(inArray(schema.genre.id, ids))
       return Object.fromEntries(rows.map((row) => [row.id, row.name]))
     },
+    anime: async (db, ids) => {
+      const rows = await db
+        .select({
+          id: schema.anime.id,
+          slug: schema.anime.slug,
+          titleEnglish: schema.anime.titleEnglish,
+        })
+        .from(schema.anime)
+        .where(inArray(schema.anime.id, ids))
+      return Object.fromEntries(
+        rows.map((row) => [row.id, row.titleEnglish ?? row.slug]),
+      )
+    },
   }
 
   async buildDisplay(

@@ -7,16 +7,11 @@ import {
   integer,
   pgTable,
   text,
-  timestamp,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
 import { user } from './auth'
-
-const uuidV7Pk = () =>
-  uuid('id')
-    .primaryKey()
-    .default(sql`uuidv7()`)
+import { createdAt, uuidV7Pk } from './_columns'
 
 const mimeTypeList = sql.raw(
   MEDIA_MIME_TYPES.map((type) => `'${type}'`).join(', '),
@@ -35,7 +30,7 @@ export const mediaAsset = pgTable(
     height: integer('height'),
     blurhash: text('blurhash'),
     originalFilename: text('original_filename'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: createdAt(),
   },
   (table) => [
     check(
@@ -55,7 +50,7 @@ export const mediaUpload = pgTable(
     uploaderId: text('uploader_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: createdAt(),
   },
   (table) => [
     index('media_upload_uploader_idx').on(table.uploaderId, table.createdAt),
@@ -73,7 +68,7 @@ export const userAvatar = pgTable(
       .notNull()
       .references(() => mediaAsset.id, { onDelete: 'restrict' }),
     isCurrent: boolean('is_current').default(false).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: createdAt(),
   },
   (table) => [
     index('user_avatar_user_id_idx').on(table.userId, table.createdAt),

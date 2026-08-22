@@ -14,17 +14,12 @@ import {
   pgTable,
   smallint,
   text,
-  timestamp,
   uniqueIndex,
   uuid,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
 import { user } from './auth'
-
-const uuidV7Pk = () =>
-  uuid('id')
-    .primaryKey()
-    .default(sql`uuidv7()`)
+import { createdAt, timestamptz, uuidV7Pk } from './_columns'
 
 export const entityKind = pgEnum('entity_kind', ENTITY_KINDS)
 
@@ -40,15 +35,17 @@ export const changesetMessageKind = pgEnum(
 export const entity = pgTable(
   'entity',
   {
-    id: uuid('id')
-      .primaryKey()
-      .default(sql`uuidv7()`),
+    id: uuidV7Pk(),
     kind: entityKind('kind').notNull(),
     headRev: integer('head_rev').default(0).notNull(),
-    deletedAt: timestamp('deleted_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamptz('deleted_at'),
+    createdAt: createdAt(),
   },
-  (table) => [index('entity_kind_idx').on(table.kind)],
+  (table) => [
+    index('entity_kind_live_idx')
+      .on(table.kind)
+      .where(sql`${table.deletedAt} is null`),
+  ],
 )
 
 export const changeset = pgTable(
@@ -60,8 +57,8 @@ export const changeset = pgTable(
     }),
     status: changesetStatus('status').default('pending').notNull(),
     summary: text('summary').notNull(),
-    submittedAt: timestamp('submitted_at'),
-    decidedAt: timestamp('decided_at'),
+    submittedAt: timestamptz('submitted_at'),
+    decidedAt: timestamptz('decided_at'),
     decidedById: text('decided_by_id').references(() => user.id, {
       onDelete: 'set null',
     }),
@@ -69,7 +66,7 @@ export const changeset = pgTable(
       (): AnyPgColumn => changeset.id,
     ),
     revertsId: uuid('reverts_id').references((): AnyPgColumn => changeset.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: createdAt(),
   },
   (table) => [
     index('changeset_pending_idx')
@@ -97,7 +94,7 @@ export const entityRevision = pgTable(
     editorId: text('editor_id').references(() => user.id, {
       onDelete: 'set null',
     }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: createdAt(),
   },
   (table) => [
     uniqueIndex('entity_revision_entity_rev_uq').on(table.entityId, table.rev),
@@ -145,7 +142,7 @@ export const changesetMessage = pgTable(
     }),
     kind: changesetMessageKind('kind').default('comment').notNull(),
     body: text('body').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: createdAt(),
   },
   (table) => [
     index('changeset_message_changeset_idx').on(

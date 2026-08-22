@@ -18,11 +18,18 @@ import type {
   AddAnimeMediaInput,
   AnimeDetail,
   AnimeListItem,
+  AnimeRelation,
+  AnimeRelationTarget,
   CreateAnimeInput,
   ListAnimeInput,
   ReorderAnimeMediaInput,
   UpdateAnimeInput,
 } from '@hayasedb/contract'
+import {
+  ANIME_RELATION_VIEW_KINDS,
+  fuzzyFromParts,
+  relationViewKind,
+} from '@hayasedb/domain'
 import { DRIZZLE } from '../../database/database.constants'
 import { MediaService } from '../media/media.service'
 import { entityHandler, type Tx } from '../revision/registry'
@@ -71,6 +78,9 @@ export class AnimeService {
     }
     if (input.format) conditions.push(eq(schema.anime.format, input.format))
     if (input.status) conditions.push(eq(schema.anime.status, input.status))
+    if (input.startYear !== undefined) {
+      conditions.push(eq(schema.anime.startYear, input.startYear))
+    }
 
     if (input.genreId) {
       conditions.push(
@@ -106,7 +116,14 @@ export class AnimeService {
     const orderBy =
       input.sort === 'title'
         ? [direction(title), asc(schema.anime.id)]
-        : [direction(schema.anime.createdAt), asc(schema.anime.id)]
+        : input.sort === 'start'
+          ? [
+              sql`${direction(schema.anime.startYear)} nulls last`,
+              sql`${direction(schema.anime.startMonth)} nulls last`,
+              sql`${direction(schema.anime.startDay)} nulls last`,
+              asc(schema.anime.id),
+            ]
+          : [direction(schema.anime.createdAt), asc(schema.anime.id)]
 
     const [[countRow], rows] = await Promise.all([
       this.db
@@ -123,6 +140,9 @@ export class AnimeService {
           titleRomaji: schema.anime.titleRomaji,
           titleEnglish: schema.anime.titleEnglish,
           titleNative: schema.anime.titleNative,
+          startYear: schema.anime.startYear,
+          startMonth: schema.anime.startMonth,
+          startDay: schema.anime.startDay,
           createdAt: schema.anime.createdAt,
           updatedAt: schema.anime.updatedAt,
         })
@@ -152,6 +172,9 @@ export class AnimeService {
       titleRomaji: string | null
       titleEnglish: string | null
       titleNative: string | null
+      startYear: number | null
+      startMonth: number | null
+      startDay: number | null
       createdAt: Date
       updatedAt: Date
     }>,
@@ -211,6 +234,7 @@ export class AnimeService {
         titleRomaji: r.titleRomaji,
         titleEnglish: r.titleEnglish,
         titleNative: r.titleNative,
+        startDate: fuzzyFromParts(r.startYear, r.startMonth, r.startDay),
         coverUrl: cover ? this.media.publicUrl(cover) : null,
         coverBlurhash: cover?.blurhash ?? null,
         genres: (genresByAnime.get(r.id) ?? []).sort(),
@@ -245,7 +269,7 @@ export class AnimeService {
   }
 
   private async buildDetail(animeId: string): Promise<AnimeDetail> {
-    const [record, entityRow] = await Promise.all([
+    const [record, entityRow, relations] = await Promise.all([
       this.db.query.anime.findFirst({
         where: eq(schema.anime.id, animeId),
         with: {
@@ -256,6 +280,7 @@ export class AnimeService {
       this.db.query.entity.findFirst({
         where: eq(schema.entity.id, animeId),
       }),
+      this.relationsOf(animeId),
     ])
     if (!record || !entityRow)
       throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
@@ -282,11 +307,16 @@ export class AnimeService {
       titleEnglish: record.titleEnglish,
       titleNative: record.titleNative,
       description: record.description,
-      startDate: record.startDate,
-      endDate: record.endDate,
+      startDate: fuzzyFromParts(
+        record.startYear,
+        record.startMonth,
+        record.startDay,
+      ),
+      endDate: fuzzyFromParts(record.endYear, record.endMonth, record.endDay),
       genres: record.genres
         .map((g) => ({ id: g.genre.id, name: g.genre.name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
+      relations,
       media,
       headRev: entityRow.headRev,
       deletedAt: entityRow.deletedAt,
@@ -295,25 +325,114 @@ export class AnimeService {
     }
   }
 
+  private async relationsOf(animeId: string): Promise<AnimeRelation[]> {
+    const edges = await this.db
+      .select({
+        sourceId: schema.animeRelation.sourceId,
+        targetId: schema.animeRelation.targetId,
+        kind: schema.animeRelation.kind,
+      })
+      .from(schema.animeRelation)
+      .where(
+        or(
+          eq(schema.animeRelation.sourceId, animeId),
+          eq(schema.animeRelation.targetId, animeId),
+        ),
+      )
+    if (edges.length === 0) return []
+
+    const otherIds = [
+      ...new Set(
+        edges.map((e) => (e.sourceId === animeId ? e.targetId : e.sourceId)),
+      ),
+    ]
+    const [rows, covers] = await Promise.all([
+      this.db
+        .select({
+          id: schema.anime.id,
+          slug: schema.anime.slug,
+          format: schema.anime.format,
+          status: schema.anime.status,
+          titleRomaji: schema.anime.titleRomaji,
+          titleEnglish: schema.anime.titleEnglish,
+          startYear: schema.anime.startYear,
+        })
+        .from(schema.anime)
+        .innerJoin(schema.entity, eq(schema.entity.id, schema.anime.id))
+        .where(
+          and(
+            inArray(schema.anime.id, otherIds),
+            isNull(schema.entity.deletedAt),
+          ),
+        ),
+      this.db
+        .select({
+          animeId: schema.animeMedia.animeId,
+          storageKey: schema.mediaAsset.storageKey,
+          blurhash: schema.mediaAsset.blurhash,
+        })
+        .from(schema.animeMedia)
+        .innerJoin(
+          schema.mediaAsset,
+          eq(schema.mediaAsset.id, schema.animeMedia.mediaId),
+        )
+        .where(
+          and(
+            inArray(schema.animeMedia.animeId, otherIds),
+            eq(schema.animeMedia.type, 'COVER'),
+          ),
+        )
+        .orderBy(asc(schema.animeMedia.position)),
+    ])
+
+    const coverByAnime = new Map<string, (typeof covers)[number]>()
+    for (const c of covers) {
+      if (!coverByAnime.has(c.animeId)) coverByAnime.set(c.animeId, c)
+    }
+    const targets = new Map<string, AnimeRelationTarget>()
+    for (const row of rows) {
+      const cover = coverByAnime.get(row.id)
+      targets.set(row.id, {
+        ...row,
+        coverUrl: cover ? this.media.publicUrl(cover) : null,
+        coverBlurhash: cover?.blurhash ?? null,
+      })
+    }
+
+    return edges
+      .flatMap((edge) => {
+        const owned = edge.sourceId === animeId
+        const target = targets.get(owned ? edge.targetId : edge.sourceId)
+        if (!target) return []
+        return [
+          { kind: relationViewKind(edge.kind, owned), owned, anime: target },
+        ]
+      })
+      .sort(
+        (a, b) =>
+          ANIME_RELATION_VIEW_KINDS.indexOf(a.kind) -
+            ANIME_RELATION_VIEW_KINDS.indexOf(b.kind) ||
+          (a.anime.startYear ?? Infinity) - (b.anime.startYear ?? Infinity) ||
+          a.anime.slug.localeCompare(b.anime.slug),
+      )
+  }
+
   async create(
     input: CreateAnimeInput,
     editorId: string | null,
   ): Promise<AnimeDetail> {
-    const { genreIds, ...fields } = input
-    await this.assertSlugAvailable(fields.slug)
-    const uniqueGenreIds = [...new Set(genreIds ?? [])]
-    await this.assertGenresExist(uniqueGenreIds)
+    const document = {
+      ...input,
+      genreIds: [...new Set(input.genreIds ?? [])],
+      relations: [],
+      media: [],
+    }
+    await this.assertSlugAvailable(document.slug)
 
     const animeId = await this.db.transaction(async (tx) => {
       const entityId = await this.revisions.createEntity(tx, { kind: 'anime' })
-      await tx.insert(schema.anime).values({ id: entityId, ...fields })
-      if (uniqueGenreIds.length > 0) {
-        await tx
-          .insert(schema.animeGenre)
-          .values(
-            uniqueGenreIds.map((genreId) => ({ animeId: entityId, genreId })),
-          )
-      }
+      await this.assertRefs(tx, document, entityId)
+      await entityHandler('anime').apply(tx, 'create', entityId, document, null)
       await this.recordDirectWrite(tx, { entityId, op: 'create', editorId })
       return entityId
     })
@@ -324,30 +443,19 @@ export class AnimeService {
     input: UpdateAnimeInput,
     editorId: string | null,
   ): Promise<AnimeDetail> {
-    const { id, genreIds, ...patch } = input
+    const { id, ...rest } = input
+    const patch = Object.fromEntries(
+      Object.entries(rest).filter(([, value]) => value !== undefined),
+    )
     await this.assertAnimeExists(id)
-    if (patch.slug !== undefined) await this.assertSlugAvailable(patch.slug, id)
-    const uniqueGenreIds = genreIds && [...new Set(genreIds)]
-    if (uniqueGenreIds) await this.assertGenresExist(uniqueGenreIds)
-
-    if (Object.keys(patch).length === 0 && !uniqueGenreIds) {
-      return this.buildDetail(id)
+    if (typeof patch.slug === 'string') {
+      await this.assertSlugAvailable(patch.slug, id)
     }
+    if (Object.keys(patch).length === 0) return this.buildDetail(id)
 
     await this.db.transaction(async (tx) => {
-      if (Object.keys(patch).length > 0) {
-        await tx.update(schema.anime).set(patch).where(eq(schema.anime.id, id))
-      }
-      if (uniqueGenreIds) {
-        await tx
-          .delete(schema.animeGenre)
-          .where(eq(schema.animeGenre.animeId, id))
-        if (uniqueGenreIds.length > 0) {
-          await tx
-            .insert(schema.animeGenre)
-            .values(uniqueGenreIds.map((genreId) => ({ animeId: id, genreId })))
-        }
-      }
+      await this.assertRefs(tx, patch, id)
+      await entityHandler('anime').apply(tx, 'update', id, patch, null)
       await this.recordDirectWrite(tx, { entityId: id, op: 'update', editorId })
     })
     return this.buildDetail(id)
@@ -498,22 +606,19 @@ export class AnimeService {
     }
   }
 
-  private async assertGenresExist(genreIds: string[]): Promise<void> {
-    if (genreIds.length === 0) return
-    const rows = await this.db
-      .select({ id: schema.genre.id })
-      .from(schema.genre)
-      .innerJoin(schema.entity, eq(schema.entity.id, schema.genre.id))
-      .where(
-        and(
-          inArray(schema.genre.id, genreIds),
-          isNull(schema.entity.deletedAt),
-        ),
-      )
-    if (rows.length !== genreIds.length) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'One or more genres do not exist',
-      })
+  private async assertRefs(
+    tx: Tx,
+    payload: Record<string, unknown>,
+    entityId: string,
+  ): Promise<void> {
+    const problems = await entityHandler('anime').validateRefs(
+      tx,
+      payload,
+      new Map(),
+      entityId,
+    )
+    if (problems.length > 0) {
+      throw new ORPCError('NOT_FOUND', { message: problems.join('; ') })
     }
   }
 }

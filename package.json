@@ -63,7 +63,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "turbo run lint check-types test && bun run format:check",
-    "check:fix": "bun run format && bun run lint:fix",
+    "fix": "bun run format && bun run lint:fix",
     "clean": "turbo run clean && rm -rf .turbo node_modules",
     "db:generate": "turbo run db:generate --filter=@hayasedb/db",
     "db:migrate": "turbo run db:migrate --filter=@hayasedb/db",

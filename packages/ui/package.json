@@ -15,6 +15,7 @@
     "@hayasedb/domain": "workspace:*",
     "@iconify-json/lucide": "^1.2.123",
     "@iconify-json/simple-icons": "^1.2.93",
+    "@internationalized/date": "3.12.2",
     "@number-flow/vue": "^0.5.2",
     "@nuxt/ui": "4.10.0",
     "@vueuse/core": "catalog:",

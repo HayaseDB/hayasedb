@@ -1,11 +1,19 @@
 <script setup lang="ts" generic="T extends SelectValue">
 import type { SelectValue } from '@nuxt/ui'
 
+defineOptions({ inheritAttrs: false })
+
 const model = defineModel<T>()
 
 const props = defineProps<{
   clearValue?: T
 }>()
+
+const attrs = useAttrs()
+const selectAttrs = computed(() => {
+  const { class: _class, ...rest } = attrs
+  return rest
+})
 
 const hasValue = computed(
   () => model.value !== undefined && model.value !== null && model.value !== '',
@@ -17,24 +25,22 @@ function clear() {
 </script>
 
 <template>
-  <USelect v-model="model">
-    <template #trailing>
-      <UButton
-        v-if="hasValue"
-        icon="i-lucide-x"
-        color="neutral"
-        variant="link"
-        size="xs"
-        aria-label="Clear selection"
-        class="p-0"
-        @pointerdown.stop.prevent
-        @click.stop.prevent="clear"
-      />
-      <UIcon
-        v-else
-        name="i-lucide-chevron-down"
-        class="text-dimmed size-5 shrink-0"
-      />
-    </template>
-  </USelect>
+  <div class="relative" :class="attrs.class">
+    <USelect
+      v-model="model"
+      v-bind="selectAttrs"
+      class="w-full"
+      :ui="{ trailing: hasValue ? 'invisible' : undefined }"
+    />
+    <UButton
+      v-if="hasValue"
+      icon="i-lucide-x"
+      color="neutral"
+      variant="link"
+      size="xs"
+      aria-label="Clear selection"
+      class="absolute inset-y-0 end-0 pe-2.5"
+      @click="clear"
+    />
+  </div>
 </template>

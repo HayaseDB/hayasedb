@@ -4,6 +4,7 @@ const {
   format,
   status,
   genreId,
+  year,
   sortKey,
   page,
   pageSize,
@@ -54,7 +55,9 @@ const rangeEnd = computed(() => Math.min(page.value * pageSize, total.value))
       v-model:format="format"
       v-model:status="status"
       v-model:genre-id="genreId"
+      v-model:year="year"
       v-model:sort-key="sortKey"
+      show-year
       :genres="genres"
       class="mb-4"
     />

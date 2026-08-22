@@ -185,6 +185,7 @@ export class ChangesetApplyService {
         tx,
         payload,
         siblingCreates,
+        change.entityId,
       )
       for (const problem of refProblems) {
         conflicts.push({

@@ -125,6 +125,7 @@ export async function runMigrations(url: string): Promise<void> {
   try {
     await waitForConnection(client)
     await client.unsafe(`SET lock_timeout = ${DDL_LOCK_TIMEOUT_MS}`)
+    await client.unsafe(`SET TIME ZONE 'UTC'`)
     await acquireLock(client)
     locked = true
 

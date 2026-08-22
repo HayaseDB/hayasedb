@@ -5,7 +5,12 @@ import {
   createAnimeInputSchema,
   type CreateAnimeInput,
 } from '@hayasedb/contract'
-import type { AnimeFormState, AnimeMediaController } from '#imports'
+import type {
+  AnimeFormState,
+  AnimeMediaController,
+  AnimeRelationEdgeItem,
+  AnimeRelationSearchResult,
+} from '#imports'
 
 const state = defineModel<AnimeFormState>('state', { required: true })
 
@@ -19,13 +24,18 @@ const props = withDefaults(
     changedFields?: (keyof AnimeFormState)[]
     saving: boolean
     submitLabel?: string
+    selfId?: string | null
+    relationBaseline?: AnimeRelationEdgeItem[]
     onSubmit: (data: CreateAnimeInput) => unknown | Promise<unknown>
     onCreateGenre?: (name: string) => void
+    onSearchAnime: (query: string) => Promise<AnimeRelationSearchResult[]>
   }>(),
   {
     proposedGenres: () => [],
     changedFields: () => [],
     submitLabel: undefined,
+    selfId: null,
+    relationBaseline: undefined,
     onCreateGenre: undefined,
   },
 )
@@ -83,6 +93,11 @@ function onDrop(index: number) {
 
 const tabs = [
   { label: 'General', icon: 'i-lucide-file-text', slot: 'general' as const },
+  {
+    label: 'Relations',
+    icon: 'i-lucide-git-branch',
+    slot: 'relations' as const,
+  },
   { label: 'Images', icon: 'i-lucide-images', slot: 'images' as const },
 ]
 const activeTab = ref('0')
@@ -147,23 +162,25 @@ const activeTab = ref('0')
           </UPageCard>
 
           <UPageCard title="Format" variant="subtle">
-            <UFormField name="format">
-              <AppSelect
-                v-model="state.format"
-                :items="formatItems"
-                :clear-value="null"
-                value-key="value"
-                placeholder="None"
-                class="w-full"
-                :highlight="changed('format')"
-                :color="changed('format') ? 'info' : undefined"
-              />
-            </UFormField>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <UFormField label="Format" name="format">
+                <AppSelect
+                  v-model="state.format"
+                  :items="formatItems"
+                  :clear-value="null"
+                  value-key="value"
+                  placeholder="None"
+                  class="w-full"
+                  :highlight="changed('format')"
+                  :color="changed('format') ? 'info' : undefined"
+                />
+              </UFormField>
+            </div>
           </UPageCard>
 
           <UPageCard title="Release Data" variant="subtle">
             <div class="grid gap-4 sm:grid-cols-2">
-              <UFormField label="Status" name="status">
+              <UFormField label="Status" name="status" class="sm:col-span-2">
                 <AppSelect
                   v-model="state.status"
                   :items="statusItems"
@@ -175,21 +192,16 @@ const activeTab = ref('0')
                   :color="changed('status') ? 'info' : undefined"
                 />
               </UFormField>
-              <div class="hidden sm:block" />
               <UFormField label="Start date" name="startDate">
-                <UInput
+                <AnimeFuzzyDateInput
                   v-model="state.startDate"
-                  type="date"
-                  class="w-full"
                   :highlight="changed('startDate')"
                   :color="changed('startDate') ? 'info' : undefined"
                 />
               </UFormField>
               <UFormField label="End date" name="endDate">
-                <UInput
+                <AnimeFuzzyDateInput
                   v-model="state.endDate"
-                  type="date"
-                  class="w-full"
                   :highlight="changed('endDate')"
                   :color="changed('endDate') ? 'info' : undefined"
                 />
@@ -232,6 +244,23 @@ const activeTab = ref('0')
                 @create="handleCreateGenre"
               />
             </UFormField>
+          </UPageCard>
+        </div>
+      </template>
+
+      <template #relations>
+        <div class="flex flex-col gap-6">
+          <UPageCard
+            title="Relations"
+            description="Link this anime to its prequels, sequels, side stories and alternatives. Relations are shown from this anime's point of view."
+            variant="subtle"
+          >
+            <AnimeRelationEditor
+              v-model="state.relationEdges"
+              :self-id="selfId"
+              :search-anime="onSearchAnime"
+              :baseline="isEdit ? relationBaseline : undefined"
+            />
           </UPageCard>
         </div>
       </template>

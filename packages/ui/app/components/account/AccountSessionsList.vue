@@ -97,6 +97,7 @@ function askRevokeOthers() {
                   :datetime="session.createdAt"
                   date-style="medium"
                   time-style="short"
+                  locale="en"
                 />
               </p>
             </div>

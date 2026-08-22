@@ -194,6 +194,7 @@ const columns: TableColumn<AdminUser>[] = [
         h(NuxtTime, {
           datetime: row.original.createdAt,
           dateStyle: 'medium',
+          locale: 'en',
         }),
       ),
   },

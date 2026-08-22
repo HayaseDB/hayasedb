@@ -174,6 +174,16 @@ useSeoMeta({
             :genres="genreItems"
           />
 
+          <div v-if="detail.relations.length" class="mt-8">
+            <h2 class="text-highlighted mb-4 text-lg font-semibold">
+              Relations
+            </h2>
+            <AnimeRelationList
+              :relations="detail.relations"
+              :to="(anime: { slug: string }) => `/anime/${anime.slug}`"
+            />
+          </div>
+
           <div v-if="galleryItems.length" class="mt-8">
             <h2 class="text-highlighted mb-4 text-lg font-semibold">Gallery</h2>
             <AnimeGallery :items="galleryItems" />

@@ -2,9 +2,9 @@ import { ANIME_MEDIA_TYPES } from './anime'
 import type { EntityKind } from './contribution'
 
 export type FieldRender =
-  'text' | 'longtext' | 'enum' | 'date' | 'ref' | 'media'
+  'text' | 'longtext' | 'enum' | 'fuzzydate' | 'ref' | 'media'
 
-export type RefTarget = 'genre' | 'mediaAsset'
+export type RefTarget = 'genre' | 'mediaAsset' | 'anime'
 
 export type FieldEmpty = '' | null | 'emptyArray'
 
@@ -36,12 +36,19 @@ export const ANIME_FIELD_META = {
   titleEnglish: { as: 'text', empty: '' },
   titleNative: { as: 'text', empty: '' },
   description: { as: 'longtext', empty: '' },
-  startDate: { as: 'date', empty: '' },
-  endDate: { as: 'date', empty: '' },
+  startDate: { as: 'fuzzydate', empty: null },
+  endDate: { as: 'fuzzydate', empty: null },
   genreIds: {
     as: 'ref',
     ref: 'genre',
     refPath: 'self',
+    unordered: true,
+    empty: 'emptyArray',
+  },
+  relations: {
+    as: 'ref',
+    ref: 'anime',
+    refPath: 'targetId',
     unordered: true,
     empty: 'emptyArray',
   },
@@ -77,6 +84,7 @@ export const ANIME_FIELD_ORDER = [
   'startDate',
   'endDate',
   'genreIds',
+  'relations',
   'media',
 ] as const satisfies ReadonlyArray<keyof typeof ANIME_FIELD_META>
 

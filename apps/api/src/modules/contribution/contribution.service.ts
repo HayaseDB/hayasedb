@@ -29,9 +29,9 @@ function changeApplyRank(change: {
   entityKind: EntityKind
 }): number {
   if (change.entityKind === 'genre') {
-    return change.op === 'delete' ? 2 : 0
+    return change.op === 'delete' ? 3 : 0
   }
-  return 1
+  return change.op === 'create' ? 1 : 2
 }
 
 @Injectable()
@@ -132,6 +132,7 @@ export class ContributionService {
           tx,
           payload,
           siblingCreates,
+          change.entityId,
         )
         if (refProblems.length > 0) {
           throw new ORPCError('NOT_FOUND', {

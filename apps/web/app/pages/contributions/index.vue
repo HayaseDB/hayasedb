@@ -55,7 +55,7 @@ useSeoMeta({ title: 'My contributions' })
           variant="subtle"
           size="sm"
         />
-        <UTooltip :text="formatDateTime(item.submittedAt)">
+        <UTooltip :disabled="!item.submittedAt">
           <span class="text-muted text-xs">
             <NuxtTime
               v-if="item.submittedAt"
@@ -65,6 +65,15 @@ useSeoMeta({ title: 'My contributions' })
             />
             <template v-else>—</template>
           </span>
+          <template v-if="item.submittedAt" #content>
+            <NuxtTime
+              class="text-xs"
+              :datetime="item.submittedAt"
+              date-style="medium"
+              time-style="short"
+              locale="en"
+            />
+          </template>
         </UTooltip>
       </NuxtLink>
     </div>

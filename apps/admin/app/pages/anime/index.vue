@@ -23,7 +23,10 @@ const {
   total,
   pending,
   refresh,
-} = await useAnimeList({ key: 'admin-anime-list', pageSize: 20 })
+} = await useAnimeList({
+  key: 'admin-anime-list',
+  pageSize: 20,
+})
 
 const actions = useAnimeActions()
 
@@ -61,6 +64,7 @@ function askDelete(item: AnimeListItem) {
 }
 
 const UButton = resolveComponent('UButton')
+const ULink = resolveComponent('ULink')
 const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const AnimeCoverImage = resolveComponent('AnimeCoverImage')
@@ -93,9 +97,13 @@ const columns: TableColumn<AnimeListItem>[] = [
     cell: ({ row }) =>
       h('div', { class: 'flex min-w-0 flex-col' }, [
         h(
-          'span',
-          { class: 'text-highlighted truncate text-sm font-medium' },
-          row.original.titleEnglish ?? '',
+          ULink,
+          {
+            to: `/anime/${row.original.id}`,
+            class:
+              'text-highlighted truncate text-sm font-medium hover:underline',
+          },
+          () => row.original.titleEnglish ?? '',
         ),
         h(
           'span',

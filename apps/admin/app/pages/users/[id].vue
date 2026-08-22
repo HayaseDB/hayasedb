@@ -225,7 +225,11 @@ function askDeleteUser() {
               <p class="text-muted truncate text-sm">{{ user.email }}</p>
               <p class="text-muted mt-1 text-xs">
                 Joined
-                <NuxtTime :datetime="user.createdAt" date-style="medium" />
+                <NuxtTime
+                  :datetime="user.createdAt"
+                  date-style="medium"
+                  locale="en"
+                />
               </p>
             </div>
           </div>
@@ -421,7 +425,8 @@ function askDeleteUser() {
                       <NuxtTime
                         :datetime="user.banExpires"
                         date-style="medium"
-                        time-style="short" /></template
+                        time-style="short"
+                        locale="en" /></template
                     ><template v-else> permanently</template>.
                   </p>
                   <p v-else class="text-muted mt-1 text-sm">

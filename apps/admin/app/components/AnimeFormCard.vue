@@ -31,10 +31,23 @@ watch(
   },
 )
 
+const relationBaseline = computed(
+  () => buildAnimeFormState(props.anime).relationEdges,
+)
+
+async function searchAnime(q: string) {
+  const { items } = await api.anime.list({ q, limit: 10 })
+  return items
+}
+
 async function submit(data: CreateAnimeInput) {
   const ok = await actions.save(props.anime, {
     data,
     changedFields: changedFields.value,
+    relations: {
+      edges: state.relationEdges,
+      baseline: relationBaseline.value,
+    },
     commitMedia: (animeId) => media.commit(animeId),
   })
   if (ok && props.anime) await props.onSaved?.()
@@ -51,6 +64,9 @@ async function submit(data: CreateAnimeInput) {
     :is-dirty="isDirty"
     :changed-fields="changedFields"
     :saving="actions.saving.value"
+    :self-id="anime?.id ?? null"
     :on-submit="submit"
+    :on-search-anime="searchAnime"
+    :relation-baseline="relationBaseline"
   />
 </template>
