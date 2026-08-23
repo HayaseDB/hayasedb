@@ -1,5 +1,34 @@
 # @hayasedb/api
 
+## 0.9.0
+
+### Minor Changes
+
+- bba5b1d: Replace the hard-wired MinIO integration with a provider-agnostic storage layer selected by environment, add a filesystem driver so tests and local development run without object-storage infrastructure, and drop the S3 vocabulary that had leaked into the database
+  
+  - New `@hayasedb/storage` package following the `@hayasedb/mail` driver pattern: a `StorageDriver` interface (`put`, `get`, `removeByPrefix`, `publicUrl`, `init`, plus `provider` and `container`), a `StorageConfig` discriminated union, and a `createStorage` factory that switches on the driver with an exhaustive `never` check. `init()` replaces the S3-specific bucket bootstrap so each driver prepares its own container (bucket create plus policy, or `mkdir -p`), and is invoked from a Nest lifecycle hook to keep construction synchronous
+  - Drivers: `minio` ports the existing client calls and builds path-style public URLs; `local` stores bytes at `${rootDir}/${key}` with a `.meta.json` sidecar so `contentType` and `cacheControl` survive a round trip, which a filesystem cannot otherwise record. A single `resolveKey` helper guards every method and returns `null` for traversal, absolute and empty keys, making a hostile key indistinguishable from a miss. A shared contract suite is exported from `@hayasedb/storage/testing` and run against both drivers
+  - API wiring mirrors `apps/api/src/mail/`: a `STORAGE` token, a `@Global()` `StorageModule` registered in `AppModule`, and a `StorageLifecycle` bootstrap hook. `StorageService` is deleted and consumers inject the token instead. The module was previously imported by the anime, contribution and moderation modules without being used; those imports are removed. `nestjs-minio-client` is dropped in favour of a direct `minio` dependency in the package
+  - `LocalStorageController` serves the local driver at `/api/files/*` using the Express 5 named-wildcard param, marked `@OpenEndpoint()` and `@AllowAnonymous()` because the API-access, throttler and auth guards are all global; `OpenEndpoint` also skips throttling, which matters when one page loads many images. Bytes are served through `driver.get()` so the controller never handles a filesystem path, and requests are refused unless the local driver is active
+  - Environment: `MINIO_*` becomes `STORAGE_*`, and the storage block is now a discriminated union on `STORAGE_DRIVER` rather than a flat object with conditional refinements. Only the selected driver's variables are read, validated and present on the parsed result, so `minio` requires its endpoint and credentials while `local` requires `STORAGE_LOCAL_ROOT`, and variables belonging to the other driver are ignored. `STORAGE_DRIVER` is required rather than defaulted: defaulting it would silently select `minio` and then report a missing endpoint instead of a missing driver. `local` is rejected when `NODE_ENV=production` because the filesystem is not shared across API replicas
+  - Because a union cannot be narrowed through a `ConfigService` path lookup, the storage factory now consumes the validated `Env` object via `getValidatedEnv()` and narrows on `env.STORAGE_DRIVER`. Reading a MinIO variable on the local branch is a compile error
+  - URLs: `MEDIA_KEY_NAMESPACE` is removed, so object keys are `<sha>/original.webp` and public URLs no longer contain a doubled `media/media/` segment. The remaining path segment is the bucket, which must stay first because Traefik routes the CDN host at the MinIO S3 root by host rule with no path stripping
+  - Database: `media_asset.bucket` is dropped and replaced by a provider-neutral `storage_provider`, and `storage_key` now holds a bare checksum. Migrations `0013`-`0016` follow the established add-nullable, backfill, `SET NOT NULL` sequence, mirroring `0010`-`0012`: adding a `NOT NULL` column without a default fails on a populated table, and the migrator applies every pending file in one transaction, so the whole deploy would abort. `0015` is hand-written because the namespace was stored inside `storage_key`, so removing the code alone would leave legacy rows resolving to the old path
+  - Tests: the integration harness runs on the local driver with a temporary root and a pre-allocated port, so `STORAGE_PUBLIC_URL` is absolute for tests that fetch a stored URL directly, and the root is removed on teardown. MinIO leaves the shared integration setup and is started only by the storage contract test, so the remaining suites no longer pay for a container. `media.service.test.ts` replaces its `as unknown as` cast with a literal checked by `satisfies StorageDriver`, so interface changes now fail to compile. End-to-end runs on the local driver, and `ensure-db.ts` clears the storage root wherever it drops the kept database, since the database and the object store became independently resettable once storage moved off MinIO
+  - CI: the end-to-end job loses its MinIO container, health-poll loop and dependence on Docker
+  
+  Deploying this requires manual steps: rename the storage variables in each environment, keeping the MinIO key values unchanged because the compose stack derives the server's root credentials from them; then move existing objects from the `media/` prefix to the bucket root and rewrite the absolute URLs stored in `user.image`. Migrations normalise `storage_key` automatically at boot, so stored images resolve to the new path as soon as the API restarts and stay unreachable until the objects are moved.
+
+### Patch Changes
+
+- Updated dependencies [bba5b1d]
+  - @hayasedb/storage@0.9.0
+  - @hayasedb/domain@0.9.0
+  - @hayasedb/db@0.9.0
+  - @hayasedb/contract@0.9.0
+  - @hayasedb/auth@0.9.0
+  - @hayasedb/mail@0.9.0
+
 ## 0.8.0
 
 ### Minor Changes
