@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG BUN_VERSION=1.3.14
+ARG BUN_VERSION=1.4.0
 ARG TURBO_VERSION=2.10.5
 
 FROM oven/bun:${BUN_VERSION}-slim AS base

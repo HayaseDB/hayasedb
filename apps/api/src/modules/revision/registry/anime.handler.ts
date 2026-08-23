@@ -60,7 +60,9 @@ function sortedRelations(
   )
 }
 
-function normalizedMedia(items: AnimeDocumentMedia[]): AnimeDocumentMedia[] {
+export function normalizedMedia(
+  items: AnimeDocumentMedia[],
+): AnimeDocumentMedia[] {
   return ANIME_MEDIA_TYPES.flatMap((type) =>
     items
       .filter((m) => m.type === type)

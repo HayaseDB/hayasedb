@@ -19,7 +19,7 @@ import {
 import type { Request } from 'express'
 import type { Env } from '../config/env.schema'
 
-const OPEN_ENDPOINT = 'OPEN_ENDPOINT'
+export const OPEN_ENDPOINT = 'OPEN_ENDPOINT'
 
 export const OpenEndpoint = () =>
   applyDecorators(SkipThrottle(), SetMetadata(OPEN_ENDPOINT, true))

@@ -1,0 +1,10 @@
+{
+  "extends": "@hayasedb/typescript-config/base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["*.ts", "fixtures", "setup", "tests", "scripts"]
+}

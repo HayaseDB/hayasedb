@@ -122,6 +122,7 @@ const activeTab = ref('0')
             <div class="flex flex-col gap-4">
               <UFormField label="Slug" name="slug" required>
                 <UInput
+                  id="anime-slug"
                   v-model="state.slug"
                   placeholder="cowboy-bebop"
                   class="w-full"
@@ -132,6 +133,7 @@ const activeTab = ref('0')
               <div class="grid gap-4 sm:grid-cols-2">
                 <UFormField label="English title" name="titleEnglish">
                   <UInput
+                    id="anime-titleEnglish"
                     v-model="state.titleEnglish"
                     placeholder="Attack on Titan"
                     class="w-full"
@@ -141,6 +143,7 @@ const activeTab = ref('0')
                 </UFormField>
                 <UFormField label="Romaji title" name="titleRomaji">
                   <UInput
+                    id="anime-titleRomaji"
                     v-model="state.titleRomaji"
                     placeholder="Shingeki no Kyojin"
                     class="w-full"
@@ -150,6 +153,7 @@ const activeTab = ref('0')
                 </UFormField>
                 <UFormField label="Native title" name="titleNative">
                   <UInput
+                    id="anime-titleNative"
                     v-model="state.titleNative"
                     placeholder="進撃の巨人"
                     class="w-full"

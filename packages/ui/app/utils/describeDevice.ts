@@ -13,12 +13,12 @@ export function describeDevice(userAgent?: string | null): string {
             : 'Browser'
   const os = /Windows/.test(userAgent)
     ? 'Windows'
-    : /Mac OS|Macintosh/.test(userAgent)
-      ? 'macOS'
-      : /Android/.test(userAgent)
-        ? 'Android'
-        : /iPhone|iPad|iOS/.test(userAgent)
-          ? 'iOS'
+    : /iPhone|iPad|iPod|iOS/.test(userAgent)
+      ? 'iOS'
+      : /Mac OS|Macintosh/.test(userAgent)
+        ? 'macOS'
+        : /Android/.test(userAgent)
+          ? 'Android'
           : /Linux/.test(userAgent)
             ? 'Linux'
             : 'Unknown OS'

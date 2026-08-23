@@ -28,7 +28,9 @@
     "db:studio": "drizzle-kit studio",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo",
+    "test": "bun --bun vitest run",
+    "test:integration": "bun --bun vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
     "@hayasedb/domain": "workspace:*",
@@ -38,11 +40,13 @@
   "devDependencies": {
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
+    "@testcontainers/postgresql": "catalog:",
     "@types/node": "^22.20.1",
     "dotenv": "catalog:",
     "drizzle-kit": "catalog:",
     "tsdown": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

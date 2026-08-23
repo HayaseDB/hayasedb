@@ -23,7 +23,7 @@ interface RevertChangeDraft {
   payload: Record<string, unknown>
 }
 
-function isUniqueViolation(error: unknown): boolean {
+export function isUniqueViolation(error: unknown): boolean {
   let current: unknown = error
   for (let depth = 0; depth < 5 && current; depth += 1) {
     if (

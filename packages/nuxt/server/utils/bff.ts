@@ -46,7 +46,7 @@ export function prepareProxyHeaders(
 
   event.node.req.headers = Object.fromEntries(
     Object.entries(event.node.req.headers).filter(
-      ([name]) => !UNTRUSTED_HEADERS.has(name),
+      ([name]) => !UNTRUSTED_HEADERS.has(name.toLowerCase()),
     ),
   )
 

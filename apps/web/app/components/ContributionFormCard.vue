@@ -167,6 +167,7 @@ async function submit(data: CreateAnimeInput) {
       <UInput
         v-model="summary"
         placeholder="Describe your change (required)…"
+        aria-label="Change summary"
         icon="i-lucide-message-square-text"
         class="max-w-md flex-1"
         :maxlength="summaryMaxLength"

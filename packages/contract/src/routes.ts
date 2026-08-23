@@ -69,7 +69,8 @@ function createRouteMatcher(routes: readonly ContractRoute[]): RouteMatcher {
 
   return {
     matches(method, pathname) {
-      const verb = method === 'HEAD' ? 'GET' : method.toUpperCase()
+      const upper = method.toUpperCase()
+      const verb = upper === 'HEAD' ? 'GET' : upper
       return compiled.some(
         (route) => route.method === verb && route.regex.test(pathname),
       )

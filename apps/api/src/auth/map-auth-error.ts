@@ -7,7 +7,7 @@ const STATUS_TO_CODE: Record<number, string> = {
   403: 'FORBIDDEN',
   404: 'NOT_FOUND',
   409: 'CONFLICT',
-  422: 'INPUT_VALIDATION_FAILED',
+  422: 'UNPROCESSABLE_CONTENT',
   429: 'TOO_MANY_REQUESTS',
 }
 
@@ -20,6 +20,7 @@ const CODE_OVERRIDES: Record<string, string> = {
   INVALID_TOKEN: 'BAD_REQUEST',
   INVALID_EMAIL_OR_PASSWORD: 'UNAUTHORIZED',
   BANNED_USER: 'FORBIDDEN',
+  INVALID_API_KEY: 'UNAUTHORIZED',
 }
 
 export function mapAuthError(

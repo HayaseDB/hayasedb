@@ -7,9 +7,11 @@
     "build": "nest build -b swc",
     "start": "node dist/src/main",
     "seed:demo": "nest build -b swc && node dist/src/seed-demo",
-    "check-types": "tsc --noEmit -p tsconfig.json",
+    "check-types": "tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint .",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo",
+    "test": "bun --bun vitest run",
+    "test:integration": "bun --bun vitest run --config vitest.int.config.mts"
   },
   "dependencies": {
     "@hayasedb/auth": "workspace:*",
@@ -44,10 +46,18 @@
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.24",
+    "@nestjs/testing": "^11.2.0",
+    "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.47",
+    "@testcontainers/minio": "catalog:",
+    "@testcontainers/postgresql": "catalog:",
+    "@testcontainers/redis": "catalog:",
     "@types/express": "^5.0.0",
     "@types/node": "^22.20.1",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "unplugin-swc": "catalog:",
+    "vitest": "catalog:"
   }
 }

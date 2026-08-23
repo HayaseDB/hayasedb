@@ -20,7 +20,8 @@
     "dev": "tsdown --watch --no-clean",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo",
+    "test": "bun --bun vitest run"
   },
   "dependencies": {
     "@better-auth/api-key": "catalog:",
@@ -37,6 +38,7 @@
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

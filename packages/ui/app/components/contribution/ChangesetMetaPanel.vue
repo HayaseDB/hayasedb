@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { ChangesetDetail } from '@hayasedb/contract'
+import type { Serialized } from '#imports'
 
 const props = withDefaults(
   defineProps<{
-    changeset: ChangesetDetail
+    changeset: Serialized<ChangesetDetail>
     supersedesTo?: string | null
     unknownAuthorLabel?: string
     decidedByLabel?: string

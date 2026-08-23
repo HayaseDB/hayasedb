@@ -1,5 +1,5 @@
 import { apiKey } from '@better-auth/api-key'
-import { betterAuth } from 'better-auth'
+import { type BetterAuthOptions, betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin } from 'better-auth/plugins'
 import { PASSWORD_MAX, PASSWORD_MIN } from '@hayasedb/contract'
@@ -44,6 +44,7 @@ export interface AuthOptions {
   errorCallbackURL: string
   mailer?: AuthMailer
   onDeleteUser?: (user: { id: string; email: string }) => Promise<void> | void
+  logger?: BetterAuthOptions['logger']
 }
 
 export function createAuth(opts: AuthOptions) {
@@ -162,6 +163,7 @@ export function createAuth(opts: AuthOptions) {
       },
     },
     onAPIError: { errorURL: opts.errorCallbackURL },
+    logger: opts.logger,
     plugins: [
       admin(),
       apiKey({

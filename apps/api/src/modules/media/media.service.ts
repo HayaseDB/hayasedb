@@ -21,6 +21,56 @@ import { StorageService } from '../../storage/storage.service'
 const BLURHASH_COMPONENTS_X = 4
 const BLURHASH_COMPONENTS_Y = 3
 
+export interface ProcessedImage {
+  output: Buffer
+  width: number
+  height: number
+  blurhash: string | null
+  checksum: string
+}
+
+export async function processImage(input: Buffer): Promise<ProcessedImage> {
+  const { data, info } = await sharp(input)
+    .rotate()
+    .resize(MEDIA_MAX_DIMENSION, MEDIA_MAX_DIMENSION, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .webp({ quality: MEDIA_OUTPUT_QUALITY })
+    .toBuffer({ resolveWithObject: true })
+  return {
+    output: data,
+    width: info.width,
+    height: info.height,
+    blurhash: await computeBlurhash(data),
+    checksum: createHash('sha256').update(data).digest('hex'),
+  }
+}
+
+const imageLogger = new Logger('MediaImage')
+
+async function computeBlurhash(webp: Buffer): Promise<string | null> {
+  try {
+    const { data, info } = await sharp(webp)
+      .raw()
+      .ensureAlpha()
+      .resize(32, 32, { fit: 'inside' })
+      .toBuffer({ resolveWithObject: true })
+    return encode(
+      new Uint8ClampedArray(data),
+      info.width,
+      info.height,
+      BLURHASH_COMPONENTS_X,
+      BLURHASH_COMPONENTS_Y,
+    )
+  } catch (error) {
+    imageLogger.warn(
+      `Blurhash computation failed: ${error instanceof Error ? error.message : String(error)}`,
+    )
+    return null
+  }
+}
+
 export interface StoredMediaAsset {
   id: string
   storageKey: string
@@ -44,28 +94,14 @@ export class MediaService {
   ): Promise<StoredMediaAsset> {
     const input = Buffer.from(await file.arrayBuffer())
 
-    let output: Buffer
-    let width: number
-    let height: number
-    let blurhash: string | null
+    let processed: ProcessedImage
     try {
-      const result = await sharp(input)
-        .rotate()
-        .resize(MEDIA_MAX_DIMENSION, MEDIA_MAX_DIMENSION, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .webp({ quality: MEDIA_OUTPUT_QUALITY })
-        .toBuffer({ resolveWithObject: true })
-      output = result.data
-      width = result.info.width
-      height = result.info.height
-      blurhash = await this.computeBlurhash(output)
+      processed = await processImage(input)
     } catch (error) {
       this.logger.warn(
         `Rejected media upload: ${error instanceof Error ? error.message : String(error)}`,
       )
-      throw new ORPCError('INPUT_VALIDATION_FAILED', {
+      throw new ORPCError('UNPROCESSABLE_CONTENT', {
         message: 'The uploaded file is not a valid image',
         data: {
           issues: [
@@ -77,8 +113,7 @@ export class MediaService {
         },
       })
     }
-
-    const checksum = createHash('sha256').update(output).digest('hex')
+    const { output, width, height, blurhash, checksum } = processed
 
     const existing = await this.findByChecksum(checksum)
     if (existing) return existing
@@ -147,28 +182,6 @@ export class MediaService {
       .where(eq(schema.mediaAsset.id, id))
       .limit(1)
     return row ?? null
-  }
-
-  private async computeBlurhash(webp: Buffer): Promise<string | null> {
-    try {
-      const { data, info } = await sharp(webp)
-        .raw()
-        .ensureAlpha()
-        .resize(32, 32, { fit: 'inside' })
-        .toBuffer({ resolveWithObject: true })
-      return encode(
-        new Uint8ClampedArray(data),
-        info.width,
-        info.height,
-        BLURHASH_COMPONENTS_X,
-        BLURHASH_COMPONENTS_Y,
-      )
-    } catch (error) {
-      this.logger.warn(
-        `Blurhash computation failed: ${error instanceof Error ? error.message : String(error)}`,
-      )
-      return null
-    }
   }
 }
 

@@ -1,0 +1,26 @@
+{
+  "name": "@hayasedb/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf playwright-report test-results .turbo",
+    "test:e2e:smoke": "playwright test --grep @smoke"
+  },
+  "devDependencies": {
+    "@hayasedb/admin": "workspace:*",
+    "@hayasedb/api": "workspace:*",
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
+    "@hayasedb/web": "workspace:*",
+    "@playwright/test": "catalog:",
+    "@types/node": "^22.20.1",
+    "dotenv": "catalog:",
+    "postgres": "catalog:",
+    "typescript": "catalog:"
+  }
+}

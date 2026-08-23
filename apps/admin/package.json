@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "postinstall": "nuxt prepare",
     "prepare": "bun run postinstall",
-    "clean": "rm -rf .output .nuxt .nitro .turbo"
+    "clean": "rm -rf .output .nuxt .nitro .turbo",
+    "test": "bun --bun vitest run"
   },
   "dependencies": {
     "@better-auth/api-key": "catalog:",
@@ -39,8 +40,12 @@
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
     "@nuxt/eslint": "^1.17.0",
+    "@nuxt/test-utils": "catalog:",
+    "@vue/test-utils": "catalog:",
     "eslint": "catalog:",
+    "happy-dom": "catalog:",
     "typescript": "catalog:",
+    "vitest": "catalog:",
     "vue-tsc": "catalog:"
   }
 }

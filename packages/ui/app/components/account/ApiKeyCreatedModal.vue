@@ -50,6 +50,7 @@ onUnmounted(() => clearTimeout(copyTimer))
           <UInput
             :model-value="apiKey"
             readonly
+            aria-label="API key"
             class="min-w-0 flex-1 font-mono"
             :ui="{ base: 'text-xs' }"
           />

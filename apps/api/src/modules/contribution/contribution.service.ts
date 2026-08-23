@@ -24,7 +24,7 @@ import { ChangesetDetailService } from './changeset-detail.service'
 const MAX_PENDING_CHANGESETS_PER_AUTHOR = 10
 const UPLOAD_DAILY_LIMIT = 100
 
-function changeApplyRank(change: {
+export function changeApplyRank(change: {
   op: string
   entityKind: EntityKind
 }): number {

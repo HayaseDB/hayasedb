@@ -8,7 +8,8 @@
     "prepare": "nuxi prepare",
     "check-types": "nuxi typecheck",
     "lint": "eslint .",
-    "clean": "rm -rf .nuxt .turbo"
+    "clean": "rm -rf .nuxt .turbo",
+    "test": "bun --bun vitest run"
   },
   "dependencies": {
     "@hayasedb/contract": "workspace:*",
@@ -25,9 +26,15 @@
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
     "@nuxt/eslint": "^1.17.0",
+    "@nuxt/test-utils": "catalog:",
+    "@vue/test-utils": "catalog:",
     "eslint": "catalog:",
+    "h3": "catalog:",
+    "happy-dom": "catalog:",
     "nuxt": "4.5.1",
     "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:",
     "vue-tsc": "catalog:"
   }
 }

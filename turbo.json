@@ -1,7 +1,12 @@
 {
   "$schema": "https://turborepo.dev/schema.v2.json",
   "ui": "stream",
-  "globalDependencies": [".nvmrc", "bunfig.toml"],
+  "globalDependencies": [
+    ".nvmrc",
+    "bunfig.toml",
+    "vitest.config.ts",
+    "vitest.presets.ts"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build", "^prepare"],
@@ -22,8 +27,15 @@
       "dependsOn": ["prepare"]
     },
     "test": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "dependsOn": ["^build", "prepare"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!.nuxt/**",
+        "!.output/**",
+        "!dist/**",
+        "!coverage/**"
+      ],
+      "passThroughEnv": ["CI", "VITEST_POOL_ID"]
     },
     "clean": {
       "cache": false
@@ -65,6 +77,43 @@
         "NUXT_*",
         "NITRO_*",
         "SHUTDOWN_DRAIN_MS"
+      ]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "passThroughEnv": [
+        "TESTCONTAINERS_*",
+        "DOCKER_HOST",
+        "DOCKER_TLS_VERIFY",
+        "DOCKER_CERT_PATH",
+        "DOCKER_CONFIG",
+        "CI",
+        "VITEST_POOL_ID"
+      ]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "passThroughEnv": [
+        "CI",
+        "NODE_ENV",
+        "DOCKER_HOST",
+        "E2E_*",
+        "PLAYWRIGHT_*",
+        "DATABASE_URL",
+        "POSTGRES_*",
+        "REDIS_*",
+        "MINIO_*",
+        "MAIL_*",
+        "MAILPIT_*",
+        "AUTH_*",
+        "INTERNAL_API_TOKEN",
+        "API_*",
+        "WEB_*",
+        "ADMIN_*",
+        "NUXT_*",
+        "NITRO_*"
       ]
     }
   }

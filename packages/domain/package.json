@@ -19,12 +19,16 @@
     "dev": "tsdown --watch --no-clean",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo",
+    "test": "bun --bun vitest run"
   },
   "devDependencies": {
+    "@fast-check/vitest": "catalog:",
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
+    "fast-check": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -6,7 +6,7 @@ export const commonErrors = {
   FORBIDDEN: { message: 'Insufficient permissions' },
   NOT_FOUND: { message: 'Resource not found' },
   CONFLICT: { message: 'Resource already exists' },
-  INPUT_VALIDATION_FAILED: {
+  UNPROCESSABLE_CONTENT: {
     message: 'Invalid input',
     data: z.object({
       issues: z.array(

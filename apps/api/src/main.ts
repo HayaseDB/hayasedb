@@ -4,11 +4,10 @@ import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { apiReference } from '@scalar/nestjs-api-reference'
-import { API_KEY_HEADER } from '@hayasedb/contract'
 import { runMigrations } from '@hayasedb/db'
 import { AppModule } from './app.module'
 import type { Env } from './config/env.schema'
-import { trustedOrigins } from './config/trusted-origins'
+import { configureApp } from './configure-app'
 import { buildOpenApiSources } from './openapi'
 
 async function bootstrap() {
@@ -28,33 +27,7 @@ async function bootstrap() {
     throw error
   }
 
-  app.setGlobalPrefix('api')
-  app.enableShutdownHooks()
-
-  app.useBodyParser('json', {
-    limit: '2mb',
-    type: ['application/json', 'text/plain'],
-  })
-  app.useBodyParser('urlencoded', { limit: '2mb', extended: true })
-
-  const trustedProxies = config.get('AUTH_TRUSTED_PROXIES', { infer: true })
-  if (trustedProxies.length > 0) {
-    app.set('trust proxy', trustedProxies)
-  }
-
-  if (config.get('INTERNAL_API_TOKEN', { infer: true }).length === 0) {
-    Logger.warn(
-      'INTERNAL_API_TOKEN is unset: every request is treated as internal and the API key requirement is disabled',
-      'Bootstrap',
-    )
-  }
-
-  app.enableCors({
-    origin: trustedOrigins(config),
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
-    allowedHeaders: ['Content-Type', 'Authorization', API_KEY_HEADER],
-  })
+  configureApp(app, config)
 
   const sources = await buildOpenApiSources(
     config.get('API_PUBLIC_URL', { infer: true }),

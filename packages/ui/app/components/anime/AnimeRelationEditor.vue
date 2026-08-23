@@ -221,6 +221,7 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
       <li
         v-for="{ state, edge } in rows"
         :key="`${state}:${relationEdgeKey(edge)}`"
+        :data-state="state"
         class="border-default flex min-h-12 items-center gap-3 rounded-md border p-2"
         :class="{
           'ring-info ring-1': state === 'added' || state === 'changed',
@@ -239,7 +240,10 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
               (next: AnimeRelationViewKind) => setKind(edge, next)
             "
           />
-          <span class="text-highlighted min-w-0 flex-1 truncate text-sm">
+          <span
+            data-testid="relation-title"
+            class="text-highlighted min-w-0 flex-1 truncate text-sm"
+          >
             {{ edge.title }}
           </span>
           <UButton
@@ -261,7 +265,10 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
             aria-label="Relation kind"
             disabled
           />
-          <span class="text-muted min-w-0 flex-1 truncate text-sm line-through">
+          <span
+            data-testid="relation-title"
+            class="text-muted min-w-0 flex-1 truncate text-sm line-through"
+          >
             {{ edge.title }}
           </span>
           <UButton

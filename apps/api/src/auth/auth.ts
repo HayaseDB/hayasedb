@@ -11,7 +11,17 @@ import { type Redis, makeRedisSecondaryStorage } from '../redis/redis.factory'
 
 export type Auth = ReturnType<typeof createAuth>
 
-const authLogger = new Logger('AuthDeleteUser')
+const authLogger = new Logger('Auth')
+
+const formatLogArg = (arg: unknown): string => {
+  if (arg instanceof Error) return arg.stack ?? arg.message
+  if (typeof arg === 'string') return arg
+  try {
+    return JSON.stringify(arg)
+  } catch {
+    return String(arg)
+  }
+}
 
 export function authFactory(
   config: ConfigService<Env, true>,
@@ -26,6 +36,7 @@ export function authFactory(
     infer: true,
   })
   const appURL = config.get('WEB_PUBLIC_URL', { infer: true })
+  const production = config.get('NODE_ENV', { infer: true }) === 'production'
 
   return createAuth({
     db,
@@ -35,7 +46,7 @@ export function authFactory(
     trustedProxies: config.get('AUTH_TRUSTED_PROXIES', { infer: true }),
     cookieDomain: sharedCookieDomain(config),
     secondaryStorage: makeRedisSecondaryStorage(redis),
-    productionMode: config.get('NODE_ENV', { infer: true }) === 'production',
+    productionMode: production,
     errorCallbackURL: `${appURL}/login`,
     github:
       githubClientId && githubClientSecret
@@ -46,6 +57,16 @@ export function authFactory(
         ? { clientId: discordClientId, clientSecret: discordClientSecret }
         : undefined,
     mailer,
+    logger: {
+      level: production ? 'warn' : 'info',
+      log: (level, message, ...args) => {
+        const line = [message, ...args.map(formatLogArg)].join(' ')
+        if (level === 'error') authLogger.error(line)
+        else if (level === 'warn') authLogger.warn(line)
+        else if (level === 'debug') authLogger.debug(line)
+        else authLogger.log(line)
+      },
+    },
     onDeleteUser: async ({ id }) => {
       try {
         await db

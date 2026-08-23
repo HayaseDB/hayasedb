@@ -53,12 +53,12 @@ export class MigrationsNotAppliedError extends Error {
   }
 }
 
-function isTransientConnectError(error: unknown): boolean {
+export function isTransientConnectError(error: unknown): boolean {
   const code = (error as { code?: unknown } | null)?.code
   return typeof code === 'string' && TRANSIENT_CONNECT_CODES.has(code)
 }
 
-async function waitForConnection(client: postgres.Sql): Promise<void> {
+export async function waitForConnection(client: postgres.Sql): Promise<void> {
   const deadline = Date.now() + CONNECT_TIMEOUT_MS
 
   for (;;) {
@@ -97,7 +97,7 @@ async function releaseLock(client: postgres.Sql): Promise<void> {
   await client`SELECT pg_advisory_unlock(${ADVISORY_LOCK_ID})`
 }
 
-async function assertApplied(client: postgres.Sql): Promise<void> {
+export async function assertApplied(client: postgres.Sql): Promise<void> {
   const expected = readMigrationFiles({ migrationsFolder: MIGRATIONS_FOLDER })
   const rows = await client<{ hash: string }[]>`
     SELECT hash FROM drizzle.__drizzle_migrations

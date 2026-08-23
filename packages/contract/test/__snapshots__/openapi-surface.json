@@ -1,0 +1,1494 @@
+[
+  {
+    "route": "POST /account/avatar",
+    "operationId": "account.uploadAvatar",
+    "tags": [
+      "Account"
+    ],
+    "requestBody": [
+      "multipart/form-data"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /account/set-password",
+    "operationId": "account.setPassword",
+    "tags": [
+      "Account"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /anime",
+    "operationId": "anime.list",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "query:limit?",
+      "query:offset?",
+      "query:q?",
+      "query:format?",
+      "query:status?",
+      "query:genreId?",
+      "query:startYear?",
+      "query:sort?",
+      "query:order?",
+      "query:includeDeleted?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /anime",
+    "operationId": "anime.create",
+    "tags": [
+      "Anime"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /anime/{animeId}/media",
+    "operationId": "anime.addMedia",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:animeId"
+    ],
+    "requestBody": [
+      "multipart/form-data"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PUT /anime/{animeId}/media/order",
+    "operationId": "anime.reorderMedia",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:animeId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /anime/{id}",
+    "operationId": "anime.getById",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PATCH /anime/{id}",
+    "operationId": "anime.update",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /anime/{id}",
+    "operationId": "anime.remove",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /anime/by-slug/{slug}",
+    "operationId": "anime.getBySlug",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:slug"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /anime/media/{id}",
+    "operationId": "anime.removeMedia",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/accounts",
+    "operationId": "auth.listAccounts",
+    "tags": [
+      "Authentication"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/accounts/{providerId}",
+    "operationId": "auth.unlinkAccount",
+    "tags": [
+      "Authentication"
+    ],
+    "parameters": [
+      "path:providerId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/accounts/link",
+    "operationId": "auth.linkSocial",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/admin/sessions/{sessionToken}",
+    "operationId": "auth.admin.revokeUserSession",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:sessionToken"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/admin/users",
+    "operationId": "auth.admin.listUsers",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "query:limit?",
+      "query:offset?",
+      "query:searchValue?",
+      "query:searchField?",
+      "query:searchOperator?",
+      "query:filterField?",
+      "query:filterValue?",
+      "query:filterOperator?",
+      "query:sortBy?",
+      "query:sortDirection?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/admin/users",
+    "operationId": "auth.admin.createUser",
+    "tags": [
+      "Administration"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/admin/users/{id}",
+    "operationId": "auth.admin.getUser",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PATCH /auth/admin/users/{id}",
+    "operationId": "auth.admin.updateUser",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/admin/users/{id}",
+    "operationId": "auth.admin.removeUser",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/admin/users/{id}/ban",
+    "operationId": "auth.admin.banUser",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/admin/users/{id}/password",
+    "operationId": "auth.admin.setUserPassword",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/admin/users/{id}/role",
+    "operationId": "auth.admin.setRole",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/admin/users/{id}/sessions",
+    "operationId": "auth.admin.listUserSessions",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/admin/users/{id}/sessions",
+    "operationId": "auth.admin.revokeUserSessions",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/admin/users/{id}/unban",
+    "operationId": "auth.admin.unbanUser",
+    "tags": [
+      "Administration"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/api-keys",
+    "operationId": "auth.apiKey.create",
+    "tags": [
+      "API Keys"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/api-keys",
+    "operationId": "auth.apiKey.list",
+    "tags": [
+      "API Keys"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/api-keys/{id}",
+    "operationId": "auth.apiKey.delete",
+    "tags": [
+      "API Keys"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/callback/{id}",
+    "operationId": "auth.callback.get",
+    "tags": [
+      "Authentication"
+    ],
+    "parameters": [
+      "path:id",
+      "query:code?",
+      "query:error?",
+      "query:error_description?",
+      "query:state?",
+      "query:device_id?",
+      "query:user?"
+    ],
+    "responses": [
+      "302",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/callback/{id}",
+    "operationId": "auth.callback.post",
+    "tags": [
+      "Authentication"
+    ],
+    "parameters": [
+      "path:id",
+      "query:code?",
+      "query:error?",
+      "query:error_description?",
+      "query:state?",
+      "query:device_id?",
+      "query:user?"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "302",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PATCH /auth/me",
+    "operationId": "auth.updateUser",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/me",
+    "operationId": "auth.deleteUser",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/me/email",
+    "operationId": "auth.changeEmail",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/me/password",
+    "operationId": "auth.changePassword",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/reset-password",
+    "operationId": "auth.resetPassword",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/reset-password/request",
+    "operationId": "auth.requestPasswordReset",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/session",
+    "operationId": "auth.getSession",
+    "tags": [
+      "Authentication"
+    ],
+    "parameters": [
+      "query:disableCookieCache?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/sessions",
+    "operationId": "auth.listSessions",
+    "tags": [
+      "Authentication"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/sessions",
+    "operationId": "auth.revokeOtherSessions",
+    "tags": [
+      "Authentication"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /auth/sessions/{token}",
+    "operationId": "auth.revokeSession",
+    "tags": [
+      "Authentication"
+    ],
+    "parameters": [
+      "path:token"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/sign-in/email",
+    "operationId": "auth.signInEmail",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/sign-in/social",
+    "operationId": "auth.signInSocial",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/sign-out",
+    "operationId": "auth.signOut",
+    "tags": [
+      "Authentication"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/sign-up/email",
+    "operationId": "auth.signUpEmail",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /auth/verify-email",
+    "operationId": "auth.verifyEmail",
+    "tags": [
+      "Authentication"
+    ],
+    "parameters": [
+      "query:token"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /auth/verify-email/resend",
+    "operationId": "auth.sendVerificationEmail",
+    "tags": [
+      "Authentication"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /changesets",
+    "operationId": "changeset.list",
+    "tags": [
+      "Changesets"
+    ],
+    "parameters": [
+      "query:limit?",
+      "query:offset?",
+      "query:status?",
+      "query:authorId?",
+      "query:mine?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /changesets",
+    "operationId": "changeset.submit",
+    "tags": [
+      "Changesets"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /changesets/{id}",
+    "operationId": "changeset.get",
+    "tags": [
+      "Changesets"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /changesets/{id}/approve",
+    "operationId": "changeset.approve",
+    "tags": [
+      "Changesets"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /changesets/{id}/messages",
+    "operationId": "changeset.addMessage",
+    "tags": [
+      "Changesets"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /changesets/{id}/reject",
+    "operationId": "changeset.reject",
+    "tags": [
+      "Changesets"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /changesets/{id}/revert",
+    "operationId": "changeset.revert",
+    "tags": [
+      "Changesets"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /changesets/{id}/withdraw",
+    "operationId": "changeset.withdraw",
+    "tags": [
+      "Changesets"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /changesets/stats",
+    "operationId": "changeset.stats",
+    "tags": [
+      "Changesets"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /genres",
+    "operationId": "genre.list",
+    "tags": [
+      "Genre"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /genres",
+    "operationId": "genre.create",
+    "tags": [
+      "Genre"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PATCH /genres/{id}",
+    "operationId": "genre.update",
+    "tags": [
+      "Genre"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /genres/{id}",
+    "operationId": "genre.remove",
+    "tags": [
+      "Genre"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /media",
+    "operationId": "media.upload",
+    "tags": [
+      "Media"
+    ],
+    "requestBody": [
+      "multipart/form-data"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /ping",
+    "operationId": "system.ping",
+    "tags": [
+      "System"
+    ],
+    "parameters": [
+      "query:message?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /revisions",
+    "operationId": "revision.list",
+    "tags": [
+      "Revisions"
+    ],
+    "parameters": [
+      "query:limit?",
+      "query:offset?",
+      "query:entityKind",
+      "query:entityId"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /revisions/{id}",
+    "operationId": "revision.get",
+    "tags": [
+      "Revisions"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /revisions/{id}/revert",
+    "operationId": "revision.revert",
+    "tags": [
+      "Revisions"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /stats",
+    "operationId": "system.stats",
+    "tags": [
+      "System"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /version",
+    "operationId": "system.version",
+    "tags": [
+      "System"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  }
+]

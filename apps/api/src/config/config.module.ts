@@ -9,10 +9,9 @@ import { validate } from './env.schema'
       isGlobal: true,
       cache: true,
       validate,
-      envFilePath:
-        process.env.NODE_ENV === 'production'
-          ? []
-          : resolve(process.cwd(), '../../.env'),
+      envFilePath: ['production', 'test'].includes(process.env.NODE_ENV ?? '')
+        ? []
+        : resolve(process.cwd(), '../../.env'),
     }),
   ],
 })
