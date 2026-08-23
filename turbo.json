@@ -53,7 +53,12 @@
     "seed:demo": {
       "cache": false,
       "dependsOn": ["^build"],
-      "passThroughEnv": ["DATABASE_URL", "POSTGRES_*", "MINIO_*", "SEED_COUNT"]
+      "passThroughEnv": [
+        "DATABASE_URL",
+        "POSTGRES_*",
+        "STORAGE_*",
+        "SEED_COUNT"
+      ]
     },
     "dev": {
       "cache": false,
@@ -69,7 +74,7 @@
         "AUTH_*",
         "WEB_*",
         "ADMIN_*",
-        "MINIO_*",
+        "STORAGE_*",
         "MAIL_*",
         "MAILPIT_*",
         "GITHUB_*",
@@ -104,7 +109,7 @@
         "DATABASE_URL",
         "POSTGRES_*",
         "REDIS_*",
-        "MINIO_*",
+        "STORAGE_*",
         "MAIL_*",
         "MAILPIT_*",
         "AUTH_*",

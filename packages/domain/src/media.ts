@@ -14,12 +14,10 @@ export const MEDIA_MAX_DIMENSION = 2048
 
 export const MEDIA_CACHE_CONTROL = 'public, max-age=31536000, immutable'
 
-export const MEDIA_KEY_NAMESPACE = 'media'
-
 export const MEDIA_OBJECT_NAME = 'original'
 
 export function mediaKeyPrefix(checksumSha256: string): string {
-  return `${MEDIA_KEY_NAMESPACE}/${checksumSha256}`
+  return checksumSha256
 }
 
 export function mediaObjectKey(checksumSha256: string): string {

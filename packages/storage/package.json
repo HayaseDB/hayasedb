@@ -1,0 +1,40 @@
+{
+  "name": "@hayasedb/storage",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./testing": {
+      "types": "./src/driver/contract.ts",
+      "default": "./src/driver/contract.ts"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch --no-clean",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo",
+    "test": "bun --bun vitest run"
+  },
+  "dependencies": {
+    "minio": "catalog:"
+  },
+  "devDependencies": {
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
+    "@types/node": "^22.20.1",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

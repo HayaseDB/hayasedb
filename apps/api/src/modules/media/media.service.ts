@@ -6,8 +6,6 @@ import { type Database, schema } from '@hayasedb/db'
 import {
   MEDIA_CACHE_CONTROL,
   MEDIA_MAX_DIMENSION,
-  MEDIA_OBJECT_NAME,
-  MEDIA_OUTPUT_EXTENSION,
   MEDIA_OUTPUT_MIME_TYPE,
   MEDIA_OUTPUT_QUALITY,
   mediaKeyPrefix,
@@ -15,8 +13,9 @@ import {
 } from '@hayasedb/domain'
 import { eq } from 'drizzle-orm'
 import sharp from 'sharp'
+import { type StorageDriver } from '@hayasedb/storage'
 import { DRIZZLE } from '../../database/database.constants'
-import { StorageService } from '../../storage/storage.service'
+import { STORAGE } from '../../storage/storage.constants'
 
 const BLURHASH_COMPONENTS_X = 4
 const BLURHASH_COMPONENTS_Y = 3
@@ -84,7 +83,7 @@ export class MediaService {
   private readonly logger = new Logger(MediaService.name)
 
   constructor(
-    private readonly storage: StorageService,
+    @Inject(STORAGE) private readonly storage: StorageDriver,
     @Inject(DRIZZLE) private readonly db: Database,
   ) {}
 
@@ -119,7 +118,8 @@ export class MediaService {
     if (existing) return existing
 
     const prefix = mediaKeyPrefix(checksum)
-    await this.storage.putObject(mediaObjectKey(checksum), output, {
+    const objectKey = mediaObjectKey(checksum)
+    await this.storage.put(objectKey, output, {
       contentType: MEDIA_OUTPUT_MIME_TYPE,
       cacheControl: MEDIA_CACHE_CONTROL,
     })
@@ -129,7 +129,7 @@ export class MediaService {
         .insert(schema.mediaAsset)
         .values({
           storageKey: prefix,
-          bucket: this.storage.bucket,
+          storageProvider: this.storage.provider,
           checksumSha256: checksum,
           mimeType: MEDIA_OUTPUT_MIME_TYPE,
           byteSize: output.byteLength,
@@ -161,9 +161,7 @@ export class MediaService {
   }
 
   publicUrl(asset: Pick<StoredMediaAsset, 'storageKey'>): string {
-    return this.storage.publicUrl(
-      `${asset.storageKey}/${MEDIA_OBJECT_NAME}.${MEDIA_OUTPUT_EXTENSION}`,
-    )
+    return this.storage.publicUrl(mediaObjectKey(asset.storageKey))
   }
 
   async findByChecksum(checksum: string): Promise<StoredMediaAsset | null> {

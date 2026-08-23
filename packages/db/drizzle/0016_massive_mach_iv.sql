@@ -1,0 +1,1 @@
+ALTER TABLE "media_asset" ALTER COLUMN "storage_provider" SET NOT NULL;

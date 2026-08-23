@@ -1,6 +1,10 @@
-import { randomUUID } from 'node:crypto'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { createServer } from 'node:net'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { INestApplication } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { STORAGE_PUBLIC_PATH } from '@hayasedb/storage'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { Test } from '@nestjs/testing'
 import type { Database } from '@hayasedb/db'
@@ -34,16 +38,29 @@ export interface TestApp {
   close(): Promise<void>
 }
 
+async function freePort(): Promise<number> {
+  const server = createServer()
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', resolve)
+  })
+  const { port } = server.address() as { port: number }
+  await new Promise<void>((resolve) => server.close(() => resolve()))
+  return port
+}
+
 function applyEnv(
   database: TestDatabase,
+  port: number,
+  storageRoot: string,
   overrides: Record<string, string | undefined>,
 ) {
   const infra = inject('infra')
   const env: Record<string, string> = {
     NODE_ENV: 'test',
     API_HOST: '127.0.0.1',
-    API_PORT: '3000',
-    API_PUBLIC_URL: 'http://127.0.0.1:3000',
+    API_PORT: String(port),
+    API_PUBLIC_URL: `http://127.0.0.1:${port}`,
     WEB_PUBLIC_URL: WEB_ORIGIN,
     ADMIN_PUBLIC_URL: ADMIN_ORIGIN,
     DATABASE_URL: database.url,
@@ -53,13 +70,9 @@ function applyEnv(
     INTERNAL_API_TOKEN: INTERNAL_TOKEN,
     AUTH_TRUSTED_ORIGINS: `${WEB_ORIGIN},${ADMIN_ORIGIN}`,
     AUTH_TRUSTED_PROXIES: '127.0.0.1,::1',
-    MINIO_ENDPOINT: infra.minioEndpoint,
-    MINIO_PORT: String(infra.minioPort),
-    MINIO_USE_SSL: 'false',
-    MINIO_ACCESS_KEY: infra.minioAccessKey,
-    MINIO_SECRET_KEY: infra.minioSecretKey,
-    MINIO_BUCKET: `media-${randomUUID().slice(0, 8)}`,
-    MINIO_PUBLIC_URL: `http://${infra.minioEndpoint}:${infra.minioPort}`,
+    STORAGE_DRIVER: 'local',
+    STORAGE_LOCAL_ROOT: storageRoot,
+    STORAGE_PUBLIC_URL: `http://127.0.0.1:${port}/api/${STORAGE_PUBLIC_PATH}`,
     MAIL_DRIVER: 'smtp',
     MAIL_SMTP_HOST: '127.0.0.1',
     MAIL_SMTP_PORT: '1',
@@ -86,7 +99,9 @@ export async function createTestApp(
   }
   created = true
   const database = await createTestDatabase()
-  applyEnv(database, options.env ?? {})
+  const port = await freePort()
+  const storageRoot = await mkdtemp(join(tmpdir(), 'hayasedb-storage-'))
+  applyEnv(database, port, storageRoot, options.env ?? {})
 
   const { AppModule } = await import('../../src/app.module')
   const mailer = createFakeMailer()
@@ -101,12 +116,11 @@ export async function createTestApp(
   })
   const config = app.get<ConfigService<Env, true>>(ConfigService)
   configureApp(app, config)
-  await app.listen(0, '127.0.0.1')
-  const address = app.getHttpServer().address() as { port: number }
+  await app.listen(port, '127.0.0.1')
 
   return {
     app,
-    baseUrl: `http://127.0.0.1:${address.port}`,
+    baseUrl: `http://127.0.0.1:${port}`,
     db: app.get<Database>(DRIZZLE),
     redis: app.get<Redis>(REDIS),
     mailer,
@@ -115,6 +129,7 @@ export async function createTestApp(
     close: async () => {
       await app.close()
       await database.drop()
+      await rm(storageRoot, { recursive: true, force: true })
     },
   }
 }

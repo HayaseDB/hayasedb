@@ -22,7 +22,7 @@ export const mediaAsset = pgTable(
   {
     id: uuidV7Pk(),
     storageKey: text('storage_key').notNull().unique(),
-    bucket: text('bucket').notNull(),
+    storageProvider: text('storage_provider').notNull(),
     checksumSha256: text('checksum_sha256').notNull().unique(),
     mimeType: text('mime_type').notNull(),
     byteSize: integer('byte_size').notNull(),

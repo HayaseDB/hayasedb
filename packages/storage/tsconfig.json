@@ -1,0 +1,4 @@
+{
+  "extends": "@hayasedb/typescript-config/library.json",
+  "include": ["src", "vitest.config.ts"]
+}

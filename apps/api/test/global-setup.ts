@@ -1,4 +1,3 @@
-import { MinioContainer } from '@testcontainers/minio'
 import { PostgreSqlContainer } from '@testcontainers/postgresql'
 import { RedisContainer } from '@testcontainers/redis'
 import { runMigrations } from '@hayasedb/db'
@@ -12,10 +11,6 @@ export interface IntegrationInfra {
   templateDb: string
   redisHost: string
   redisPort: number
-  minioEndpoint: string
-  minioPort: number
-  minioAccessKey: string
-  minioSecretKey: string
 }
 
 declare module 'vitest' {
@@ -25,13 +20,12 @@ declare module 'vitest' {
 }
 
 export default async function setup(project: TestProject) {
-  const [pg, redis, minio] = await Promise.all([
+  const [pg, redis] = await Promise.all([
     new PostgreSqlContainer('postgres:18').start(),
     new RedisContainer('redis:8').start(),
-    new MinioContainer('minio/minio:RELEASE.2025-04-08T15-41-24Z').start(),
   ])
 
-  const stop = () => Promise.all([pg.stop(), redis.stop(), minio.stop()])
+  const stop = () => Promise.all([pg.stop(), redis.stop()])
 
   try {
     const adminUrl = pg.getConnectionUri()
@@ -50,10 +44,6 @@ export default async function setup(project: TestProject) {
       templateDb: TEMPLATE_DB,
       redisHost: redis.getHost(),
       redisPort: redis.getPort(),
-      minioEndpoint: minio.getHost(),
-      minioPort: minio.getPort(),
-      minioAccessKey: minio.getUsername(),
-      minioSecretKey: minio.getPassword(),
     })
   } catch (error) {
     await stop()

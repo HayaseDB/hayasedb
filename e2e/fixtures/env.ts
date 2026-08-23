@@ -39,6 +39,7 @@ export const env = {
   databaseUrl: required('DATABASE_URL'),
   mailpitUrl: required('MAILPIT_URL'),
   internalToken: required('INTERNAL_API_TOKEN'),
+  storageLocalRoot: required('STORAGE_LOCAL_ROOT'),
 }
 
 export const ADMIN = {

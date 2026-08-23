@@ -47,6 +47,7 @@
       "h3": "1.15.11",
       "happy-dom": "20.11.6",
       "ioredis": "5.11.1",
+      "minio": "7.1.4",
       "nodemailer": "9.0.3",
       "postgres": "3.4.9",
       "react": "19.2.7",

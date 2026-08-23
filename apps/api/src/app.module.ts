@@ -20,6 +20,7 @@ import type { Env } from './config/env.schema'
 import { DatabaseModule } from './database/database.module'
 import { DRIZZLE } from './database/database.constants'
 import { MailModule } from './mail/mail.module'
+import { StorageModule } from './storage/storage.module'
 import { MAILER } from './mail/mail.constants'
 import { AccountModule } from './modules/account/account.module'
 import { AuthApiModule } from './modules/auth/auth.module'
@@ -41,6 +42,7 @@ const orpcLogger = new Logger('ORPC')
     DatabaseModule,
     RedisModule,
     MailModule,
+    StorageModule,
     ORPCModule.forRootAsync({
       useFactory: (request: Request) => ({
         context: { request } satisfies ORPCContext,

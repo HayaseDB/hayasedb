@@ -130,8 +130,6 @@ jobs:
       POSTGRES_PASSWORD: hayase
       POSTGRES_HOST: localhost
       POSTGRES_PORT: '5432'
-      MINIO_ACCESS_KEY: minio-e2e
-      MINIO_SECRET_KEY: minio-e2e-secret
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -163,24 +161,6 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         working-directory: e2e
         run: ./node_modules/.bin/playwright install-deps chromium
-
-      - name: Start MinIO
-        run: |
-          docker run -d --name minio -p 9000:9000 \
-            -e MINIO_ROOT_USER="$MINIO_ACCESS_KEY" \
-            -e MINIO_ROOT_PASSWORD="$MINIO_SECRET_KEY" \
-            --health-cmd "mc ready local" \
-            --health-interval 5s \
-            --health-timeout 5s \
-            --health-retries 20 \
-            minio/minio:RELEASE.2025-04-08T15-41-24Z server /data
-          for _ in $(seq 1 30); do
-            [ "$(docker inspect -f '{{.State.Health.Status}}' minio)" = healthy ] && exit 0
-            [ "$(docker inspect -f '{{.State.Status}}' minio)" = running ] || break
-            sleep 2
-          done
-          docker logs minio
-          exit 1
 
       - name: Run end-to-end tests
         run: bunx turbo run test:e2e

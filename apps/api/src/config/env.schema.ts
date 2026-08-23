@@ -46,18 +46,26 @@ const authEnv = z.object({
   DISCORD_CLIENT_SECRET: z.string().optional(),
 })
 
-const minioEnv = z.object({
-  MINIO_ENDPOINT: z.string().default('localhost'),
-  MINIO_PORT: z.coerce.number().int().positive().default(9000),
-  MINIO_USE_SSL: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((value) => value === 'true'),
-  MINIO_ACCESS_KEY: z.string().min(1),
-  MINIO_SECRET_KEY: z.string().min(1),
-  MINIO_BUCKET: z.string().default('media'),
-  MINIO_PUBLIC_URL: z.string().url().default('http://localhost:9000'),
-})
+const storageEnv = z.discriminatedUnion('STORAGE_DRIVER', [
+  z.object({
+    STORAGE_DRIVER: z.literal('minio'),
+    STORAGE_PUBLIC_URL: z.string().url(),
+    STORAGE_MINIO_ENDPOINT: z.string().min(1),
+    STORAGE_MINIO_PORT: z.coerce.number().int().positive().default(9000),
+    STORAGE_MINIO_USE_SSL: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+    STORAGE_MINIO_ACCESS_KEY: z.string().min(1),
+    STORAGE_MINIO_SECRET_KEY: z.string().min(1),
+    STORAGE_MINIO_BUCKET: z.string().min(1).default('media'),
+  }),
+  z.object({
+    STORAGE_DRIVER: z.literal('local'),
+    STORAGE_PUBLIC_URL: z.string().url(),
+    STORAGE_LOCAL_ROOT: z.string().min(1),
+  }),
+])
 
 const mailEnv = z.object({
   MAIL_DRIVER: z.enum(['smtp', 'resend']).default('smtp'),
@@ -75,17 +83,28 @@ const mailEnv = z.object({
   MAIL_RESEND_API_KEY: z.string().optional(),
 })
 
-export const envSchema = appEnv
+const baseEnv = appEnv
   .extend(dbEnv.shape)
   .extend(authEnv.shape)
-  .extend(minioEnv.shape)
   .extend(mailEnv.shape)
+
+export const envSchema = z
+  .intersection(baseEnv, storageEnv)
   .superRefine((env, ctx) => {
     if (env.MAIL_DRIVER === 'resend' && !env.MAIL_RESEND_API_KEY) {
       ctx.addIssue({
         code: 'custom',
         path: ['MAIL_RESEND_API_KEY'],
         message: 'MAIL_RESEND_API_KEY is required when MAIL_DRIVER is "resend"',
+      })
+    }
+
+    if (env.NODE_ENV === 'production' && env.STORAGE_DRIVER === 'local') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['STORAGE_DRIVER'],
+        message:
+          'STORAGE_DRIVER "local" is not supported in production: the filesystem is not shared across API replicas',
       })
     }
 
@@ -108,5 +127,15 @@ export function validate(config: Record<string, unknown>): Env {
       `Invalid environment configuration:\n${z.prettifyError(parsed.error)}`,
     )
   }
+  validatedEnv = parsed.data
   return parsed.data
+}
+
+let validatedEnv: Env | null = null
+
+export function getValidatedEnv(): Env {
+  if (!validatedEnv) {
+    throw new Error('Environment has not been validated yet')
+  }
+  return validatedEnv
 }

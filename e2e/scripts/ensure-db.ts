@@ -1,3 +1,5 @@
+import { rm } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import postgres from 'postgres'
 import { E2E_DATABASE_SUFFIX, env } from '../fixtures/env'
 
@@ -18,6 +20,10 @@ try {
   if (!existing || !keepExisting) {
     await sql.unsafe(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`)
     await sql.unsafe(`CREATE DATABASE "${database}"`)
+    await rm(resolve(process.cwd(), env.storageLocalRoot), {
+      recursive: true,
+      force: true,
+    })
   }
 } finally {
   await sql.end()

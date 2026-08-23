@@ -16,6 +16,8 @@ coverage/
 !.vscode/extensions.json
 playwright-report/
 test-results/
+.storage/
+.storage-e2e/
 
 !e2e/.env.e2e
 e2e/.auth/
