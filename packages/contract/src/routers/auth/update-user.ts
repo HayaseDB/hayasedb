@@ -14,7 +14,6 @@ export const updateUserContract = base
   .input(
     z.object({
       name: nameSchema.optional(),
-      image: z.url().max(2048).nullish(),
     }),
   )
   .output(successSchema)

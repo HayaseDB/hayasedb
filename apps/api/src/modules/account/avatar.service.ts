@@ -1,15 +1,21 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import { AuthService } from '@thallesp/nestjs-better-auth'
 import { type Database, schema } from '@hayasedb/db'
 import { and, eq } from 'drizzle-orm'
-import type { Auth } from '../../auth/auth'
+import type { Request } from 'express'
 import { DRIZZLE } from '../../database/database.constants'
+import { AuthFacade } from '../auth/auth.service'
 import { MediaService } from '../media/media.service'
 
 export interface StoredAvatar {
   id: string
   url: string
   createdAt: Date
+}
+
+export interface UploadedAvatar {
+  image: string
+  avatar: StoredAvatar
+  headers: Headers
 }
 
 @Injectable()
@@ -19,16 +25,18 @@ export class AvatarService {
   constructor(
     private readonly media: MediaService,
     @Inject(DRIZZLE) private readonly db: Database,
-    private readonly auth: AuthService<Auth>,
+    private readonly auth: AuthFacade,
   ) {}
 
   async upload(
     userId: string,
-    headers: Headers,
+    request: Request,
     file: File,
-  ): Promise<{ image: string; avatar: StoredAvatar }> {
+  ): Promise<UploadedAvatar> {
     const asset = await this.media.ingest(file, file.name)
     const url = this.media.publicUrl(asset)
+
+    const { headers } = await this.auth.updateUser(request, { image: url })
 
     const row = await this.db.transaction(async (tx) => {
       await tx
@@ -68,10 +76,8 @@ export class AvatarService {
       return inserted
     })
 
-    await this.auth.api.updateUser({ body: { image: url }, headers })
-
     this.logger.log(`Stored avatar ${asset.storageKey} for user ${userId}`)
 
-    return { image: url, avatar: { ...row, url } }
+    return { image: url, avatar: { ...row, url }, headers }
   }
 }

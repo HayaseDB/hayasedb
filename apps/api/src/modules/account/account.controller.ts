@@ -6,6 +6,7 @@ import { fromNodeHeaders } from 'better-auth/node'
 import { contract } from '@hayasedb/contract'
 import type { Auth } from '../../auth/auth'
 import { requireVerifiedUser } from '../../auth/require-user'
+import { forwardSetCookie } from '../../orpc/forward-set-cookie'
 import { AvatarService } from './avatar.service'
 
 @Controller()
@@ -23,10 +24,14 @@ export class AccountController {
       async ({ input, context, errors }) => {
         const userId = requireVerifiedUser(context)
 
-        const headers = fromNodeHeaders(context.request.headers)
-
         try {
-          return await this.avatarService.upload(userId, headers, input.file)
+          const { image, avatar, headers } = await this.avatarService.upload(
+            userId,
+            context.request,
+            input.file,
+          )
+          forwardSetCookie(context.request, headers)
+          return { image, avatar }
         } catch (error) {
           if (error instanceof ORPCError) throw error
           this.logger.error(

@@ -14,27 +14,31 @@ export function useAccountActions() {
   const origin = () => useRequestURL().origin
 
   async function updateProfile(input: UpdateProfileSchema): Promise<boolean> {
-    return Boolean(
-      await run(() => api.auth.updateUser({ name: input.name }), {
-        title: 'Update failed',
-        success: {
-          title: 'Profile updated',
-          description: 'Your changes have been saved.',
-        },
-      }),
-    )
+    const updated = await run(() => api.auth.updateUser({ name: input.name }), {
+      title: 'Update failed',
+      success: {
+        title: 'Profile updated',
+        description: 'Your changes have been saved.',
+      },
+    })
+    if (!updated) return false
+
+    await refreshAppSession()
+    return true
   }
 
   async function uploadAvatar(file: File): Promise<boolean> {
-    return Boolean(
-      await run(() => api.account.uploadAvatar({ file }), {
-        title: 'Upload failed',
-        success: {
-          title: 'Avatar updated',
-          description: 'Your new profile picture has been saved.',
-        },
-      }),
-    )
+    const uploaded = await run(() => api.account.uploadAvatar({ file }), {
+      title: 'Upload failed',
+      success: {
+        title: 'Avatar updated',
+        description: 'Your new profile picture has been saved.',
+      },
+    })
+    if (!uploaded) return false
+
+    await refreshAppSession()
+    return true
   }
 
   async function changeEmail(input: ChangeEmailSchema): Promise<boolean> {

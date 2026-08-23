@@ -30,7 +30,7 @@
     "lint": "eslint .",
     "clean": "rm -rf dist .turbo",
     "test": "bun --bun vitest run",
-    "test:integration": "bun --bun vitest run --config vitest.int.config.ts"
+    "test:integration": "bun vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
     "@hayasedb/domain": "workspace:*",

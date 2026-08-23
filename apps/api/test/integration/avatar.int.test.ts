@@ -54,7 +54,7 @@ describe('account avatar', () => {
     expect((await fetch(first.image)).status).toBe(200)
 
     const cached = await user.client.auth.getSession({})
-    expect(cached?.user.image).toBeNull()
+    expect(cached?.user.image).toBe(first.image)
     const fresh = await user.client.auth.getSession({
       disableCookieCache: true,
     })
@@ -64,6 +64,9 @@ describe('account avatar', () => {
       file: await pngFile(256, 256, '#445566'),
     })
     expect(second.image).not.toBe(first.image)
+    expect((await user.client.auth.getSession({}))?.user.image).toBe(
+      second.image,
+    )
     expect(
       (await user.client.auth.getSession({ disableCookieCache: true }))?.user
         .image,

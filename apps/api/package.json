@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "clean": "rm -rf dist .turbo",
     "test": "bun --bun vitest run",
-    "test:integration": "bun --bun vitest run --config vitest.int.config.mts"
+    "test:integration": "bun vitest run --config vitest.int.config.mts"
   },
   "dependencies": {
     "@hayasedb/auth": "workspace:*",

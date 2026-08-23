@@ -10,7 +10,7 @@ import type {
 useSeoMeta({ title: 'Settings' })
 useAuthError()
 
-const { data: session, refresh: refreshSession } = await useAppSession()
+const { data: session } = await useAppSession()
 const user = computed(() => session.value?.user ?? null)
 const currentToken = computed(() => session.value?.session?.token ?? null)
 
@@ -71,15 +71,11 @@ async function onDeleteAccount() {
 }
 
 async function onUpdateProfile(data: UpdateProfileSchema) {
-  const ok = await updateProfile(data)
-  if (ok) await refreshSession()
-  return ok
+  return await updateProfile(data)
 }
 
 async function onUploadAvatar(file: File) {
-  const ok = await uploadAvatar(file)
-  if (ok) await refreshSession()
-  return ok
+  return await uploadAvatar(file)
 }
 
 async function onChangeEmail(data: ChangeEmailSchema) {

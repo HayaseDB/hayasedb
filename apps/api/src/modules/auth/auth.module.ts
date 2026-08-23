@@ -17,5 +17,6 @@ import { UserController } from './user.controller'
     OAuthController,
   ],
   providers: [AuthFacade, AdminFacade, ApiKeyFacade],
+  exports: [AuthFacade],
 })
 export class AuthApiModule {}
