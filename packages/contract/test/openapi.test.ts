@@ -1,7 +1,7 @@
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { expect, it } from 'vitest'
-import { contract } from '../src'
+import { buildPublicOpenApiDocument, collectRoutes, contract } from '../src'
 
 it('keeps the public surface of the OpenAPI document stable', async () => {
   const generator = new OpenAPIGenerator({
@@ -38,4 +38,46 @@ it('keeps the public surface of the OpenAPI document stable', async () => {
   await expect(JSON.stringify(surface, null, 2) + '\n').toMatchFileSnapshot(
     './__snapshots__/openapi-surface.json',
   )
+})
+
+it('publishes exactly the api-key routes and nothing else', async () => {
+  const document = await buildPublicOpenApiDocument({
+    serverUrl: 'https://example.invalid/api',
+    version: '0.0.0',
+  })
+
+  const published = Object.entries(document.paths ?? {})
+    .flatMap(([path, item]) =>
+      Object.keys(item ?? {}).map(
+        (method) => `${method.toUpperCase()} ${path}`,
+      ),
+    )
+    .sort()
+
+  const expected = collectRoutes()
+    .filter((route) => route.apiKey)
+    .map((route) => `${route.method} ${route.path}`)
+    .sort()
+
+  expect(published).toEqual(expected)
+})
+
+it('never exposes session-only surfaces in the public document', async () => {
+  const document = await buildPublicOpenApiDocument({
+    serverUrl: 'https://example.invalid/api',
+    version: '0.0.0',
+  })
+
+  const paths = Object.keys(document.paths ?? {})
+
+  expect(paths.length).toBeGreaterThan(0)
+  for (const prefix of [
+    '/auth',
+    '/account',
+    '/changeset',
+    '/revision',
+    '/media',
+  ]) {
+    expect(paths.filter((path) => path.startsWith(prefix))).toEqual([])
+  }
 })

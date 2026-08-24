@@ -4,8 +4,6 @@ import { LazyApiKeyCreateModal, LazyApiKeyCreatedModal } from '#components'
 const { keys, pending, refresh } = await useApiKeys()
 const { loading, createKey, deleteKey } = useApiKeyActions()
 
-const docsUrl = useRuntimeConfig().public.apiDocsUrl
-
 const overlay = useOverlay()
 const createModal = overlay.create(LazyApiKeyCreateModal)
 const createdModal = overlay.create(LazyApiKeyCreatedModal)
@@ -16,7 +14,7 @@ function openCreateModal() {
       const created = await createKey(input)
       if (!created) return false
       await refresh()
-      createdModal.open({ apiKey: created.key, docsUrl })
+      createdModal.open({ apiKey: created.key, docsUrl: '/docs' })
       return true
     },
   })

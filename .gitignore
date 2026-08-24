@@ -18,6 +18,7 @@ playwright-report/
 test-results/
 .storage/
 .storage-e2e/
+.scalar/
 
 !e2e/.env.e2e
 e2e/.auth/

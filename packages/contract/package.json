@@ -7,7 +7,8 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.mjs"
-    }
+    },
+    "./openapi.json": "./dist/openapi.public.json"
   },
   "main": "./dist/index.mjs",
   "files": [
@@ -29,12 +30,12 @@
     "@hayasedb/domain": "workspace:*",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@orpc/zod": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@hayasedb/eslint-config": "workspace:*",
     "@hayasedb/typescript-config": "workspace:*",
-    "@orpc/zod": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

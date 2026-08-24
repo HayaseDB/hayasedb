@@ -19,7 +19,7 @@ export default defineNuxtConfig({
       gitSha: process.env.GIT_SHA?.slice(0, 7) ?? '',
       webUrl: 'http://localhost:3001',
       adminUrl: 'http://localhost:3002',
-      apiDocsUrl: 'http://localhost:3000/docs',
+      apiPublicUrl: 'http://localhost:3000',
     },
   },
 

@@ -14,6 +14,7 @@ withDefaults(
 const links: NavigationMenuItem[] = [
   { label: 'Home', to: '/' },
   { label: 'Explore', to: '/explore' },
+  { label: 'Docs', to: '/docs' },
 ]
 </script>
 

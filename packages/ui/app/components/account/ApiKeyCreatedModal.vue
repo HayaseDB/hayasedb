@@ -73,11 +73,7 @@ onUnmounted(() => clearTimeout(copyTimer))
           header.
           <template v-if="docsUrl">
             See the
-            <NuxtLink
-              :to="docsUrl"
-              external
-              target="_blank"
-              class="text-primary hover:underline"
+            <NuxtLink :to="docsUrl" class="text-primary hover:underline"
               >API documentation</NuxtLink
             >
             for the available endpoints.

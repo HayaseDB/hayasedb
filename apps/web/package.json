@@ -28,6 +28,7 @@
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@scalar/api-reference": "1.66.1",
     "@vueuse/core": "catalog:",
     "better-auth": "catalog:",
     "motion-v": "^2.3.0",

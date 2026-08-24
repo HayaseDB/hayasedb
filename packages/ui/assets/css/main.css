@@ -4,3 +4,10 @@
 @theme {
   --font-sans: 'Poppins', sans-serif;
 }
+
+@layer base {
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+}
