@@ -1,5 +1,14 @@
 # @hayasedb/auth
 
+## 0.10.0
+
+### Patch Changes
+
+- Updated dependencies [35384f0]
+- Updated dependencies [27b0847]
+  - @hayasedb/contract@0.10.0
+  - @hayasedb/db@0.10.0
+
 ## 0.9.0
 
 ### Patch Changes
