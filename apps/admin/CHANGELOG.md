@@ -1,5 +1,17 @@
 # @hayasedb/admin
 
+## 0.10.0
+
+### Patch Changes
+
+- Updated dependencies [35384f0]
+- Updated dependencies [27b0847]
+  - @hayasedb/contract@0.10.0
+  - @hayasedb/nuxt@0.10.0
+  - @hayasedb/ui@0.10.0
+  - @hayasedb/auth@0.10.0
+  - @hayasedb/domain@0.10.0
+
 ## 0.9.0
 
 ### Patch Changes

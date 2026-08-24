@@ -1,5 +1,34 @@
 # @hayasedb/contract
 
+## 0.10.0
+
+### Minor Changes
+
+- 35384f0: Serve the public API reference from the web app as a first-class `Docs` route, generated from the contract at build time so the page no longer depends on the API being reachable
+  
+  - Contract: `buildOpenApiDocument` and `buildPublicOpenApiDocument` are exported from `@hayasedb/contract`, replacing the generator that `apps/api/src/openapi.ts` had duplicated. Both documents are now expressed through one `OpenAPIGenerator` instance, and `shouldHoistDef` becomes module-private since it existed only to feed that duplicate. The API keeps ownership of the internal description and its `internalToken` scheme; only the generator construction is shared
+  - Contract build: `tsdown` emits `dist/openapi.public.json` through `onSuccess`, exposed as the `@hayasedb/contract/openapi.json` subpath export. Generation runs inside the single `tsdown` invocation rather than an `&&` chain, so it also regenerates on `tsdown --watch` rebuilds, where the previous chain left the artifact stale. It runs after the preset's `clean`, and the emitter fails the build when the published method and path pairs diverge from the contract's api-key routes, naming what is missing or unexpected, so an endpoint cannot silently drop out of the published spec. `onSuccess` is a string command because tsdown's native config loader resolves imports through `nativeImport`, which cannot follow the extensionless TS imports in `src/`
+  - Web: `/docs` renders the reference through Scalar inside a same-origin iframe served by a Nitro route at `/_reference`. The iframe is the isolation boundary, not a workaround: the Scalar standalone bundle unconditionally appends a `<style id="scalar-style">` element to `document.head` containing a full Tailwind build with a `*, :before, :after, ::backdrop` reset, and uses no shadow DOM, so either in-app embedding path would overwrite the application theme. Theming is passed through Scalar's native `customCss` key rather than a hand-written `<style>` tag, and the reference is pinned to light with `darkMode: false` and `hideDarkModeToggle: true` to match the app, which pins `colorMode` to light and ships no toggle
+  - Web: `/openapi.json` serves the generated document with `servers[0].url` rewritten from `apiPublicUrl` at request time, so one build artifact serves every environment. Only `standalone.js` is staged into `public/_docs`, resolved through the package's own `browser` field, which is the sanctioned pointer since `exports` blocks the deep path. Mounting the whole `dist/browser/` directory had been publishing 40 MB of source maps and `chunks/` files that the standalone build never requests; the served surface is now 4.1 MB
+  - Web: the page mirrors the iframe's hash onto the parent URL so sidebar navigation produces shareable `/docs#tag/…` links and deep links load scrolled. Scalar navigates via `history.replaceState`, which emits no `hashchange`, and the native `onSidebarClick` callback misses scroll-driven changes, so the hash is polled
+  - Config: `@scalar/api-reference` is declared in the root catalog like every other shared dependency rather than pinned in `apps/web`. `apiDocsUrl` is replaced by `apiPublicUrl`, removing a second environment variable that only ever held `apiPublicUrl + '/docs'`. The API key modal now links to the in-app route instead of opening the API host in a new tab
+  - Layouts: the session block shared byte-for-byte by `default.vue` and the new `docs.vue` moves into a `useLayoutSession` composable. Ordering `useRuntimeConfig()` and `useAccountActions()` ahead of the awaited session fixes a pre-existing `NUXT_E1001` warning, since `useAccountActions()` reaches `useNuxtApp()` through `useApiClient()` and both layouts had been calling it after an `await`
+  - Tests: the contract suite asserts that the published document matches the contract's api-key routes exactly, and that no `/auth`, `/account`, `/changeset`, `/revision` or `/media` path appears in it, so a procedure cannot reach the public spec by mistake
+  
+  `apps/api` keeps serving both the public and internal specs at `/docs`; the internal document is useful outside production and is never published, so narrowing it stays out of this change. Deployments must set `NUXT_PUBLIC_API_PUBLIC_URL` in place of `NUXT_PUBLIC_API_DOCS_URL`; both derive from the existing `API_PUBLIC_URL`, so no new value is introduced.
+
+### Patch Changes
+
+- 27b0847: Fix stale email verification state, where a verified user could keep being rejected as unverified for up to five minutes
+  
+  Better Auth rewrites its session cookie cache when an email is verified, but only on a response to the browser holding that cookie. Verifying in a different browser, a private window, or on a phone leaves the original browser with a stale cookie, and session reads short-circuit on it before reaching the database.
+  
+  - API: `auth.getSession` now forwards Better Auth's response cookie instead of discarding it. The client already requests an uncached read, which also refreshes the cookie cache, so a stale cookie repairs itself on the next session read
+  - Nuxt: a `FORBIDDEN` unverified-email response triggers one session refresh, turning the worst case into a self-correcting retry
+  - Contract: the rejection message is shared between the API check and the frontend predicate so they cannot drift
+  - Web: `verify-email` continues with `router.replace` so the tokened URL leaves history
+- @hayasedb/domain@0.10.0
+
 ## 0.9.0
 
 ### Patch Changes
