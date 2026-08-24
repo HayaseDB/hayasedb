@@ -25,3 +25,15 @@ export function handleUnauthenticated(): Promise<void> {
 
   return inFlight
 }
+
+let unverifiedInFlight: Promise<void> | null = null
+
+export function handleUnverifiedEmail(): Promise<void> {
+  if (import.meta.server) return Promise.resolve()
+
+  unverifiedInFlight ??= refreshAppSession().finally(() => {
+    unverifiedInFlight = null
+  })
+
+  return unverifiedInFlight
+}

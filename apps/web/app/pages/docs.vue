@@ -22,10 +22,13 @@ const syncHash = () => {
   )
 }
 
+let poll: ReturnType<typeof setInterval>
+
 onMounted(() => {
-  const poll = setInterval(syncHash, 150)
-  onBeforeUnmount(() => clearInterval(poll))
+  poll = setInterval(syncHash, 150)
 })
+
+onBeforeUnmount(() => clearInterval(poll))
 </script>
 
 <template>

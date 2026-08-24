@@ -4,6 +4,8 @@ import { paginationInputSchema, queryBooleanSchema } from './common'
 export const PASSWORD_MIN = 8
 export const PASSWORD_MAX = 128
 
+export const EMAIL_NOT_VERIFIED_MESSAGE = 'Email address is not verified'
+
 export const socialProviders = ['github', 'discord'] as const
 export type SocialProvider = (typeof socialProviders)[number]
 

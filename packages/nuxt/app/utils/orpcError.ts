@@ -1,3 +1,5 @@
+import { EMAIL_NOT_VERIFIED_MESSAGE } from '@hayasedb/contract'
+
 function orpcErrorCode(error: unknown): string | undefined {
   if (error && typeof error === 'object' && 'code' in error) {
     const code = (error as { code?: unknown }).code
@@ -12,6 +14,13 @@ export function isConflictError(error: unknown): boolean {
 
 export function isUnauthorizedError(error: unknown): boolean {
   return orpcErrorCode(error) === 'UNAUTHORIZED'
+}
+
+export function isUnverifiedEmailError(error: unknown): boolean {
+  return (
+    orpcErrorCode(error) === 'FORBIDDEN' &&
+    orpcErrorMessage(error) === EMAIL_NOT_VERIFIED_MESSAGE
+  )
 }
 
 export function isRateLimitedError(error: unknown): boolean {

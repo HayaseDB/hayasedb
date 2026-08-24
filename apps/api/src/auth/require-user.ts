@@ -1,5 +1,6 @@
 import { ORPCError } from '@orpc/server'
 import type { Request } from 'express'
+import { EMAIL_NOT_VERIFIED_MESSAGE } from '@hayasedb/contract'
 import type { ORPCContext } from '../orpc/context'
 
 export function isAdminRequest(request: Request): boolean {
@@ -16,7 +17,7 @@ export function requireVerifiedUser(context: ORPCContext): string {
   }
   if (!user.emailVerified) {
     throw new ORPCError('FORBIDDEN', {
-      message: 'Email address is not verified',
+      message: EMAIL_NOT_VERIFIED_MESSAGE,
     })
   }
   return user.id

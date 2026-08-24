@@ -10,6 +10,7 @@ export class AuthFacade extends BetterAuthFacade {
     return this.api.getSession({
       headers: this.headers(request),
       query: { disableCookieCache },
+      returnHeaders: true,
     })
   }
 
