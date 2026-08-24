@@ -27,4 +27,12 @@ describe('forwardSetCookie', () => {
     forwardSetCookie({ res: { appendHeader } } as never, new Headers())
     expect(appendHeader).not.toHaveBeenCalled()
   })
+
+  it('does nothing when the caller has no headers to forward', () => {
+    const appendHeader = vi.fn()
+    expect(() =>
+      forwardSetCookie({ res: { appendHeader } } as never, undefined),
+    ).not.toThrow()
+    expect(appendHeader).not.toHaveBeenCalled()
+  })
 })
