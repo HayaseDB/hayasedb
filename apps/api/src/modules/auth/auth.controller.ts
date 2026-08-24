@@ -16,11 +16,12 @@ export class AuthController {
   getSession() {
     return implement(contract.auth.getSession).handler(
       async ({ input, context }) => {
-        const session = await this.auth.getSession(
+        const { headers, response } = await this.auth.getSession(
           context.request,
           input.disableCookieCache,
         )
-        return session ?? null
+        forwardSetCookie(context.request, headers)
+        return response ?? null
       },
     )
   }

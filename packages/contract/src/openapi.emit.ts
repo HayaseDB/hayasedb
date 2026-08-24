@@ -12,12 +12,29 @@ const document = await buildPublicOpenApiDocument({
   version: pkg.version,
 })
 
-const generated = Object.keys(document.paths ?? {}).length
-const expected = collectRoutes().filter((route) => route.apiKey).length
+const published = Object.entries(document.paths ?? {})
+  .flatMap(([path, item]) =>
+    Object.keys(item ?? {}).map((method) => `${method.toUpperCase()} ${path}`),
+  )
+  .sort()
 
-if (generated !== expected) {
+const expected = collectRoutes()
+  .filter((route) => route.apiKey)
+  .map((route) => `${route.method} ${route.path}`)
+  .sort()
+
+const missing = expected.filter((route) => !published.includes(route))
+const unexpected = published.filter((route) => !expected.includes(route))
+
+if (missing.length > 0 || unexpected.length > 0) {
   throw new Error(
-    `Public OpenAPI document has ${generated} paths but the contract declares ${expected} api-key routes.`,
+    [
+      'Public OpenAPI document does not match the contract api-key routes.',
+      missing.length > 0 && `missing: ${missing.join(', ')}`,
+      unexpected.length > 0 && `unexpected: ${unexpected.join(', ')}`,
+    ]
+      .filter(Boolean)
+      .join(' '),
   )
 }
 

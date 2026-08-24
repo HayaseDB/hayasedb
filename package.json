@@ -28,6 +28,7 @@
       "@react-email/components": "1.0.12",
       "@react-email/render": "2.0.10",
       "@react-email/ui": "6.6.8",
+      "@scalar/api-reference": "1.66.1",
       "@testcontainers/minio": "12.1.0",
       "@testcontainers/postgresql": "12.1.0",
       "@testcontainers/redis": "12.1.0",

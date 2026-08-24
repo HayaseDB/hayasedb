@@ -30,7 +30,7 @@ function onResend() {
 }
 
 async function onContinue() {
-  await router.push('/')
+  await router.replace('/')
 }
 </script>
 

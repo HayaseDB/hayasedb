@@ -12,11 +12,13 @@ type ApiClientOptions = Pick<
   'origin' | 'headers'
 > & {
   onUnauthorized?: () => void
+  onUnverifiedEmail?: () => void
   onRateLimited?: () => void
 }
 
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
-  const { onUnauthorized, onRateLimited, ...linkOptions } = options
+  const { onUnauthorized, onUnverifiedEmail, onRateLimited, ...linkOptions } =
+    options
 
   const link = new OpenAPILink(contract, {
     url: '/api',
@@ -30,6 +32,9 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       onError((error) => {
         if (onRateLimited && isRateLimitedError(error)) onRateLimited()
         if (onUnauthorized && isUnauthorizedError(error)) onUnauthorized()
+        if (onUnverifiedEmail && isUnverifiedEmailError(error)) {
+          onUnverifiedEmail()
+        }
       }),
     ],
   }) as ApiClient
