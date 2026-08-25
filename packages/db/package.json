@@ -24,7 +24,6 @@
     "dev": "tsdown --watch --no-clean",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check --dialect=postgresql --out=./drizzle",
-    "db:migrate": "tsx src/migrate-cli.ts",
     "db:studio": "drizzle-kit studio",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
@@ -45,7 +44,6 @@
     "dotenv": "catalog:",
     "drizzle-kit": "catalog:",
     "tsdown": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -1,0 +1,51 @@
+{
+  "name": "@hayasedb/cli",
+  "version": "0.10.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "hayasedb": "./dist/main.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/main.ts",
+      "default": "./dist/main.mjs"
+    }
+  },
+  "main": "./dist/main.mjs",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch --no-clean",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo node_modules",
+    "test": "bun --bun vitest run"
+  },
+  "dependencies": {
+    "@hayasedb/auth": "workspace:*",
+    "@hayasedb/contract": "workspace:*",
+    "@hayasedb/db": "workspace:*",
+    "@hayasedb/domain": "workspace:*",
+    "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "better-auth": "catalog:",
+    "citty": "catalog:",
+    "consola": "catalog:",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hayasedb/eslint-config": "workspace:*",
+    "@hayasedb/typescript-config": "workspace:*",
+    "@types/node": "^22.20.1",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

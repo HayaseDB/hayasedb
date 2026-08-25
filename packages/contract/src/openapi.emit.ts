@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises'
+import { rename, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import pkg from '../package.json' with { type: 'json' }
@@ -40,7 +40,8 @@ if (missing.length > 0 || unexpected.length > 0) {
 
 const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 
-await writeFile(
-  join(outDir, 'openapi.public.json'),
-  JSON.stringify(document) + '\n',
-)
+const target = join(outDir, 'openapi.public.json')
+const staging = `${target}.tmp`
+
+await writeFile(staging, JSON.stringify(document) + '\n')
+await rename(staging, target)

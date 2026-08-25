@@ -1,6 +1,6 @@
 import swc from 'unplugin-swc'
 
-export const swcPlugin = () =>
+export const swcPlugin = (): ReturnType<typeof swc.vite> =>
   swc.vite({
     tsconfigFile: false,
     jsc: {

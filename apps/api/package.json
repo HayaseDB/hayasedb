@@ -6,7 +6,6 @@
     "dev": "NODE_ENV=development nest start -b swc -w",
     "build": "nest build -b swc",
     "start": "node dist/src/main",
-    "seed:demo": "nest build -b swc && node dist/src/seed-demo",
     "check-types": "tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint .",
     "clean": "rm -rf dist .turbo node_modules",
@@ -15,6 +14,7 @@
   },
   "dependencies": {
     "@hayasedb/auth": "workspace:*",
+    "@hayasedb/cli": "workspace:*",
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/db": "workspace:*",
     "@hayasedb/domain": "workspace:*",

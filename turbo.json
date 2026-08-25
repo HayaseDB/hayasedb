@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.v2.json",
   "ui": "stream",
+  "concurrency": "16",
   "globalDependencies": [
     ".nvmrc",
     "bunfig.toml",
@@ -44,21 +45,6 @@
       "cache": false,
       "dependsOn": ["^build"],
       "passThroughEnv": ["DATABASE_URL", "POSTGRES_*"]
-    },
-    "db:migrate": {
-      "cache": false,
-      "dependsOn": ["^build"],
-      "passThroughEnv": ["DATABASE_URL", "POSTGRES_*"]
-    },
-    "seed:demo": {
-      "cache": false,
-      "dependsOn": ["^build"],
-      "passThroughEnv": [
-        "DATABASE_URL",
-        "POSTGRES_*",
-        "STORAGE_*",
-        "SEED_COUNT"
-      ]
     },
     "dev": {
       "cache": false,
