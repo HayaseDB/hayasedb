@@ -3,6 +3,7 @@ import { CalendarDate, type DateValue } from '@internationalized/date'
 import {
   FUZZY_DATE_MONTHS,
   daysInMonth,
+  fuzzyDateEquals,
   type FuzzyDate,
 } from '@hayasedb/domain'
 
@@ -38,13 +39,28 @@ function impliedPrecision(value: FuzzyDate | null): Precision {
 
 const precision = ref<Precision>(impliedPrecision(model.value))
 
+const draft = ref<FuzzyDate | null>(model.value)
+
 let clearingYear = false
+
+function truncate(value: FuzzyDate | null, to: Precision): FuzzyDate | null {
+  if (!value || to === 'unknown') return null
+  const month = to === 'year' ? null : value.month
+  return {
+    year: value.year,
+    month,
+    day: to === 'day' && month ? value.day : null,
+  }
+}
 
 watch(model, (value, previous) => {
   const implied = impliedPrecision(value)
   if (!value && clearingYear) {
     clearingYear = false
     return
+  }
+  if (!fuzzyDateEquals(value, truncate(draft.value, precision.value))) {
+    draft.value = value
   }
   if (!value || !previous) {
     precision.value = implied
@@ -55,63 +71,63 @@ watch(model, (value, previous) => {
   }
 })
 
+function commit(next: FuzzyDate | null) {
+  draft.value = next
+  model.value = truncate(next, precision.value)
+}
+
 function setPrecision(value: Precision) {
   clearingYear = false
   precision.value = value
-  const current = model.value
-  if (value === 'unknown' || !current) {
-    model.value = null
-    return
-  }
-  model.value = {
-    year: current.year,
-    month: value === 'year' ? null : current.month,
-    day: value === 'day' ? current.day : null,
-  }
+  model.value = truncate(draft.value, value)
 }
 
 const year = computed({
-  get: () => model.value?.year ?? null,
+  get: () => draft.value?.year ?? null,
   set: (value: number | null) => {
     if (value == null || Number.isNaN(value)) {
       clearingYear = model.value !== null
+      draft.value = null
       model.value = null
       return
     }
-    const month =
-      precision.value === 'year' ? null : (model.value?.month ?? null)
-    const day =
-      precision.value === 'day' && month
-        ? Math.min(model.value?.day ?? 0, daysInMonth(value, month)) || null
-        : null
-    model.value = { year: value, month, day }
+    const month = draft.value?.month ?? null
+    const day = month
+      ? Math.min(draft.value?.day ?? 0, daysInMonth(value, month)) || null
+      : null
+    commit({ year: value, month, day })
   },
 })
 
 const month = computed({
-  get: () => model.value?.month ?? null,
+  get: () => draft.value?.month ?? null,
   set: (value: number | null) => {
-    if (!model.value) return
-    model.value = { year: model.value.year, month: value, day: null }
+    const current = draft.value
+    if (!current) return
+    const day =
+      value && current.day
+        ? Math.min(current.day, daysInMonth(current.year, value))
+        : null
+    commit({ year: current.year, month: value, day })
   },
 })
 
 const calendarDate = computed<DateValue | undefined>({
   get: () => {
-    const value = model.value
+    const value = draft.value
     return value?.month && value.day
       ? new CalendarDate(value.year, value.month, value.day)
       : undefined
   },
   set: (value) => {
-    model.value = value
-      ? { year: value.year, month: value.month, day: value.day }
-      : null
+    commit(
+      value ? { year: value.year, month: value.month, day: value.day } : null,
+    )
   },
 })
 
 const calendarPlaceholder = computed(() => {
-  const value = model.value
+  const value = draft.value
   if (!value) return undefined
   return new CalendarDate(value.year, value.month ?? 1, 1)
 })

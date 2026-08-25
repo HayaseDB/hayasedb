@@ -70,6 +70,37 @@ describe('AnimeFuzzyDateInput', () => {
     expect(wrapper.find('[aria-label="Date"]').exists()).toBe(true)
   })
 
+  it('restores hidden parts when the precision is raised again', async () => {
+    const { value, clickTab } = await mount({ year: 2020, month: 4, day: 9 })
+    await clickTab('Month')
+    expect(value.value).toEqual({ year: 2020, month: 4, day: null })
+    await clickTab('Day')
+    expect(value.value).toEqual({ year: 2020, month: 4, day: 9 })
+    await clickTab('Year')
+    expect(value.value).toEqual({ year: 2020, month: null, day: null })
+    await clickTab('Day')
+    expect(value.value).toEqual({ year: 2020, month: 4, day: 9 })
+  })
+
+  it('restores parts after a round trip through Unknown', async () => {
+    const { value, clickTab } = await mount({ year: 2020, month: 4, day: 9 })
+    await clickTab('Unknown')
+    expect(value.value).toBeNull()
+    await clickTab('Day')
+    expect(value.value).toEqual({ year: 2020, month: 4, day: 9 })
+  })
+
+  it('drops the remembered day when an external value replaces it', async () => {
+    const { wrapper, value, clickTab } = await mount({
+      year: 2020,
+      month: 4,
+      day: 9,
+    })
+    await wrapper.setProps({ modelValue: { year: 1999, month: 7, day: null } })
+    await clickTab('Day')
+    expect(value.value).toEqual({ year: 1999, month: 7, day: null })
+  })
+
   it('follows an external model upgrade but not a downgrade', async () => {
     const { wrapper, selectedTab } = await mount({
       year: 2020,
