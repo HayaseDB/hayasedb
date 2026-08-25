@@ -87,7 +87,7 @@
     "format:check": "prettier --check .",
     "check": "turbo run lint check-types && bun run test:unit && bun run format:check",
     "fix": "bun run format && bun run lint:fix",
-    "clean": "turbo run clean && rm -rf .turbo node_modules",
+    "clean": "turbo run clean && rm -rf .turbo .storage .storage-e2e node_modules",
     "db:generate": "turbo run db:generate --filter=@hayasedb/db",
     "db:migrate": "turbo run db:migrate --filter=@hayasedb/db",
     "db:studio": "bun --filter @hayasedb/db db:studio",

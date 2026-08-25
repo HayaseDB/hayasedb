@@ -23,6 +23,8 @@ const {
   total,
   pending,
   refresh,
+  hasFilters,
+  resetFilters,
 } = await useAnimeList({
   key: 'admin-anime-list',
   pageSize: 20,
@@ -74,7 +76,7 @@ const columns: TableColumn<AnimeListItem>[] = [
     accessorKey: 'coverUrl',
     header: '',
     enableHiding: false,
-    meta: { class: { th: 'w-16', td: 'w-16' } },
+    meta: { class: { th: 'min-w-16', td: 'min-w-16' } },
     cell: ({ row }) =>
       h(AnimeCoverImage, {
         src: row.original.coverUrl,
@@ -94,6 +96,7 @@ const columns: TableColumn<AnimeListItem>[] = [
           onClick: toggleTitleSort,
         }),
       ),
+    meta: { class: { th: 'min-w-56', td: 'max-w-80 min-w-56' } },
     cell: ({ row }) =>
       h('div', { class: 'flex min-w-0 flex-col' }, [
         h(
@@ -116,7 +119,7 @@ const columns: TableColumn<AnimeListItem>[] = [
     id: 'format',
     accessorKey: 'format',
     header: 'Format',
-    meta: { class: { th: 'w-24', td: 'w-24' } },
+    meta: { class: { th: 'min-w-24', td: 'min-w-24' } },
     cell: ({ row }) => {
       const label = animeFormatLabel(row.original.format)
       if (!label) return null
@@ -127,7 +130,7 @@ const columns: TableColumn<AnimeListItem>[] = [
     id: 'status',
     accessorKey: 'status',
     header: 'Status',
-    meta: { class: { th: 'w-36', td: 'w-36' } },
+    meta: { class: { th: 'min-w-36', td: 'min-w-36' } },
     cell: ({ row }) => {
       const label = animeStatusLabel(row.original.status)
       if (!label) return null
@@ -142,7 +145,7 @@ const columns: TableColumn<AnimeListItem>[] = [
     id: 'genres',
     accessorKey: 'genres',
     header: 'Genres',
-    meta: { class: { th: 'w-56', td: 'w-56' } },
+    meta: { class: { th: 'min-w-56', td: 'min-w-56' } },
     cell: ({ row }) =>
       h(
         'span',
@@ -241,11 +244,7 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
           :genres="genres"
         >
           <template #trailing>
-            <UDropdownMenu
-              :items="columnItems"
-              :content="{ align: 'end' }"
-              class="sm:ml-auto"
-            >
+            <UDropdownMenu :items="columnItems" :content="{ align: 'end' }">
               <UButton
                 label="Columns"
                 icon="i-lucide-columns-3"
@@ -257,6 +256,22 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
           </template>
         </AnimeFilterBar>
 
+        <div class="flex h-5 items-center gap-3">
+          <p class="text-muted text-sm">
+            {{ total }} {{ total === 1 ? 'title' : 'titles' }}
+          </p>
+          <UButton
+            v-if="hasFilters"
+            label="Reset filters"
+            icon="i-lucide-x"
+            color="neutral"
+            variant="link"
+            size="xs"
+            :ui="{ base: 'py-0', leadingIcon: 'size-3.5' }"
+            @click="resetFilters()"
+          />
+        </div>
+
         <UTable
           v-model:column-visibility="columnVisibility"
           :data="items"
@@ -266,12 +281,28 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
           :ui="TABLE_UI"
         >
           <template #empty>
-            <div
-              class="text-muted flex flex-col items-center gap-2 py-16 text-center"
-            >
-              <UIcon name="i-lucide-search-x" class="size-6" />
-              <p class="text-sm">No anime found.</p>
-            </div>
+            <UEmpty
+              variant="naked"
+              icon="i-lucide-search-x"
+              :title="hasFilters ? 'No anime found' : 'No anime yet'"
+              :description="
+                hasFilters
+                  ? 'Try adjusting your search or filters.'
+                  : 'Add the first anime to get started.'
+              "
+              :actions="
+                hasFilters
+                  ? [
+                      {
+                        label: 'Reset filters',
+                        color: 'neutral',
+                        variant: 'outline',
+                        onClick: () => resetFilters(),
+                      },
+                    ]
+                  : undefined
+              "
+            />
           </template>
         </UTable>
 

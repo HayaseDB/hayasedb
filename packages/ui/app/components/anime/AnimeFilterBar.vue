@@ -32,22 +32,25 @@ const genreItems = computed(() =>
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
     <UInput
       v-model="q"
       icon="i-lucide-search"
       placeholder="Search anime…"
       aria-label="Search anime"
-      class="w-full sm:w-64"
+      class="w-full lg:w-64 lg:shrink-0"
     />
-    <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+
+    <div
+      class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center"
+    >
       <AppSelect
         v-model="format"
         :items="animeFormatOptions"
         value-key="value"
         placeholder="All formats"
         aria-label="Format"
-        class="w-full sm:w-40"
+        class="w-full lg:w-40"
       />
       <AppSelect
         v-model="status"
@@ -55,7 +58,7 @@ const genreItems = computed(() =>
         value-key="value"
         placeholder="All statuses"
         aria-label="Status"
-        class="w-full sm:w-44"
+        class="w-full lg:w-44"
       />
       <AppSelect
         v-model="genreId"
@@ -63,7 +66,7 @@ const genreItems = computed(() =>
         value-key="value"
         placeholder="All genres"
         aria-label="Genre"
-        class="w-full sm:w-40"
+        class="w-full lg:w-40"
       />
       <AppSelect
         v-if="showYear"
@@ -72,7 +75,7 @@ const genreItems = computed(() =>
         value-key="value"
         placeholder="All years"
         aria-label="Year"
-        class="w-full sm:w-32"
+        class="w-full lg:w-32"
       />
       <USelect
         v-if="sortKey !== undefined"
@@ -81,9 +84,12 @@ const genreItems = computed(() =>
         value-key="value"
         icon="i-lucide-arrow-down-up"
         aria-label="Sort by"
-        class="w-full sm:w-40"
+        class="col-span-full w-full sm:col-span-1 lg:w-40"
       />
     </div>
-    <slot name="trailing" />
+
+    <div class="flex items-center gap-2 lg:ms-auto lg:shrink-0">
+      <slot name="trailing" />
+    </div>
   </div>
 </template>

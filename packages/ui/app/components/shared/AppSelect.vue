@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="T extends SelectValue">
+import type { HTMLAttributes } from 'vue'
 import type { SelectValue } from '@nuxt/ui'
 
 defineOptions({ inheritAttrs: false })
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const attrs = useAttrs()
+const rootClass = computed(() => attrs.class as HTMLAttributes['class'])
 const selectAttrs = computed(() => {
   const { class: _class, ...rest } = attrs
   return rest
@@ -25,7 +27,7 @@ function clear() {
 </script>
 
 <template>
-  <div class="relative" :class="attrs.class">
+  <div class="relative" :class="rootClass">
     <USelect
       v-model="model"
       v-bind="selectAttrs"

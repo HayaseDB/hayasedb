@@ -55,7 +55,7 @@ function askRevokeOthers() {
         <UButton
           color="neutral"
           variant="subtle"
-          size="xs"
+          size="sm"
           icon="i-lucide-log-out"
           label="Sign out others"
           :disabled="!hasOthers || loading"

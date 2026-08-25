@@ -24,6 +24,8 @@ const {
   total,
   pending,
   refresh,
+  hasFilters,
+  resetFilters,
 } = useAdminUsers({ key: 'admin-users-list', pageSize: 20 })
 
 const actions = useAdminUserActions()
@@ -117,6 +119,7 @@ const columns: TableColumn<AdminUser>[] = [
           onClick: () => toggleSort('name'),
         }),
       ),
+    meta: { class: { th: 'min-w-56', td: 'max-w-80 min-w-56' } },
     cell: ({ row }) =>
       h('div', { class: 'flex min-w-0 items-center gap-3' }, [
         h(UAvatar, {
@@ -152,7 +155,7 @@ const columns: TableColumn<AdminUser>[] = [
     id: 'role',
     accessorKey: 'role',
     header: 'Role',
-    meta: { class: { th: 'w-28', td: 'w-28' } },
+    meta: { class: { th: 'min-w-28', td: 'min-w-28' } },
     cell: ({ row }) =>
       h(UBadge, {
         label: row.original.role === 'admin' ? 'Admin' : 'User',
@@ -164,7 +167,7 @@ const columns: TableColumn<AdminUser>[] = [
     id: 'status',
     accessorKey: 'banned',
     header: 'Status',
-    meta: { class: { th: 'w-32', td: 'w-32' } },
+    meta: { class: { th: 'min-w-32', td: 'min-w-32' } },
     cell: ({ row }) => {
       if (row.original.banned) {
         return h(UBadge, { label: 'Banned', color: 'error', variant: 'subtle' })
@@ -181,7 +184,7 @@ const columns: TableColumn<AdminUser>[] = [
   {
     id: 'createdAt',
     accessorKey: 'createdAt',
-    meta: { class: { th: 'w-36', td: 'w-36' } },
+    meta: { class: { th: 'min-w-36', td: 'min-w-36' } },
     header: () =>
       h(
         UButton,
@@ -313,28 +316,45 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
             v-model="q"
             icon="i-lucide-search"
             placeholder="Search name or email…"
-            class="sm:max-w-xs"
+            aria-label="Search users"
+            class="w-full sm:w-64 sm:shrink-0"
           />
           <AppSelect
             v-model="filter"
             :items="filterItems"
             value-key="value"
             placeholder="All users"
-            class="w-36"
+            aria-label="User filter"
+            class="w-full sm:w-40"
           />
-          <UDropdownMenu
-            :items="columnItems"
-            :content="{ align: 'end' }"
-            class="sm:ml-auto"
-          >
-            <UButton
-              label="Columns"
-              icon="i-lucide-columns-3"
-              color="neutral"
-              variant="outline"
-              trailing-icon="i-lucide-chevron-down"
-            />
-          </UDropdownMenu>
+          <div class="flex items-center gap-2 sm:ms-auto sm:shrink-0">
+            <UDropdownMenu :items="columnItems" :content="{ align: 'end' }">
+              <UButton
+                label="Columns"
+                icon="i-lucide-columns-3"
+                color="neutral"
+                variant="outline"
+                trailing-icon="i-lucide-chevron-down"
+                class="w-full sm:w-auto"
+              />
+            </UDropdownMenu>
+          </div>
+        </div>
+
+        <div class="flex h-5 items-center gap-3">
+          <p class="text-muted text-sm">
+            {{ total }} {{ total === 1 ? 'user' : 'users' }}
+          </p>
+          <UButton
+            v-if="hasFilters"
+            label="Reset filters"
+            icon="i-lucide-x"
+            color="neutral"
+            variant="link"
+            size="xs"
+            :ui="{ base: 'py-0', leadingIcon: 'size-3.5' }"
+            @click="resetFilters()"
+          />
         </div>
 
         <UTable
@@ -346,12 +366,28 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
           :ui="TABLE_UI"
         >
           <template #empty>
-            <div
-              class="text-muted flex flex-col items-center gap-2 py-16 text-center"
-            >
-              <UIcon name="i-lucide-search-x" class="size-6" />
-              <p class="text-sm">No users found.</p>
-            </div>
+            <UEmpty
+              variant="naked"
+              icon="i-lucide-search-x"
+              :title="hasFilters ? 'No users found' : 'No users yet'"
+              :description="
+                hasFilters
+                  ? 'Try adjusting your search or filters.'
+                  : 'Users appear here once they register.'
+              "
+              :actions="
+                hasFilters
+                  ? [
+                      {
+                        label: 'Reset filters',
+                        color: 'neutral',
+                        variant: 'outline',
+                        onClick: () => resetFilters(),
+                      },
+                    ]
+                  : undefined
+              "
+            />
           </template>
         </UTable>
 

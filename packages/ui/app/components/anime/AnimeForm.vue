@@ -5,6 +5,7 @@ import {
   createAnimeInputSchema,
   type CreateAnimeInput,
 } from '@hayasedb/contract'
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
 import type {
   AnimeFormState,
   AnimeMediaController,
@@ -101,6 +102,8 @@ const tabs = [
   { label: 'Images', icon: 'i-lucide-images', slot: 'images' as const },
 ]
 const activeTab = ref('0')
+
+const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
 </script>
 
 <template>
@@ -108,12 +111,13 @@ const activeTab = ref('0')
     <UTabs
       v-model="activeTab"
       :items="tabs"
-      orientation="vertical"
+      :orientation="isDesktop ? 'vertical' : 'horizontal'"
       variant="link"
       :ui="{
-        root: 'flex-row items-start gap-8',
-        list: 'w-48 shrink-0',
-        content: 'flex-1 min-w-0',
+        root: 'gap-6 lg:flex-row lg:items-start lg:gap-8',
+        list: 'lg:w-48 lg:shrink-0',
+        trigger: 'max-lg:flex-1 max-lg:min-w-0',
+        content: 'min-w-0 lg:flex-1',
       }"
     >
       <template #general>
@@ -358,36 +362,59 @@ const activeTab = ref('0')
           <UPageCard :title="mediaLabel('GALLERY')" variant="subtle">
             <div class="flex flex-col gap-4">
               <div v-if="gallery.length" class="flex flex-wrap gap-3">
-                <div
-                  v-for="(m, index) in gallery"
-                  :key="m.key"
-                  draggable="true"
-                  class="group relative cursor-grab active:cursor-grabbing"
-                  :class="
-                    dragOverIndex === index ? 'ring-primary rounded ring-2' : ''
-                  "
-                  @dragstart="dragIndex = index"
-                  @dragover.prevent="dragOverIndex = index"
-                  @dragleave="dragOverIndex = null"
-                  @drop="onDrop(index)"
-                >
-                  <AnimeCoverImage
-                    :src="m.url"
-                    :alt="`Gallery image ${Number(index) + 1}`"
-                    class="bg-default h-32 w-24 rounded"
-                  />
-                  <UIcon
-                    name="i-lucide-grip-vertical"
-                    class="bg-inverted/70 text-inverted absolute top-1 left-1 size-5 rounded p-0.5"
-                  />
-                  <UButton
-                    icon="i-lucide-x"
-                    color="error"
-                    variant="solid"
-                    size="xs"
-                    class="absolute top-1 right-1 opacity-0 transition group-hover:opacity-100"
-                    @click="() => media.removeGallery(m.key)"
-                  />
+                <div v-for="(m, index) in gallery" :key="m.key">
+                  <div
+                    draggable="true"
+                    class="relative cursor-grab active:cursor-grabbing"
+                    :class="
+                      dragOverIndex === index
+                        ? 'ring-primary rounded ring-2'
+                        : ''
+                    "
+                    @dragstart="dragIndex = index"
+                    @dragover.prevent="dragOverIndex = index"
+                    @dragleave="dragOverIndex = null"
+                    @drop="onDrop(index)"
+                  >
+                    <AnimeCoverImage
+                      :src="m.url"
+                      :alt="`Gallery image ${Number(index) + 1}`"
+                      class="bg-default h-32 w-24 rounded"
+                    />
+                    <UIcon
+                      name="i-lucide-grip-vertical"
+                      class="bg-inverted/70 text-inverted absolute top-1 left-1 hidden size-5 rounded p-0.5 lg:block"
+                    />
+                    <UButton
+                      icon="i-lucide-x"
+                      color="error"
+                      variant="solid"
+                      size="sm"
+                      class="absolute top-1 right-1"
+                      :aria-label="`Remove gallery image ${Number(index) + 1}`"
+                      @click="() => media.removeGallery(m.key)"
+                    />
+                  </div>
+                  <div class="mt-1 flex justify-center gap-1">
+                    <UButton
+                      icon="i-lucide-chevron-left"
+                      color="neutral"
+                      variant="outline"
+                      size="sm"
+                      :disabled="index === 0"
+                      :aria-label="`Move gallery image ${Number(index) + 1} left`"
+                      @click="() => media.reorderGallery(index, index - 1)"
+                    />
+                    <UButton
+                      icon="i-lucide-chevron-right"
+                      color="neutral"
+                      variant="outline"
+                      size="sm"
+                      :disabled="index === gallery.length - 1"
+                      :aria-label="`Move gallery image ${Number(index) + 1} right`"
+                      @click="() => media.reorderGallery(index, index + 1)"
+                    />
+                  </div>
                 </div>
               </div>
               <p v-else class="text-muted text-sm">No gallery images yet.</p>
@@ -421,7 +448,7 @@ const activeTab = ref('0')
     </UTabs>
 
     <div
-      class="border-default mt-6 flex items-center justify-end gap-3 border-t py-4"
+      class="border-default mt-6 flex flex-col items-stretch gap-3 border-t py-4 sm:flex-row sm:items-center sm:justify-end"
     >
       <slot name="footer-leading" />
       <UButton

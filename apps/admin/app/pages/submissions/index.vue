@@ -38,10 +38,11 @@ const columns: TableColumn<ChangesetRow>[] = [
   {
     accessorKey: 'summary',
     header: 'Summary',
+    meta: { class: { th: 'min-w-56', td: 'max-w-80 min-w-56' } },
     cell: ({ row }) =>
       h(
         'span',
-        { class: 'text-highlighted text-sm font-medium' },
+        { class: 'text-highlighted block truncate text-sm font-medium' },
         row.original.summary,
       ),
   },
@@ -73,7 +74,7 @@ const columns: TableColumn<ChangesetRow>[] = [
   {
     accessorKey: 'changeCount',
     header: 'Changes',
-    meta: { class: { th: 'w-24', td: 'w-24' } },
+    meta: { class: { th: 'min-w-24', td: 'min-w-24' } },
     cell: ({ row }) =>
       h(UBadge, {
         label: String(row.original.changeCount),
@@ -84,13 +85,13 @@ const columns: TableColumn<ChangesetRow>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
-    meta: { class: { th: 'w-36', td: 'w-36' } },
+    meta: { class: { th: 'min-w-36', td: 'min-w-36' } },
     cell: ({ row }) => h(ChangesetStatusBadge, { status: row.original.status }),
   },
   {
     accessorKey: 'submittedAt',
     header: 'Submitted',
-    meta: { class: { th: 'w-36', td: 'w-36' } },
+    meta: { class: { th: 'min-w-36', td: 'min-w-36' } },
     cell: ({ row }) => {
       if (!row.original.submittedAt) {
         return h('span', { class: 'text-muted text-sm' }, '—')

@@ -64,7 +64,7 @@ const rangeEnd = computed(() => Math.min(page.value * pageSize, total.value))
 
     <div
       v-if="!initialLoading"
-      class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1"
+      class="mb-4 flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1"
     >
       <p class="text-muted text-sm">
         {{ total }} {{ total === 1 ? 'title' : 'titles' }}
@@ -74,8 +74,9 @@ const rangeEnd = computed(() => Math.min(page.value * pageSize, total.value))
         label="Reset filters"
         icon="i-lucide-x"
         color="neutral"
-        variant="ghost"
+        variant="link"
         size="xs"
+        :ui="{ base: 'py-0', leadingIcon: 'size-3.5' }"
         @click="resetFilters()"
       />
     </div>

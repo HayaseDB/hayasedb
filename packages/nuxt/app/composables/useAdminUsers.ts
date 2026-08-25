@@ -60,6 +60,13 @@ export function useAdminUsers(options: UseAdminUsersOptions) {
   const total = computed(() => data.value?.total ?? 0)
   const pending = computed(() => reqStatus.value === 'pending')
 
+  const hasFilters = computed(() => !!(q.value || filter.value))
+
+  function resetFilters() {
+    q.value = ''
+    filter.value = undefined
+  }
+
   return {
     q,
     filter,
@@ -71,5 +78,7 @@ export function useAdminUsers(options: UseAdminUsersOptions) {
     total,
     pending,
     refresh,
+    hasFilters,
+    resetFilters,
   }
 }

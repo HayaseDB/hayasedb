@@ -169,7 +169,7 @@ async function submit(data: CreateAnimeInput) {
         placeholder="Describe your change (required)…"
         aria-label="Change summary"
         icon="i-lucide-message-square-text"
-        class="max-w-md flex-1"
+        class="w-full flex-1 sm:max-w-md"
         :maxlength="summaryMaxLength"
       />
     </template>

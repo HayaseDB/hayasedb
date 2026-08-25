@@ -36,27 +36,31 @@ useSeoMeta({ title: 'My contributions' })
         v-for="item in items"
         :key="item.id"
         :to="`/contributions/${item.id}`"
-        class="hover:bg-elevated/50 flex flex-wrap items-center gap-3 px-4 py-3 transition"
+        class="hover:bg-elevated/50 flex flex-col gap-2 px-4 py-3 transition sm:flex-row sm:items-center sm:gap-3"
       >
-        <ChangesetStatusBadge :status="item.status" />
-        <span class="text-highlighted min-w-0 flex-1 truncate font-medium">
-          {{ item.summary }}
-        </span>
-        <span class="text-muted truncate text-sm">
-          {{
-            [...new Set(item.entityKinds)]
-              .map((kind) => ENTITY_KIND_LABELS[kind])
-              .join(', ')
-          }}
-        </span>
-        <UBadge
-          :label="String(item.changeCount)"
-          color="neutral"
-          variant="subtle"
-          size="sm"
-        />
-        <UTooltip :disabled="!item.submittedAt">
-          <span class="text-muted text-xs">
+        <div class="flex min-w-0 flex-1 items-center gap-3">
+          <ChangesetStatusBadge :status="item.status" />
+          <span class="text-highlighted min-w-0 flex-1 truncate font-medium">
+            {{ item.summary }}
+          </span>
+        </div>
+        <div
+          class="text-muted flex items-center gap-3 text-sm sm:shrink-0 sm:justify-end"
+        >
+          <span class="min-w-0 truncate">
+            {{
+              [...new Set(item.entityKinds)]
+                .map((kind) => ENTITY_KIND_LABELS[kind])
+                .join(', ')
+            }}
+          </span>
+          <UBadge
+            :label="String(item.changeCount)"
+            color="neutral"
+            variant="subtle"
+            size="sm"
+          />
+          <span class="text-muted shrink-0 text-xs">
             <NuxtTime
               v-if="item.submittedAt"
               :datetime="item.submittedAt"
@@ -65,16 +69,7 @@ useSeoMeta({ title: 'My contributions' })
             />
             <template v-else>—</template>
           </span>
-          <template v-if="item.submittedAt" #content>
-            <NuxtTime
-              class="text-xs"
-              :datetime="item.submittedAt"
-              date-style="medium"
-              time-style="short"
-              locale="en"
-            />
-          </template>
-        </UTooltip>
+        </div>
       </NuxtLink>
     </div>
     <UEmpty

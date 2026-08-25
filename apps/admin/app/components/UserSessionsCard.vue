@@ -51,7 +51,7 @@ function askRevokeAll() {
         <UButton
           color="neutral"
           variant="subtle"
-          size="xs"
+          size="sm"
           icon="i-lucide-log-out"
           label="Revoke all"
           :disabled="!sessions.length || loading"

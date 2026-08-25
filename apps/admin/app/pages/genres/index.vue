@@ -73,7 +73,7 @@ const columns: TableColumn<GenreListItem>[] = [
   {
     accessorKey: 'animeCount',
     header: 'Anime',
-    meta: { class: { th: 'w-24', td: 'w-24' } },
+    meta: { class: { th: 'min-w-24', td: 'min-w-24' } },
     cell: ({ row }) =>
       h(UBadge, {
         label: String(row.original.animeCount),

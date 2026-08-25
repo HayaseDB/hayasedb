@@ -9,7 +9,8 @@
   },
   "scripts": {
     "check-types": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "clean": "rm -rf .turbo node_modules"
   },
   "dependencies": {
     "@eslint/js": "catalog:",

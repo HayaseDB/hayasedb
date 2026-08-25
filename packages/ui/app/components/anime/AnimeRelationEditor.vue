@@ -222,7 +222,7 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
         v-for="{ state, edge } in rows"
         :key="`${state}:${relationEdgeKey(edge)}`"
         :data-state="state"
-        class="border-default flex min-h-12 items-center gap-3 rounded-md border p-2"
+        class="border-default flex min-h-12 flex-col items-stretch gap-2 rounded-md border p-2 sm:flex-row sm:items-center sm:gap-3"
         :class="{
           'ring-info ring-1': state === 'added' || state === 'changed',
           'ring-error border-dashed ring-1': state === 'removed',
@@ -234,7 +234,7 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
             :items="kindOptions(edge)"
             value-key="value"
             size="sm"
-            class="w-44 shrink-0"
+            class="w-full sm:w-44 sm:shrink-0"
             aria-label="Relation kind"
             @update:model-value="
               (next: AnimeRelationViewKind) => setKind(edge, next)
@@ -250,7 +250,8 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
             icon="i-lucide-x"
             color="neutral"
             variant="ghost"
-            size="xs"
+            size="sm"
+            class="self-end sm:self-auto"
             aria-label="Remove relation"
             @click="remove(edge)"
           />
@@ -261,7 +262,7 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
             :items="animeRelationViewOptions"
             value-key="value"
             size="sm"
-            class="w-44 shrink-0"
+            class="w-full sm:w-44 sm:shrink-0"
             aria-label="Relation kind"
             disabled
           />
@@ -275,7 +276,8 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
             icon="i-lucide-undo-2"
             color="neutral"
             variant="ghost"
-            size="xs"
+            size="sm"
+            class="self-end sm:self-auto"
             aria-label="Restore relation"
             @click="restore(edge)"
           />

@@ -1,5 +1,5 @@
 export const TABLE_UI = {
-  base: 'table-fixed',
+  base: 'min-w-full',
   thead: 'bg-elevated/50',
   th: 'text-default font-medium',
   tbody: '[&>tr:last-child>td]:border-b-0',

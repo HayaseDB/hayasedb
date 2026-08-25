@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "postinstall": "nuxt prepare",
     "prepare": "bun run postinstall",
-    "clean": "rm -rf .output .nuxt .nitro .turbo",
+    "clean": "rm -rf .output .nuxt .nitro .turbo node_modules",
     "test": "bun --bun vitest run"
   },
   "dependencies": {

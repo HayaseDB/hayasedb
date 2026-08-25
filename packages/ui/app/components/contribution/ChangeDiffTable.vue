@@ -67,16 +67,13 @@ function valueProps(row: ChangeDiffRow, value: unknown) {
           <span :class="row.drifted && 'opacity-60'">
             <ChangeDiffValue v-bind="valueProps(row, row.before)" />
           </span>
-          <UPopover
-            v-if="row.drifted"
-            mode="hover"
-            :open-delay="0"
-            :close-delay="100"
-            arrow
-          >
-            <UIcon
-              name="i-lucide-history"
-              class="text-warning mt-0.5 size-4 shrink-0 cursor-help"
+          <UPopover v-if="row.drifted" arrow>
+            <UButton
+              icon="i-lucide-history"
+              color="warning"
+              variant="ghost"
+              size="xs"
+              class="-my-1 shrink-0 p-1"
               aria-label="Value changed since submission"
             />
             <template #content>

@@ -9,7 +9,7 @@
     "seed:demo": "nest build -b swc && node dist/src/seed-demo",
     "check-types": "tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint .",
-    "clean": "rm -rf dist .turbo",
+    "clean": "rm -rf dist .turbo node_modules",
     "test": "bun --bun vitest run",
     "test:integration": "bun vitest run --config vitest.int.config.mts"
   },

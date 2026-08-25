@@ -99,6 +99,17 @@ export async function useAnimeList(options: UseAnimeListOptions) {
     page,
   })
 
+  const hasFilters = computed(
+    () => !!(q.value || format.value || status.value || genreId.value),
+  )
+
+  function resetFilters() {
+    q.value = ''
+    format.value = undefined
+    status.value = undefined
+    genreId.value = undefined
+  }
+
   return {
     q,
     debouncedQ,
@@ -109,6 +120,8 @@ export async function useAnimeList(options: UseAnimeListOptions) {
     order,
     page,
     pageSize,
+    hasFilters,
+    resetFilters,
     ...data,
   }
 }

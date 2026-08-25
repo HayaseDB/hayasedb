@@ -8,7 +8,7 @@
     "prepare": "nuxi prepare",
     "check-types": "nuxi typecheck",
     "lint": "eslint .",
-    "clean": "rm -rf .nuxt .turbo",
+    "clean": "rm -rf .nuxt .turbo node_modules",
     "test": "bun --bun vitest run"
   },
   "dependencies": {

@@ -23,7 +23,7 @@
     "dev": "tsdown --watch --no-clean",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "clean": "rm -rf dist .turbo",
+    "clean": "rm -rf dist .turbo node_modules",
     "test": "bun --bun vitest run"
   },
   "dependencies": {

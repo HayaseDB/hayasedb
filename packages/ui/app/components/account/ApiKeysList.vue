@@ -46,9 +46,12 @@ const isExpired = (key: ApiKeyRow) =>
     <div
       v-for="key in keys"
       :key="key.id"
-      class="flex flex-wrap items-center gap-3 px-4 py-3"
+      class="flex items-start gap-3 px-4 py-3"
     >
-      <UIcon name="i-lucide-key-round" class="text-dimmed size-4 shrink-0" />
+      <UIcon
+        name="i-lucide-key-round"
+        class="text-dimmed mt-1 size-4 shrink-0"
+      />
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
           <span class="text-highlighted truncate text-sm font-medium">
@@ -73,21 +76,21 @@ const isExpired = (key: ApiKeyRow) =>
           <template v-if="key.start">{{ key.start }}&hellip;</template>
           <template v-else>&hellip;</template>
         </p>
-      </div>
-      <span class="text-muted text-xs">
-        <template v-if="key.lastRequest">
-          Last used
-          <NuxtTime :datetime="key.lastRequest" relative locale="en" />
-        </template>
-        <template v-else>Never used</template>
-      </span>
-      <UTooltip>
-        <span class="text-muted text-xs">
-          Created
-          <NuxtTime :datetime="key.createdAt" relative locale="en" />
-        </span>
-        <template #content>
-          <span v-if="key.expiresAt" class="text-xs">
+        <div
+          class="text-muted mt-1 flex flex-col gap-x-4 gap-y-0.5 text-xs sm:flex-row sm:flex-wrap"
+        >
+          <span>
+            <template v-if="key.lastRequest">
+              Last used
+              <NuxtTime :datetime="key.lastRequest" relative locale="en" />
+            </template>
+            <template v-else>Never used</template>
+          </span>
+          <span>
+            Created
+            <NuxtTime :datetime="key.createdAt" relative locale="en" />
+          </span>
+          <span v-if="key.expiresAt">
             Expires
             <NuxtTime
               :datetime="key.expiresAt"
@@ -96,9 +99,9 @@ const isExpired = (key: ApiKeyRow) =>
               locale="en"
             />
           </span>
-          <span v-else class="text-xs">Never expires</span>
-        </template>
-      </UTooltip>
+          <span v-else>Never expires</span>
+        </div>
+      </div>
       <UButton
         color="error"
         variant="ghost"
