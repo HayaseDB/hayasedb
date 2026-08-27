@@ -20,7 +20,7 @@
     },
     "apps/admin": {
       "name": "@hayasedb/admin",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@better-auth/api-key": "catalog:",
         "@hayasedb/auth": "workspace:*",
@@ -57,7 +57,7 @@
     },
     "apps/api": {
       "name": "@hayasedb/api",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@hayasedb/auth": "workspace:*",
         "@hayasedb/cli": "workspace:*",
@@ -109,7 +109,7 @@
     },
     "apps/web": {
       "name": "@hayasedb/web",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@better-auth/api-key": "catalog:",
         "@hayasedb/auth": "workspace:*",
@@ -150,7 +150,7 @@
     },
     "e2e": {
       "name": "@hayasedb/e2e",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "devDependencies": {
         "@hayasedb/admin": "workspace:*",
         "@hayasedb/api": "workspace:*",
@@ -166,7 +166,7 @@
     },
     "packages/auth": {
       "name": "@hayasedb/auth",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@better-auth/api-key": "catalog:",
         "@hayasedb/contract": "workspace:*",
@@ -188,7 +188,7 @@
     },
     "packages/cli": {
       "name": "@hayasedb/cli",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "bin": {
         "hayasedb": "./dist/main.mjs",
       },
@@ -219,7 +219,7 @@
     },
     "packages/contract": {
       "name": "@hayasedb/contract",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@hayasedb/domain": "workspace:*",
         "@orpc/contract": "catalog:",
@@ -237,7 +237,7 @@
     },
     "packages/db": {
       "name": "@hayasedb/db",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@hayasedb/domain": "workspace:*",
         "drizzle-orm": "catalog:",
@@ -257,7 +257,7 @@
     },
     "packages/domain": {
       "name": "@hayasedb/domain",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "devDependencies": {
         "@fast-check/vitest": "catalog:",
         "@hayasedb/eslint-config": "workspace:*",
@@ -270,7 +270,7 @@
     },
     "packages/eslint-config": {
       "name": "@hayasedb/eslint-config",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@eslint/js": "catalog:",
         "eslint-config-prettier": "catalog:",
@@ -289,7 +289,7 @@
     },
     "packages/mail": {
       "name": "@hayasedb/mail",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@react-email/components": "catalog:",
         "@react-email/render": "catalog:",
@@ -313,7 +313,7 @@
     },
     "packages/nuxt": {
       "name": "@hayasedb/nuxt",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@hayasedb/contract": "workspace:*",
         "@hayasedb/domain": "workspace:*",
@@ -343,7 +343,7 @@
     },
     "packages/storage": {
       "name": "@hayasedb/storage",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "minio": "catalog:",
       },
@@ -358,7 +358,7 @@
     },
     "packages/typescript-config": {
       "name": "@hayasedb/typescript-config",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "devDependencies": {
         "@types/node": "^22.20.1",
         "tsdown": "catalog:",
@@ -371,7 +371,7 @@
     },
     "packages/ui": {
       "name": "@hayasedb/ui",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@hayasedb/contract": "workspace:*",
         "@hayasedb/domain": "workspace:*",
