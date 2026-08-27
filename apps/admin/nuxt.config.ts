@@ -17,7 +17,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'HayaseDB Admin',
+      htmlAttrs: { lang: 'en' },
       link: [
         { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },

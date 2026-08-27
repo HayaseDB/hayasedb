@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { en } from '@nuxt/ui/locale'
 
-useHead({
-  titleTemplate: (title) => (title ? `${title} - HayaseDB` : 'HayaseDB'),
+useSeoMeta({
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
 })
+
+useSchemaOrg([
+  defineOrganization({
+    name: 'HayaseDB',
+    logo: '/web-app-manifest-512x512.png',
+  }),
+  defineWebSite({ name: 'HayaseDB' }),
+  defineWebPage(),
+])
+
+defineOgImage('Default')
 </script>
 
 <template>

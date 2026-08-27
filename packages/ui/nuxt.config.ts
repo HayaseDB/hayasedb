@@ -32,6 +32,7 @@ export default defineNuxtConfig({
         weights: [400, 500, 600, 700],
         styles: ['normal'],
         preload: true,
+        global: true,
       },
     ],
   },

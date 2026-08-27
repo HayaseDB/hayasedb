@@ -59,6 +59,15 @@ export function formatFuzzyDate(date: FuzzyDate | null | undefined): string {
   return `${month} ${date.day}, ${date.year}`
 }
 
+export function fuzzyToIso(date: FuzzyDate | null | undefined): string | null {
+  if (!date) return null
+  const year = String(date.year).padStart(4, '0')
+  if (date.month === null) return year
+  const month = String(date.month).padStart(2, '0')
+  if (date.day === null) return `${year}-${month}`
+  return `${year}-${month}-${String(date.day).padStart(2, '0')}`
+}
+
 export function fuzzyDateEquals(
   a: FuzzyDate | null | undefined,
   b: FuzzyDate | null | undefined,

@@ -1,4 +1,15 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    background?: string
+    foreground?: string
+  }>(),
+  {
+    background: '#000000',
+    foreground: '#ffffff',
+  },
+)
+</script>
 
 <template>
   <svg
@@ -7,9 +18,9 @@
     aria-label="HayaseDB"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect width="530" height="530" rx="112" fill="#000000" />
+    <rect width="530" height="530" rx="112" :fill="background" />
     <g
-      fill="#ffffff"
+      :fill="foreground"
       transform="translate(143, 90) scale(2.542) translate(-2, -8.7)"
     >
       <path

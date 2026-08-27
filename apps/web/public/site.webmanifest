@@ -1,6 +1,7 @@
 {
   "name": "HayaseDB",
   "short_name": "HayaseDB",
+  "description": "The open anime database. Built and reviewed by the community, free to explore and free to use through an open API.",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

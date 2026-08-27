@@ -17,12 +17,23 @@ const {
   pending,
 } = await useAnimeListQuery({ key: 'explore-anime' })
 
+const isFiltered = computed(() => hasFilters.value || !!q.value)
+
 useSeoMeta({
   title: () => {
-    const base = q.value ? `“${q.value}” – Explore` : 'Explore'
-    return page.value > 1 ? `${base} – Page ${page.value}` : base
+    const base = q.value ? `“${q.value}” · Explore` : 'Explore'
+    return page.value > 1 ? `${base} · Page ${page.value}` : base
   },
-  description: 'Search and discover anime.',
+  description:
+    'Search and discover anime by title, genre, format, status and release year.',
+  robots: () => (isFiltered.value ? 'noindex, follow' : 'index, follow'),
+})
+
+const canonicalUrl = withSiteUrl('/explore')
+
+useHead({
+  link: () =>
+    isFiltered.value ? [{ rel: 'canonical', href: canonicalUrl.value }] : [],
 })
 
 watch(page, () => {

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { fuzzyToIso } from '@hayasedb/domain'
+
 const route = useRoute()
 const api = useApiClient()
 const slug = computed(() => String(route.params.slug))
@@ -22,6 +24,14 @@ if (error.value || !anime.value) {
 
 const detail = computed(() => anime.value!)
 
+const displayTitle = computed(
+  () =>
+    detail.value.titleEnglish ??
+    detail.value.titleRomaji ??
+    detail.value.titleNative ??
+    detail.value.slug,
+)
+
 const banner = computed(() =>
   detail.value.media.find((m) => m.type === 'BANNER'),
 )
@@ -32,7 +42,7 @@ const galleryItems = computed(() =>
     .map((image, index) => ({
       id: image.id,
       url: image.url,
-      alt: `${detail.value.titleEnglish} gallery image ${index + 1}`,
+      alt: `${displayTitle.value} gallery image ${index + 1}`,
     })),
 )
 
@@ -52,7 +62,7 @@ function openCoverLightbox() {
       {
         id: cover.value.id,
         url: cover.value.url,
-        alt: `${detail.value.titleEnglish} cover`,
+        alt: `${displayTitle.value} cover`,
       },
     ],
   })
@@ -68,22 +78,52 @@ function toggleDescription() {
   descriptionExpanded.value = !descriptionExpanded.value
 }
 
-useSeoMeta({
-  title: () => detail.value.titleEnglish,
-  description: () => detail.value.description ?? undefined,
-  ogTitle: () => detail.value.titleEnglish,
-  ogDescription: () => detail.value.description ?? undefined,
-  ogImage: () => cover.value?.url,
+const metaDescription = computed(() => {
+  const raw = detail.value.description?.replace(/\s+/g, ' ').trim()
+  if (!raw) return undefined
+  if (raw.length <= 160) return raw
+  const clipped = raw.slice(0, 157)
+  const lastSpace = clipped.lastIndexOf(' ')
+  return `${(lastSpace > 100 ? clipped.slice(0, lastSpace) : clipped).trimEnd()}…`
 })
+
+useSeoMeta({
+  title: () => displayTitle.value,
+  description: () => metaDescription.value,
+  ogTitle: () => displayTitle.value,
+  ogDescription: () => metaDescription.value,
+  ogType: 'video.tv_show',
+  ogImageAlt: () => `${displayTitle.value} cover art`,
+  twitterImageAlt: () => `${displayTitle.value} cover art`,
+})
+
+defineOgImage('Anime', {
+  title: displayTitle.value,
+  cover: cover.value?.url ?? null,
+  genres: detail.value.genres.slice(0, 3).map((genre) => genre.name),
+  format: detail.value.format,
+  year: detail.value.startDate?.year ?? null,
+})
+
+useSchemaOrg([
+  defineMovie({
+    name: displayTitle,
+    description: computed(() => detail.value.description ?? undefined),
+    image: computed(() => cover.value?.url ?? '/web-app-manifest-512x512.png'),
+    genre: computed(() =>
+      detail.value.genres.map((genre) => genre.name).join(', '),
+    ),
+    dateCreated: computed(
+      () => fuzzyToIso(detail.value.startDate) ?? undefined,
+    ),
+  }),
+])
 </script>
 
 <template>
   <div>
     <div v-if="banner" class="relative h-56 w-full sm:h-72 lg:h-80">
-      <AnimeCoverImage
-        :src="banner.url"
-        :alt="`${detail.titleEnglish} banner`"
-      />
+      <AnimeCoverImage :src="banner.url" :alt="`${displayTitle} banner`" />
       <div
         class="from-default absolute inset-0 bg-gradient-to-t to-transparent"
       />
@@ -117,13 +157,10 @@ useSeoMeta({
             :disabled="!cover"
             class="ring-default block aspect-[2/3] w-full overflow-hidden rounded-lg shadow-lg ring-1"
             :class="{ 'cursor-zoom-in': cover }"
-            :aria-label="`Open ${detail.titleEnglish} cover in fullscreen`"
+            :aria-label="`Open ${displayTitle} cover in fullscreen`"
             @click="openCoverLightbox()"
           >
-            <AnimeCoverImage
-              :src="cover?.url"
-              :alt="`${detail.titleEnglish} cover`"
-            />
+            <AnimeCoverImage :src="cover?.url" :alt="`${displayTitle} cover`" />
           </button>
           <AnimeDetailsPanel
             class="mt-4 hidden sm:flex"
@@ -135,9 +172,12 @@ useSeoMeta({
         <div class="min-w-0 flex-1">
           <div class="flex min-w-0 flex-col gap-1">
             <h1 class="text-highlighted text-2xl font-semibold lg:text-3xl">
-              {{ detail.titleEnglish }}
+              {{ displayTitle }}
             </h1>
-            <p v-if="detail.titleNative" class="text-muted text-sm">
+            <p
+              v-if="detail.titleNative && detail.titleNative !== displayTitle"
+              class="text-muted text-sm"
+            >
               {{ detail.titleNative }}
             </p>
           </div>

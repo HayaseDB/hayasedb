@@ -14,12 +14,21 @@ const marqueeItems = computed(() =>
 )
 const recentItems = computed(() => (data.value?.items ?? []).slice(0, 6))
 
+const SITE_DESCRIPTION =
+  'The open anime database. Built and reviewed by the community, free to explore and free to use through an open API.'
+
 useSeoMeta({
-  description:
-    'The open anime database. Built and reviewed by the community, free to explore and free to use through an open API.',
-  ogTitle: 'HayaseDB: The open anime database',
-  ogDescription:
-    'The open anime database. Built and reviewed by the community, free to explore and free to use through an open API.',
+  title: 'HayaseDB · The open anime database',
+  description: SITE_DESCRIPTION,
+  ogTitle: 'HayaseDB · The open anime database',
+  ogDescription: SITE_DESCRIPTION,
+})
+
+useHead({ titleTemplate: null })
+
+defineOgImage('Default', {
+  title: 'The open anime database',
+  description: SITE_DESCRIPTION,
 })
 
 const heroMotion = computed(() => {

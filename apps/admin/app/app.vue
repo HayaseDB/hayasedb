@@ -2,8 +2,11 @@
 import { en } from '@nuxt/ui/locale'
 
 useHead({
-  titleTemplate: (title) =>
-    title ? `${title} - HayaseDB Admin` : 'HayaseDB Admin',
+  titleTemplate: '%s · HayaseDB Admin',
+})
+
+useSeoMeta({
+  robots: 'noindex, nofollow',
 })
 </script>
 
