@@ -193,6 +193,7 @@
         "hayasedb": "./dist/main.mjs",
       },
       "dependencies": {
+        "@clack/prompts": "catalog:",
         "@hayasedb/auth": "workspace:*",
         "@hayasedb/contract": "workspace:*",
         "@hayasedb/db": "workspace:*",
@@ -402,6 +403,7 @@
   },
   "catalog": {
     "@better-auth/api-key": "1.6.23",
+    "@clack/prompts": "1.7.0",
     "@eslint/js": "10.0.1",
     "@fast-check/vitest": "0.4.1",
     "@nuxt/test-utils": "4.1.0",

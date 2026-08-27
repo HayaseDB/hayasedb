@@ -3,7 +3,7 @@ import { OpenAPILink } from '@orpc/openapi/fetch'
 import type { JsonifiedClient } from '@orpc/openapi'
 import type { RouterContractClient } from '@orpc/contract'
 import { contract, INTERNAL_TOKEN_HEADER } from '@hayasedb/contract'
-import { consola } from 'consola'
+import { CliError } from '../tui'
 
 export type ApiClient = JsonifiedClient<RouterContractClient<typeof contract>>
 
@@ -35,10 +35,9 @@ export async function assertApiReachable(options: ApiClientOptions) {
   try {
     await createApiClient(options).system.ping({})
   } catch {
-    consola.error(
+    throw new CliError(
       `The API at ${options.apiUrl} is not reachable. Start it first (bun dev) or pass --api-url.`,
     )
-    process.exit(1)
   }
 }
 
@@ -59,10 +58,9 @@ export async function signIn(
     },
   )
   if (!res.ok) {
-    consola.error(
+    throw new CliError(
       `Sign-in as ${email} failed: ${res.status} ${await res.text()}`,
     )
-    process.exit(1)
   }
   const cookie = res.headers
     .getSetCookie()
@@ -70,8 +68,7 @@ export async function signIn(
     .filter(Boolean)
     .join('; ')
   if (!cookie) {
-    consola.error('Sign-in succeeded but no session cookie was returned.')
-    process.exit(1)
+    throw new CliError('Sign-in succeeded but no session cookie was returned.')
   }
   return cookie
 }

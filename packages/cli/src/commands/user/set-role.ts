@@ -1,10 +1,11 @@
 import { defineCommand } from 'citty'
-import { consola } from 'consola'
 import { eq } from 'drizzle-orm'
 import { schema } from '@hayasedb/db'
 import { dbEnv } from '../../env'
 import { withDb } from '../../context'
-import { USER_ROLES, requireUserByEmail, type UserRole } from '../../users'
+import { promptEmail, promptRole } from '../../prompts/fields'
+import { USER_ROLES, requireUserByEmail } from '../../users'
+import { intro, isInteractive, log, outro } from '../../tui'
 
 export default defineCommand({
   meta: {
@@ -14,32 +15,32 @@ export default defineCommand({
   args: {
     email: {
       type: 'positional',
-      description: 'Email address of the user',
-      required: true,
+      description: 'Email address of the user (prompted when omitted)',
+      required: false,
     },
     role: {
       type: 'positional',
-      description: `New role (${USER_ROLES.join(', ')})`,
-      required: true,
+      description: `New role (${USER_ROLES.join(', ')}); prompted when omitted`,
+      required: false,
     },
   },
   async run({ args }) {
-    const role = args.role as UserRole
-    if (!USER_ROLES.includes(role)) {
-      consola.error(
-        `Unknown role "${args.role}". Expected one of: ${USER_ROLES.join(', ')}.`,
-      )
-      process.exit(2)
-    }
+    if (isInteractive()) intro('Set role')
+
+    const email = await promptEmail(args.email)
 
     const env = dbEnv()
     await withDb(env, async (db) => {
-      const user = await requireUserByEmail(db, args.email)
+      const user = await requireUserByEmail(db, email)
+      const role = await promptRole(args.role)
+
       await db
         .update(schema.user)
         .set({ role })
         .where(eq(schema.user.id, user.id))
-      consola.success(`Role of ${user.email} set to ${role}.`)
+      log.success(`Role of ${user.email} set to ${role}.`)
     })
+
+    if (isInteractive()) outro('Done.')
   },
 })

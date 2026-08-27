@@ -1,13 +1,20 @@
 import { defineCommand } from 'citty'
-import { consola } from 'consola'
-import { eq } from 'drizzle-orm'
-import * as z from 'zod'
-import { schema } from '@hayasedb/db'
-import { PASSWORD_MAX, PASSWORD_MIN } from '@hayasedb/contract'
 import { authEnv } from '../../env'
 import { withAuth } from '../../context'
-import { promptNewPassword } from '../../prompts'
-import { USER_ROLES, findUserByEmail, type UserRole } from '../../users'
+import {
+  promptEmail,
+  promptName,
+  promptNewPassword,
+  promptRole,
+} from '../../prompts/fields'
+import {
+  USER_ROLES,
+  createVerifiedUser,
+  describeCreatedUser,
+  findUserByEmail,
+  resolveRole,
+} from '../../users'
+import { CliError, intro, isInteractive, outro, spinner } from '../../tui'
 
 export default defineCommand({
   meta: {
@@ -17,8 +24,8 @@ export default defineCommand({
   args: {
     email: {
       type: 'positional',
-      description: 'Email address of the new user',
-      required: true,
+      description: 'Email address of the new user (prompted when omitted)',
+      required: false,
     },
     name: {
       type: 'string',
@@ -31,59 +38,38 @@ export default defineCommand({
     role: {
       type: 'string',
       description: `Role to assign (${USER_ROLES.join(', ')})`,
-      default: 'user',
     },
     admin: {
       type: 'boolean',
       description: 'Shorthand for --role admin',
-      default: false,
     },
   },
   async run({ args }) {
-    const email = z.string().pipe(z.email()).safeParse(args.email)
-    if (!email.success) {
-      consola.error(`"${args.email}" is not a valid email address.`)
-      process.exit(2)
-    }
+    if (isInteractive()) intro('Create user')
 
-    const role = (args.admin ? 'admin' : args.role) as UserRole
-    if (!USER_ROLES.includes(role)) {
-      consola.error(
-        `Unknown role "${args.role}". Expected one of: ${USER_ROLES.join(', ')}.`,
-      )
-      process.exit(2)
-    }
-
-    const password = args.password ?? (await promptNewPassword())
-    if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
-      consola.error(
-        `Password must be between ${PASSWORD_MIN} and ${PASSWORD_MAX} characters.`,
-      )
-      process.exit(2)
-    }
+    const email = await promptEmail(args.email)
 
     const env = authEnv()
     await withAuth(env, async (auth, db) => {
-      if (await findUserByEmail(db, email.data)) {
-        consola.error(`A user with email ${email.data} already exists.`)
-        process.exit(1)
+      if (await findUserByEmail(db, email)) {
+        throw new CliError(`A user with email ${email} already exists.`)
       }
 
-      const created = await auth.api.createUser({
-        body: {
-          email: email.data,
-          password,
-          name: args.name ?? email.data.split('@')[0]!,
-          role,
-        },
-      })
+      const name = await promptName(args.name, email.split('@')[0]!)
+      const password = await promptNewPassword(args.password)
+      const role = await promptRole(resolveRole(args))
 
-      await db
-        .update(schema.user)
-        .set({ emailVerified: true })
-        .where(eq(schema.user.id, created.user.id))
-
-      consola.success(`Created ${role} user ${email.data}.`)
+      const progress = spinner()
+      progress.start('Creating user…')
+      try {
+        await createVerifiedUser(auth, db, { email, name, password, role })
+      } catch (error) {
+        progress.error('Could not create the user.')
+        throw error
+      }
+      progress.stop(describeCreatedUser(role, email))
     })
+
+    if (isInteractive()) outro('Done.')
   },
 })

@@ -1,4 +1,3 @@
-import { consola } from 'consola'
 import type { SeedEnv } from '../env'
 import {
   assertApiReachable,
@@ -10,18 +9,19 @@ import {
 import { promptTree, type TreeNode } from '../tree-prompt'
 import { loadAsset } from './assets'
 import { assertUserExists, ensureUsers } from './ensure'
+import { CliError, EXIT_USAGE, log, outro, spinner, unwrap } from '../tui'
 import type { SeedContext, SeedSet, SeedStep, SeedUser } from './types'
 
 export function resolveSteps(set: SeedSet, names: string[]): SeedStep[] {
   const byName = new Map(set.steps.map((step) => [step.name, step]))
   for (const name of names) {
     if (!byName.has(name)) {
-      consola.error(
+      throw new CliError(
         `Unknown step "${name}" for seed "${set.name}". Available steps: ${set.steps
           .map((step) => step.name)
           .join(', ')}.`,
+        EXIT_USAGE,
       )
-      process.exit(2)
     }
   }
 
@@ -69,19 +69,14 @@ export function buildStepTree(set: SeedSet): {
 
 export async function promptSteps(set: SeedSet): Promise<string[]> {
   const { nodes, requires } = buildStepTree(set)
-  const selection = await promptTree({
-    message: `Which parts of the "${set.name}" seed should be applied?`,
-    nodes,
-    requires,
-  })
-  if (selection === null) {
-    consola.info('Cancelled, aborting.')
-    process.exit(1)
-  }
-  if (selection.length === 0) {
-    consola.info('Nothing selected, aborting.')
-    process.exit(1)
-  }
+  const selection = unwrap(
+    await promptTree({
+      message: `Which parts of the "${set.name}" seed should be applied?`,
+      nodes,
+      requires,
+    }),
+  )
+  if (selection.length === 0) throw new CliError('Nothing selected, aborting.')
   return selection
 }
 
@@ -93,17 +88,15 @@ export function enforceDependencies(set: SeedSet, names: string[]): SeedStep[] {
     const missing = (step.dependsOn ?? []).filter((name) => !selected.has(name))
     if (missing.length > 0) {
       selected.delete(step.name)
-      consola.warn(
+      log.warn(
         `Skipping step "${step.name}" because it requires ${missing.join(', ')}.`,
       )
       continue
     }
     steps.push(step)
   }
-  if (steps.length === 0) {
-    consola.info('No applicable steps left, aborting.')
-    process.exit(1)
-  }
+  if (steps.length === 0)
+    throw new CliError('No applicable steps left, aborting.')
   return steps
 }
 
@@ -151,8 +144,15 @@ export async function runSeedSet(
   }
 
   for (const step of steps) {
-    consola.start(`${step.name}: ${step.description}`)
-    await step.run(context)
+    const progress = spinner()
+    progress.start(`${step.name}: ${step.description}`)
+    try {
+      await step.run(context)
+    } catch (error) {
+      progress.error(`${step.name} failed.`)
+      throw error
+    }
+    progress.stop(`${step.name}: ${step.description}`)
   }
-  consola.success(`Seed "${set.name}" complete.`)
+  outro(`Seed "${set.name}" complete.`)
 }

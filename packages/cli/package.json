@@ -26,6 +26,7 @@
     "test": "bun --bun vitest run"
   },
   "dependencies": {
+    "@clack/prompts": "catalog:",
     "@hayasedb/auth": "workspace:*",
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/db": "workspace:*",

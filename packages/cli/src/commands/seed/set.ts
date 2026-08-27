@@ -1,8 +1,6 @@
-import { stdin } from 'node:process'
 import { defineCommand } from 'citty'
-import { consola } from 'consola'
 import { seedEnv } from '../../env'
-import { confirmOrAbort } from '../../prompts'
+import { CliError, confirmOrAbort, intro, isInteractive } from '../../tui'
 import {
   enforceDependencies,
   promptSteps,
@@ -37,11 +35,12 @@ export function defineSeedSetCommand(set: SeedSet) {
     async run({ args }) {
       const env = seedEnv()
       if (env.NODE_ENV === 'production') {
-        consola.error(
+        throw new CliError(
           `Refusing to apply seed "${set.name}" with NODE_ENV=production.`,
         )
-        process.exit(1)
       }
+
+      if (isInteractive()) intro(`Seed "${set.name}"`)
 
       const apiUrl = args['api-url'] ?? env.API_PUBLIC_URL
       const steps = args.only
@@ -52,7 +51,7 @@ export function defineSeedSetCommand(set: SeedSet) {
               .map((name) => name.trim())
               .filter(Boolean),
           )
-        : args.yes || !stdin.isTTY
+        : args.yes || !isInteractive()
           ? set.steps
           : enforceDependencies(set, await promptSteps(set))
 

@@ -1,6 +1,15 @@
 import { stdin, stdout } from 'node:process'
 import { emitKeypressEvents } from 'node:readline'
+import {
+  S_BAR,
+  S_BAR_END,
+  S_CHECKBOX_ACTIVE,
+  S_CHECKBOX_INACTIVE,
+  S_CHECKBOX_SELECTED,
+  S_STEP_SUBMIT,
+} from '@clack/prompts'
 import { colors } from 'consola/utils'
+import { CANCEL } from './tui'
 
 export interface TreeNode {
   value: string
@@ -114,31 +123,37 @@ function renderLines(
   cursor: number,
 ): string[] {
   const lines = [
-    `${colors.green('?')} ${colors.bold(options.message)} ${colors.dim(
-      '(↑/↓ move, space toggle, a all, enter confirm)',
-    )}`,
+    `${colors.green(S_STEP_SUBMIT)}  ${colors.bold(options.message)}`,
   ]
   for (const [index, node] of flat.entries()) {
     const active = index === cursor
     const checked = selected.has(node.value)
-    const pointer = active ? colors.cyan('❯') : ' '
-    const checkbox = checked ? colors.green('◉') : colors.dim('◯')
-    const label = checked
+    const checkbox = checked
       ? active
-        ? colors.cyan(node.label)
-        : node.label
-      : colors.dim(node.label)
+        ? colors.green(S_CHECKBOX_ACTIVE)
+        : colors.green(S_CHECKBOX_SELECTED)
+      : colors.dim(S_CHECKBOX_INACTIVE)
+    const label = active
+      ? colors.cyan(node.label)
+      : checked
+        ? node.label
+        : colors.dim(node.label)
     const hint = node.hint ? ` ${colors.dim(node.hint)}` : ''
     lines.push(
-      ` ${pointer} ${colors.dim(node.branch)}${checkbox} ${label}${hint}`,
+      `${colors.gray(S_BAR)}  ${colors.dim(node.branch)}${checkbox} ${label}${hint}`,
     )
   }
+  lines.push(
+    `${colors.gray(S_BAR_END)}  ${colors.dim(
+      '↑/↓ move · space toggle · a all · enter confirm',
+    )}`,
+  )
   return lines
 }
 
 export async function promptTree(
   options: TreePromptOptions,
-): Promise<string[] | null> {
+): Promise<string[] | symbol> {
   const flat = flattenTree(options.nodes)
   const requirements = buildRequirements(options.nodes, options.requires)
   const order = flat.map((node) => node.value)
@@ -166,8 +181,8 @@ export async function promptTree(
   stdin.resume()
   stdout.write('\u001B[?25l')
 
-  const result = await new Promise<string[] | null>((resolve) => {
-    const finish = (value: string[] | null): void => {
+  const result = await new Promise<string[] | symbol>((resolve) => {
+    const finish = (value: string[] | symbol): void => {
       stdin.off('keypress', onKeypress)
       stdin.setRawMode(wasRaw)
       stdin.pause()
@@ -180,7 +195,7 @@ export async function promptTree(
     ): void => {
       if (!key) return
       if ((key.ctrl && key.name === 'c') || key.name === 'escape') {
-        finish(null)
+        finish(CANCEL)
         return
       }
       switch (key.name) {

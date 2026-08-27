@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { schema, type Database } from '@hayasedb/db'
-import { consola } from 'consola'
+import type { Auth } from '@hayasedb/auth'
+import { CliError, EXIT_USAGE } from './tui'
 
 export const USER_ROLES = ['user', 'admin'] as const
 export type UserRole = (typeof USER_ROLES)[number]
@@ -32,9 +33,55 @@ export async function requireUserByEmail(
   email: string,
 ): Promise<UserRow> {
   const user = await findUserByEmail(db, email)
-  if (!user) {
-    consola.error(`No user found with email ${email}.`)
-    process.exit(1)
-  }
+  if (!user) throw new CliError(`No user found with email ${email}.`)
   return user
+}
+
+export function resolveRole(args: {
+  role?: string
+  admin?: boolean
+}): string | undefined {
+  if (!args.admin) return args.role
+  if (args.role !== undefined && args.role !== 'admin') {
+    throw new CliError(
+      `--admin conflicts with --role ${args.role}.`,
+      EXIT_USAGE,
+    )
+  }
+  return 'admin'
+}
+
+export interface NewUser {
+  email: string
+  name: string
+  password: string
+  role: UserRole
+}
+
+export async function createVerifiedUser(
+  auth: Auth,
+  db: Database,
+  user: NewUser,
+): Promise<string> {
+  const created = await auth.api.createUser({
+    body: {
+      email: user.email,
+      password: user.password,
+      name: user.name,
+      role: user.role,
+    },
+  })
+
+  await db
+    .update(schema.user)
+    .set({ emailVerified: true })
+    .where(eq(schema.user.id, created.user.id))
+
+  return created.user.id
+}
+
+export function describeCreatedUser(role: string, email: string): string {
+  return role === 'admin'
+    ? `Created admin user ${email}.`
+    : `Created user ${email}.`
 }

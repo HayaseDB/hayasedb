@@ -1,9 +1,11 @@
-import { eq } from 'drizzle-orm'
-import { schema } from '@hayasedb/db'
-import { consola } from 'consola'
 import { withAuth, withDb } from '../context'
 import type { AuthEnv } from '../env'
-import { findUserByEmail } from '../users'
+import {
+  createVerifiedUser,
+  describeCreatedUser,
+  findUserByEmail,
+} from '../users'
+import { CliError, log } from '../tui'
 import type { SeedUser } from './types'
 
 export async function assertUserExists(
@@ -16,10 +18,9 @@ export async function assertUserExists(
   const hint = userStepName
     ? ` Select the "${userStepName}" step or run it first with --only ${userStepName}.`
     : ''
-  consola.error(
+  throw new CliError(
     `User ${user.email} does not exist yet, so it cannot author seeded data.${hint}`,
   )
-  process.exit(1)
 }
 
 export async function ensureUsers(
@@ -31,23 +32,12 @@ export async function ensureUsers(
     for (const seedUser of users) {
       if (await findUserByEmail(db, seedUser.email)) {
         if (!options.silentExisting) {
-          consola.info(`User ${seedUser.email} already exists.`)
+          log.info(`User ${seedUser.email} already exists.`)
         }
         continue
       }
-      const created = await auth.api.createUser({
-        body: {
-          email: seedUser.email,
-          password: seedUser.password,
-          name: seedUser.name,
-          role: seedUser.role,
-        },
-      })
-      await db
-        .update(schema.user)
-        .set({ emailVerified: true })
-        .where(eq(schema.user.id, created.user.id))
-      consola.success(`Created ${seedUser.role} user ${seedUser.email}.`)
+      await createVerifiedUser(auth, db, seedUser)
+      log.success(describeCreatedUser(seedUser.role, seedUser.email))
     }
   })
 }

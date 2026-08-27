@@ -7,7 +7,7 @@ import {
   type AnimeRelationKind,
 } from '@hayasedb/domain'
 import { ORPCError } from '@orpc/client'
-import { consola } from 'consola'
+import { log } from '../../../tui'
 import { withAuth, withDb } from '../../../context'
 import { findUserByEmail } from '../../../users'
 import type { ApiClient } from '../../api-client'
@@ -84,7 +84,7 @@ export const genresStep: SeedStep = {
     for (const name of SEED_GENRES) {
       if (existing.has(name)) continue
       await client.genre.create({ name })
-      consola.success(`Created genre ${name}.`)
+      log.success(`Created genre ${name}.`)
     }
   },
 }
@@ -100,11 +100,11 @@ export const animeStep: SeedStep = {
       if (genreIds.has(name)) continue
       const genre = await client.genre.create({ name })
       genreIds.set(name, genre.id)
-      consola.success(`Created genre ${name}.`)
+      log.success(`Created genre ${name}.`)
     }
     for (const entry of SEED_ANIME) {
       if (await findAnimeIdBySlug(client, entry.slug)) {
-        consola.info(`Anime ${entry.slug} already exists.`)
+        log.info(`Anime ${entry.slug} already exists.`)
         continue
       }
       const created = await client.anime.create({
@@ -124,7 +124,7 @@ export const animeStep: SeedStep = {
         }),
       })
       await attachMedia(context, client, created.id, entry)
-      consola.success(`Created anime ${entry.slug}.`)
+      log.success(`Created anime ${entry.slug}.`)
     }
   },
 }
@@ -184,7 +184,7 @@ export const relationsStep: SeedStep = {
         linked += 1
       }
     }
-    consola.success(`Linked relations for ${linked} anime.`)
+    log.success(`Linked relations for ${linked} anime.`)
   },
 }
 
@@ -202,14 +202,14 @@ export const avatarsStep: SeedStep = {
     for (const seedUser of SEED_USERS) {
       if (!seedUser.avatar) continue
       if (withImage.has(seedUser.email)) {
-        consola.info(`User ${seedUser.email} already has an avatar.`)
+        log.info(`User ${seedUser.email} already has an avatar.`)
         continue
       }
       const client = await context.clientFor(seedUser)
       await client.account.uploadAvatar({
         file: await context.loadAsset(seedUser.avatar),
       })
-      consola.success(`Uploaded avatar for ${seedUser.email}.`)
+      log.success(`Uploaded avatar for ${seedUser.email}.`)
     }
   },
 }
@@ -229,13 +229,13 @@ export const apiKeysStep: SeedStep = {
           .where(eq(schema.apikey.referenceId, user.id))
           .limit(1)
         if (existing) {
-          consola.info(`User ${seedUser.email} already has an API key.`)
+          log.info(`User ${seedUser.email} already has an API key.`)
           continue
         }
         await auth.api.createApiKey({
           body: { name: 'Demo key', userId: user.id },
         })
-        consola.success(`Created API key for ${seedUser.email}.`)
+        log.success(`Created API key for ${seedUser.email}.`)
       }
     })
   },
@@ -282,7 +282,7 @@ export const contributionsStep: SeedStep = {
     }
     const exists = (summary: string): boolean => {
       if (!summaries.has(summary)) return false
-      consola.info(`Changeset "${summary}" already exists.`)
+      log.info(`Changeset "${summary}" already exists.`)
       return true
     }
 
@@ -318,7 +318,7 @@ export const contributionsStep: SeedStep = {
         id: pending.id,
         body: 'Nice addition, the current synopsis was quite thin.',
       })
-      consola.success(`Submitted pending changeset "${pendingSummary}".`)
+      log.success(`Submitted pending changeset "${pendingSummary}".`)
     }
 
     const approvedSummary = 'Add the Award Winning genre to the catalog'
@@ -341,7 +341,7 @@ export const contributionsStep: SeedStep = {
         body: 'Good catch, merging this into the catalog.',
       })
       await moderator.changeset.approve({ id: approved.id })
-      consola.success(`Approved changeset "${approvedSummary}".`)
+      log.success(`Approved changeset "${approvedSummary}".`)
     }
 
     const rejectedSummary = `Remove ${musicEntry.titleRomaji ?? musicEntry.slug} from the database`
@@ -365,7 +365,7 @@ export const contributionsStep: SeedStep = {
         reason:
           'Music videos are in scope for the database, so this entry should stay.',
       })
-      consola.success(`Rejected changeset "${rejectedSummary}".`)
+      log.success(`Rejected changeset "${rejectedSummary}".`)
     }
 
     const withdrawnSummary = `Rework the description of ${second.titleRomaji ?? second.slug}`
@@ -388,7 +388,7 @@ export const contributionsStep: SeedStep = {
         ],
       })
       await authorClient.changeset.withdraw({ id: withdrawn.id })
-      consola.success(`Withdrew changeset "${withdrawnSummary}".`)
+      log.success(`Withdrew changeset "${withdrawnSummary}".`)
     }
 
     const supersededSummary = `Fix the English title of ${third.titleRomaji ?? third.slug}`
@@ -429,7 +429,7 @@ export const contributionsStep: SeedStep = {
           },
         ],
       })
-      consola.success(`Superseded changeset "${supersededSummary}".`)
+      log.success(`Superseded changeset "${supersededSummary}".`)
     }
   },
 }

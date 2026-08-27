@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
-import { consola } from 'consola'
+import { CliError, EXIT_USAGE } from './tui'
 import * as z from 'zod'
 
 let envFileLoaded = false
@@ -50,10 +50,10 @@ function parseEnv<Schema extends z.ZodType>(schema: Schema): z.output<Schema> {
   loadEnvFile()
   const parsed = schema.safeParse(process.env)
   if (!parsed.success) {
-    consola.error(
+    throw new CliError(
       `Invalid environment configuration:\n${z.prettifyError(parsed.error)}`,
+      EXIT_USAGE,
     )
-    process.exit(2)
   }
   return parsed.data
 }
