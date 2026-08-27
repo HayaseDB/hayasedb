@@ -16,7 +16,7 @@ const {
   refresh,
 } = await useAsyncData(
   () => `admin-anime-${id.value}`,
-  () => api.anime.getById({ id: id.value }),
+  () => api.anime.get({ id: id.value }),
   { watch: [id] },
 )
 

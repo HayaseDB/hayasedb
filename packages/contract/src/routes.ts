@@ -4,11 +4,12 @@ import {
   getOpenAPIMeta,
 } from '@orpc/openapi'
 import { contract } from './routers'
-import type { BffAudience } from './meta'
-import { getBffAudiences, isApiKeyAllowed } from './meta'
+import type { BffAudience, CachePolicy } from './meta'
+import { getBffAudiences, getCachePolicy, isApiKeyAllowed } from './meta'
 
 type ContractNode = Parameters<typeof getOpenAPIMeta>[0] &
-  Parameters<typeof isApiKeyAllowed>[0]
+  Parameters<typeof isApiKeyAllowed>[0] &
+  Parameters<typeof getCachePolicy>[0]
 
 const isProcedure = (node: unknown): node is ContractNode =>
   typeof node === 'object' && node !== null && '~orpc' in node
@@ -18,6 +19,7 @@ export interface ContractRoute {
   path: `/${string}`
   apiKey: boolean
   bff: readonly BffAudience[]
+  cache?: CachePolicy
 }
 
 export function collectRoutes(
@@ -32,6 +34,7 @@ export function collectRoutes(
         path: meta.path,
         apiKey: isApiKeyAllowed(node),
         bff: getBffAudiences(node),
+        cache: getCachePolicy(node),
       })
     }
     return routes

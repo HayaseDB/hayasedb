@@ -5,6 +5,7 @@ import {
   ANIME_MEDIA_TYPES,
   ANIME_RELATION_KINDS,
   ANIME_RELATION_VIEW_KINDS,
+  ANIME_SORT_KEYS,
   ANIME_STATUSES,
   daysInMonth,
   isoToFuzzy,
@@ -157,18 +158,34 @@ export const animeDetailSchema = animeCoreSchema.extend({
   deletedAt: z.date().nullable(),
 })
 
-export const animeSortSchema = z.enum(['recent', 'title', 'start'])
+export const animeSortFieldSchema = z.enum(['createdAt', 'title', 'startDate'])
 export const sortOrderSchema = z.enum(['asc', 'desc'])
+
+export const animeSortSchema = z.enum(ANIME_SORT_KEYS)
+
+export type AnimeSort = z.infer<typeof animeSortSchema>
+export type AnimeSortField = z.infer<typeof animeSortFieldSchema>
+
+export interface ParsedAnimeSort {
+  field: AnimeSortField
+  order: z.infer<typeof sortOrderSchema>
+}
+
+export const parseAnimeSort = (sort: AnimeSort): ParsedAnimeSort =>
+  sort.startsWith('-')
+    ? { field: sort.slice(1) as AnimeSortField, order: 'desc' }
+    : { field: sort as AnimeSortField, order: 'asc' }
 
 export const listAnimeInputSchema = paginationInputSchema.extend({
   q: z.string().trim().max(120).optional(),
+  slug: slugSchema.optional(),
   format: animeFormatSchema.optional(),
   status: animeStatusSchema.optional(),
-  genreId: idSchema.optional(),
-  startYear: z.coerce.number().pipe(animeYearSchema).optional(),
-  sort: animeSortSchema.default('recent'),
-  order: sortOrderSchema.default('desc'),
-  limit: z.coerce.number().int().min(1).max(100).default(24),
+  genre: idSchema.optional(),
+  startYearMin: z.coerce.number().pipe(animeYearSchema).optional(),
+  startYearMax: z.coerce.number().pipe(animeYearSchema).optional(),
+  sort: animeSortSchema.default('-createdAt'),
+  cursor: z.string().min(1).max(512).optional(),
   includeDeleted: queryBooleanSchema.default(false),
 })
 
@@ -211,17 +228,18 @@ export const updateAnimeInputSchema = createAnimeInputSchema.partial().extend({
 })
 
 export const addAnimeMediaInputSchema = z.object({
-  animeId: idSchema,
+  id: idSchema,
   type: animeMediaTypeSchema,
   file: mediaFileSchema,
 })
 
 export const removeAnimeMediaInputSchema = z.object({
   id: idSchema,
+  mediaId: idSchema,
 })
 
 export const reorderAnimeMediaInputSchema = z.object({
-  animeId: idSchema,
+  id: idSchema,
   type: animeMediaTypeSchema,
   orderedIds: z.array(idSchema),
 })

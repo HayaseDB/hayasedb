@@ -13,9 +13,8 @@ const {
   q,
   format,
   status,
-  genreId,
+  genre,
   sort,
-  order,
   page,
   pageSize,
   genres,
@@ -33,20 +32,19 @@ const {
 const actions = useAnimeActions()
 
 function toggleTitleSort() {
-  if (sort.value !== 'title') {
-    sort.value = 'title'
-    order.value = 'asc'
-  } else if (order.value === 'asc') {
-    order.value = 'desc'
+  if (sort.value === 'title') {
+    sort.value = '-title'
+  } else if (sort.value === '-title') {
+    sort.value = '-createdAt'
   } else {
-    sort.value = 'recent'
-    order.value = 'desc'
+    sort.value = 'title'
   }
 }
 
 const titleSortIcon = computed(() => {
-  if (sort.value !== 'title') return 'i-lucide-arrow-down-up'
-  return order.value === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'
+  if (sort.value === 'title') return 'i-lucide-arrow-up'
+  if (sort.value === '-title') return 'i-lucide-arrow-down'
+  return 'i-lucide-arrow-down-up'
 })
 
 const overlay = useOverlay()
@@ -240,7 +238,7 @@ const columnItems = computed<DropdownMenuItem[]>(() =>
           v-model:q="q"
           v-model:format="format"
           v-model:status="status"
-          v-model:genre-id="genreId"
+          v-model:genre="genre"
           :genres="genres"
         >
           <template #trailing>

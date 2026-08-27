@@ -5,7 +5,7 @@ const api = useApiClient()
 const reducedMotion = useReducedMotion()
 
 const { data } = await useAsyncData('landing-anime', () =>
-  api.anime.list({ limit: 30, sort: 'recent', order: 'desc' }),
+  api.anime.list({ limit: 30, sort: '-createdAt' }),
 )
 const { data: liveStats } = await useSystemStats()
 

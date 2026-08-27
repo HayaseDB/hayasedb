@@ -48,7 +48,9 @@ describe('API access boundary', () => {
     const http = createTestHttp(app.baseUrl, { apiKey })
     const list = await http.client.anime.list({})
     expect(list.meta.total).toBe(0)
-    expect(await http.client.system.ping({})).toMatchObject({ ok: true })
+    expect(await http.client.system.version()).toMatchObject({
+      name: expect.any(String),
+    })
     expect((await http.fetch('/api/genres')).status).toBe(200)
   })
 

@@ -51,12 +51,14 @@
       "query:limit?",
       "query:offset?",
       "query:q?",
+      "query:slug?",
       "query:format?",
       "query:status?",
-      "query:genreId?",
-      "query:startYear?",
+      "query:genre?",
+      "query:startYearMin?",
+      "query:startYearMax?",
       "query:sort?",
-      "query:order?",
+      "query:cursor?",
       "query:includeDeleted?"
     ],
     "responses": [
@@ -93,56 +95,8 @@
     ]
   },
   {
-    "route": "POST /anime/{animeId}/media",
-    "operationId": "anime.addMedia",
-    "tags": [
-      "Anime"
-    ],
-    "parameters": [
-      "path:animeId"
-    ],
-    "requestBody": [
-      "multipart/form-data"
-    ],
-    "responses": [
-      "200",
-      "400",
-      "401",
-      "403",
-      "404",
-      "409",
-      "422",
-      "429",
-      "500"
-    ]
-  },
-  {
-    "route": "PUT /anime/{animeId}/media/order",
-    "operationId": "anime.reorderMedia",
-    "tags": [
-      "Anime"
-    ],
-    "parameters": [
-      "path:animeId"
-    ],
-    "requestBody": [
-      "application/json"
-    ],
-    "responses": [
-      "200",
-      "400",
-      "401",
-      "403",
-      "404",
-      "409",
-      "422",
-      "429",
-      "500"
-    ]
-  },
-  {
     "route": "GET /anime/{id}",
-    "operationId": "anime.getById",
+    "operationId": "anime.get",
     "tags": [
       "Anime"
     ],
@@ -210,13 +164,16 @@
     ]
   },
   {
-    "route": "GET /anime/by-slug/{slug}",
-    "operationId": "anime.getBySlug",
+    "route": "POST /anime/{id}/media",
+    "operationId": "anime.addMedia",
     "tags": [
       "Anime"
     ],
     "parameters": [
-      "path:slug"
+      "path:id"
+    ],
+    "requestBody": [
+      "multipart/form-data"
     ],
     "responses": [
       "200",
@@ -231,8 +188,33 @@
     ]
   },
   {
-    "route": "DELETE /anime/media/{id}",
+    "route": "DELETE /anime/{id}/media/{mediaId}",
     "operationId": "anime.removeMedia",
+    "tags": [
+      "Anime"
+    ],
+    "parameters": [
+      "path:id",
+      "path:mediaId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PUT /anime/{id}/media/order",
+    "operationId": "anime.reorderMedia",
     "tags": [
       "Anime"
     ],
@@ -1263,6 +1245,10 @@
     "tags": [
       "Genre"
     ],
+    "parameters": [
+      "query:q?",
+      "query:name?"
+    ],
     "responses": [
       "200",
       "400",
@@ -1283,6 +1269,27 @@
     ],
     "requestBody": [
       "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /genres/{id}",
+    "operationId": "genre.get",
+    "tags": [
+      "Genre"
+    ],
+    "parameters": [
+      "path:id"
     ],
     "responses": [
       "200",
@@ -1352,27 +1359,6 @@
     ],
     "requestBody": [
       "multipart/form-data"
-    ],
-    "responses": [
-      "200",
-      "400",
-      "401",
-      "403",
-      "404",
-      "409",
-      "422",
-      "429",
-      "500"
-    ]
-  },
-  {
-    "route": "GET /ping",
-    "operationId": "system.ping",
-    "tags": [
-      "System"
-    ],
-    "parameters": [
-      "query:message?"
     ],
     "responses": [
       "200",

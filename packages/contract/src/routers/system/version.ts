@@ -1,9 +1,10 @@
 import * as z from 'zod'
 import { base } from '../../base'
-import { apiKeyAllowed } from '../../meta'
+import { apiKeyAllowed, cacheable } from '../../meta'
 
 export const versionContract = base
   .meta(apiKeyAllowed())
+  .meta(cacheable(60))
   .route({
     method: 'GET',
     path: '/version',

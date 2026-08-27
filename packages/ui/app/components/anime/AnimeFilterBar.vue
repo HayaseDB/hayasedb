@@ -9,8 +9,9 @@ const props = defineProps<{
 const q = defineModel<string>('q', { default: '' })
 const format = defineModel<AnimeFormat>('format')
 const status = defineModel<AnimeStatus>('status')
-const genreId = defineModel<string>('genreId')
-const year = defineModel<number>('year')
+const genre = defineModel<string>('genre')
+const yearMin = defineModel<number>('yearMin')
+const yearMax = defineModel<number>('yearMax')
 const sortKey = defineModel<AnimeSortKey>('sortKey')
 
 const FIRST_ANIME_YEAR = 1907
@@ -61,7 +62,7 @@ const genreItems = computed(() =>
         class="w-full lg:w-44"
       />
       <AppSelect
-        v-model="genreId"
+        v-model="genre"
         :items="genreItems"
         value-key="value"
         placeholder="All genres"
@@ -70,11 +71,20 @@ const genreItems = computed(() =>
       />
       <AppSelect
         v-if="showYear"
-        v-model="year"
+        v-model="yearMin"
         :items="yearItems"
         value-key="value"
-        placeholder="All years"
-        aria-label="Year"
+        placeholder="Year from"
+        aria-label="Earliest release year"
+        class="w-full lg:w-32"
+      />
+      <AppSelect
+        v-if="showYear"
+        v-model="yearMax"
+        :items="yearItems"
+        value-key="value"
+        placeholder="Year to"
+        aria-label="Latest release year"
         class="w-full lg:w-32"
       />
       <USelect

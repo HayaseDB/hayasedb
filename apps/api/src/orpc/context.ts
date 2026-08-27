@@ -15,10 +15,12 @@ declare module 'express' {
 
 export interface ORPCContext {
   request: Request
+  resHeaders?: Headers | undefined
 }
 
 declare module '@orpc/server' {
   interface DefaultInitialContext {
     request: ORPCContext['request']
+    resHeaders?: Headers | undefined
   }
 }

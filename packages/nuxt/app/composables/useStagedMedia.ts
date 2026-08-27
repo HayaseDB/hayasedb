@@ -12,13 +12,13 @@ type AnimeDetail = { media: MediaItem[] }
 
 type MediaApi = {
   addMedia: (input: {
-    animeId: string
+    id: string
     type: AnimeMediaType
     file: File
   }) => Promise<AnimeDetail>
-  removeMedia: (input: { id: string }) => Promise<AnimeDetail>
+  removeMedia: (input: { id: string; mediaId: string }) => Promise<AnimeDetail>
   reorderMedia: (input: {
-    animeId: string
+    id: string
     type: AnimeMediaType
     orderedIds: string[]
   }) => Promise<AnimeDetail>
@@ -61,12 +61,12 @@ export function useStagedMedia(
     const currentId = singleOf(source(), type)?.id ?? null
 
     if (!item) {
-      if (currentId) await api.removeMedia({ id: currentId })
+      if (currentId) await api.removeMedia({ id: animeId, mediaId: currentId })
       return
     }
     if (item.kind === 'pending') {
-      if (currentId) await api.removeMedia({ id: currentId })
-      await api.addMedia({ animeId, type, file: item.file })
+      if (currentId) await api.removeMedia({ id: animeId, mediaId: currentId })
+      await api.addMedia({ id: animeId, type, file: item.file })
     }
   }
 
@@ -77,8 +77,10 @@ export function useStagedMedia(
         .filter((m): m is StagedExistingItem => m.kind === 'existing')
         .map((m) => m.id),
     )
-    for (const id of currentIds) {
-      if (!keptIds.has(id)) await api.removeMedia({ id })
+    for (const mediaId of currentIds) {
+      if (!keptIds.has(mediaId)) {
+        await api.removeMedia({ id: animeId, mediaId })
+      }
     }
 
     const known = new Set(currentIds.filter((id) => keptIds.has(id)))
@@ -89,7 +91,7 @@ export function useStagedMedia(
         continue
       }
       const detail = await api.addMedia({
-        animeId,
+        id: animeId,
         type: 'GALLERY',
         file: item.file,
       })
@@ -108,7 +110,7 @@ export function useStagedMedia(
         resolvedIds.some((id, i) => id !== currentIds[i]))
     if (needsReorder) {
       await api.reorderMedia({
-        animeId,
+        id: animeId,
         type: 'GALLERY',
         orderedIds: resolvedIds,
       })

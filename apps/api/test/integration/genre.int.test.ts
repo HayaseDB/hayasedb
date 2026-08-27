@@ -50,13 +50,13 @@ describe('genres', () => {
       genreIds: [mecha.id],
     })
     await admin.client.anime.create({ slug: 'mecha-b', genreIds: [mecha.id] })
-    const before = (await anon.client.genre.list()).items.find(
+    const before = (await anon.client.genre.list({})).items.find(
       (g) => g.id === mecha.id,
     )
     expect(before?.animeCount).toBe(2)
 
     await admin.client.anime.remove({ id: a.id })
-    const after = (await anon.client.genre.list()).items.find(
+    const after = (await anon.client.genre.list({})).items.find(
       (g) => g.id === mecha.id,
     )
     expect(after?.animeCount).toBe(1)
@@ -76,13 +76,33 @@ describe('genres', () => {
       success: true,
     })
     expect(
-      (await anon.client.genre.list()).items.map((g) => g.id),
+      (await anon.client.genre.list({})).items.map((g) => g.id),
     ).not.toContain(sports.id)
 
     const again = await errorOf(admin.client.genre.remove({ id: sports.id }))
     expect(again?.code).toBe('NOT_FOUND')
     const reuse = await errorOf(admin.client.genre.create({ name: 'Sports' }))
     expect(reuse?.code).toBe('CONFLICT')
+  })
+
+  it('fetches a single genre by id and filters the collection by name', async () => {
+    const isekai = await admin.client.genre.create({ name: 'Isekai' })
+
+    const fetched = await anon.client.genre.get({ id: isekai.id })
+    expect(fetched).toMatchObject({
+      id: isekai.id,
+      name: 'Isekai',
+      animeCount: 0,
+    })
+
+    const byName = await anon.client.genre.list({ name: 'isekai' })
+    expect(byName.items.map((g) => g.id)).toEqual([isekai.id])
+    expect(byName.meta.total).toBe(1)
+
+    const missing = await errorOf(
+      anon.client.genre.get({ id: '00000000-0000-4000-8000-000000000000' }),
+    )
+    expect(missing?.code).toBe('NOT_FOUND')
   })
 
   it('forbids genre writes for anonymous callers', async () => {

@@ -6,7 +6,7 @@ export const reorderAnimeMediaContract = base
   .meta(bff('admin'))
   .route({
     method: 'PUT',
-    path: '/anime/{animeId}/media/order',
+    path: '/anime/{id}/media/order',
     tags: ['Anime'],
     summary: 'Reorder anime media',
   })

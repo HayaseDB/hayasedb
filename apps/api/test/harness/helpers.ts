@@ -1,4 +1,4 @@
-import type { ORPCError } from '@orpc/client'
+import { ORPCError } from '@orpc/client'
 import type { animeDocumentSchema } from '@hayasedb/contract'
 import type * as z from 'zod'
 import { createTestHttp, type TestClient } from './client'
@@ -27,3 +27,20 @@ export const animeCreate = (
   entityId,
   payload: { slug, genreIds: [], media: [], ...extra },
 })
+
+export const animeBySlug = async (
+  client: TestClient,
+  slug: string,
+  opts: { includeDeleted?: boolean } = {},
+) => {
+  const { items } = await client.anime.list({
+    slug,
+    limit: 1,
+    includeDeleted: opts.includeDeleted,
+  })
+  const match = items[0]
+  if (!match) {
+    throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
+  }
+  return client.anime.get({ id: match.id })
+}

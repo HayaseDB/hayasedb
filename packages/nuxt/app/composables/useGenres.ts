@@ -1,7 +1,7 @@
 export function useGenres() {
   const api = useApiClient()
   const { data, status, refresh } = useAsyncData('genres', () =>
-    api.genre.list(),
+    api.genre.list({}),
   )
 
   const genres = computed(() => data.value?.items ?? [])

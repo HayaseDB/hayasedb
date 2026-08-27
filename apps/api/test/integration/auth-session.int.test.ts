@@ -95,19 +95,23 @@ describe('session cookies and API keys', () => {
     expect(created.key).toMatch(/^hyd_/)
 
     const listed = await alice.client.auth.apiKey.list()
-    expect(listed.map((k) => k.id)).toContain(created.id)
+    expect(listed.items.map((k) => k.id)).toContain(created.id)
+    expect(listed.meta.total).toBe(listed.items.length)
     expect(JSON.stringify(listed)).not.toContain(created.key)
 
     const bob = internal(app)
     await signUpVerified(bob, app.mailer)
-    expect(await bob.client.auth.apiKey.list()).toEqual([])
+    expect(await bob.client.auth.apiKey.list()).toEqual({
+      items: [],
+      meta: { total: 0 },
+    })
     const steal = await errorOf(
       bob.client.auth.apiKey.delete({ id: created.id }),
     )
     expect(steal?.code).toBe('NOT_FOUND')
-    expect((await alice.client.auth.apiKey.list()).map((k) => k.id)).toContain(
-      created.id,
-    )
+    expect(
+      (await alice.client.auth.apiKey.list()).items.map((k) => k.id),
+    ).toContain(created.id)
   })
 
   it('resolves an API key to its owner only on the session route', async () => {

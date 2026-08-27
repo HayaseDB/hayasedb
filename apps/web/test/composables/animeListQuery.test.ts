@@ -36,7 +36,10 @@ beforeEach(() => {
   list.mockReset()
   genreList.mockReset()
   list.mockImplementation(async () => ({ items: [], meta: { total: 7 } }))
-  genreList.mockImplementation(async () => ({ items: [] }))
+  genreList.mockImplementation(async () => ({
+    items: [],
+    meta: { total: 0 },
+  }))
 })
 
 afterEach(async () => {
@@ -51,10 +54,10 @@ describe('useAnimeListQuery', () => {
       q: undefined,
       format: undefined,
       status: undefined,
-      genreId: undefined,
-      startYear: undefined,
-      sort: 'recent',
-      order: 'desc',
+      genre: undefined,
+      startYearMin: undefined,
+      startYearMax: undefined,
+      sort: '-createdAt',
       limit: 10,
       offset: 0,
     })
@@ -67,8 +70,9 @@ describe('useAnimeListQuery', () => {
       q: 'naruto',
       format: 'TV',
       status: 'BOGUS',
-      year: '2001',
-      sort: 'title-asc',
+      yearMin: '2001',
+      yearMax: '2005',
+      sort: 'title',
       page: '3',
     })
     expect(list).toHaveBeenLastCalledWith(
@@ -76,9 +80,9 @@ describe('useAnimeListQuery', () => {
         q: 'naruto',
         format: 'TV',
         status: undefined,
-        startYear: 2001,
+        startYearMin: 2001,
+        startYearMax: 2005,
         sort: 'title',
-        order: 'asc',
         offset: 20,
       }),
     )
@@ -89,11 +93,11 @@ describe('useAnimeListQuery', () => {
   })
 
   it('setting a filter rewrites the url, resets the page and refetches', async () => {
-    const wrapper = await mountAt({ page: '3', sort: 'title-asc' })
+    const wrapper = await mountAt({ page: '3', sort: 'title' })
     query.format.value = 'MOVIE'
     await settle()
     const route = useRouter().currentRoute.value
-    expect(route.query).toEqual({ format: 'MOVIE', sort: 'title-asc' })
+    expect(route.query).toEqual({ format: 'MOVIE', sort: 'title' })
     expect(list).toHaveBeenLastCalledWith(
       expect.objectContaining({ format: 'MOVIE', offset: 0, sort: 'title' }),
     )
@@ -101,8 +105,8 @@ describe('useAnimeListQuery', () => {
   })
 
   it('the default sort never appears in the url', async () => {
-    const wrapper = await mountAt({ sort: 'title-asc' })
-    query.sortKey.value = 'recent-desc'
+    const wrapper = await mountAt({ sort: 'title' })
+    query.sortKey.value = '-createdAt'
     await settle()
     expect(useRouter().currentRoute.value.query).toEqual({})
     wrapper.unmount()
@@ -137,7 +141,7 @@ describe('useAnimeListQuery', () => {
   })
 
   it('resetFilters clears the search box and navigates to the bare path', async () => {
-    const wrapper = await mountAt({ q: 'x', format: 'TV', year: '1999' })
+    const wrapper = await mountAt({ q: 'x', format: 'TV', yearMin: '1999' })
     query.resetFilters()
     await settle()
     expect(query.q.value).toBe('')

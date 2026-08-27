@@ -81,6 +81,6 @@ describe('guard order and throttling', () => {
         }),
       })
     }
-    expect((await http.fetch('/api/ping')).status).toBe(200)
+    expect((await http.fetch('/api/version')).status).toBe(200)
   })
 })

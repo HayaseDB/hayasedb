@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAnimeRelationPlan } from '#imports'
 import type { AnimeRelationViewEdge } from '@hayasedb/domain'
 
-const { getById } = vi.hoisted(() => ({ getById: vi.fn() }))
+const { get } = vi.hoisted(() => ({ get: vi.fn() }))
 
-mockNuxtImport('useApiClient', () => () => ({ anime: { getById } }))
+mockNuxtImport('useApiClient', () => () => ({ anime: { get } }))
 
 const SELF = '00000000-0000-7000-8000-00000000000a'
 const B = '00000000-0000-7000-8000-00000000000b'
@@ -24,8 +24,8 @@ const edge = (
 
 beforeEach(() => {
   remote.clear()
-  getById.mockReset()
-  getById.mockImplementation(async ({ id }: { id: string }) => {
+  get.mockReset()
+  get.mockImplementation(async ({ id }: { id: string }) => {
     const found = remote.get(id)
     if (!found) throw new Error(`unknown ${id}`)
     return found
@@ -43,7 +43,7 @@ describe('useAnimeRelationPlan', () => {
     ])
     expect(result.ownChanged).toBe(false)
     expect(result.foreign).toEqual([])
-    expect(getById).not.toHaveBeenCalled()
+    expect(get).not.toHaveBeenCalled()
   })
 
   it('an inverse kind is stored on the other anime with the canonical kind', async () => {
@@ -109,7 +109,7 @@ describe('useAnimeRelationPlan', () => {
     })
     expect(result.own).toEqual([{ targetId: C, kind: 'SEQUEL' }])
     expect(result.ownChanged).toBe(false)
-    expect(getById).toHaveBeenCalledTimes(1)
+    expect(get).toHaveBeenCalledTimes(1)
     expect(result.foreign[0]?.relations).toEqual([
       { targetId: SELF, kind: 'SEQUEL' },
       { targetId: SELF, kind: 'SIDE_STORY' },

@@ -29,3 +29,20 @@ export const bff = (...audiences: BffAudience[]) => bffMeta(audiences)
 export const getBffAudiences = (
   procedure: Parameters<typeof getBff>[0],
 ): readonly BffAudience[] => getBff(procedure) ?? []
+
+export interface CachePolicy {
+  maxAge: number
+  staleWhileRevalidate: number
+}
+
+const [cacheableMeta, getCacheable] = defineMeta(
+  'cacheable',
+  (incoming: CachePolicy) => incoming,
+)
+
+export const cacheable = (maxAge: number, staleWhileRevalidate = 0) =>
+  cacheableMeta({ maxAge, staleWhileRevalidate })
+
+export const getCachePolicy = (
+  procedure: Parameters<typeof getCacheable>[0],
+): CachePolicy | undefined => getCacheable(procedure)

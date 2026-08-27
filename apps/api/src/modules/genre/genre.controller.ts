@@ -13,9 +13,17 @@ export class GenreController {
   @AllowAnonymous()
   @Implement(contract.genre.list)
   list() {
-    return implement(contract.genre.list).handler(async () => ({
-      items: await this.genres.list(),
-    }))
+    return implement(contract.genre.list).handler(({ input }) =>
+      this.genres.list(input),
+    )
+  }
+
+  @AllowAnonymous()
+  @Implement(contract.genre.get)
+  get() {
+    return implement(contract.genre.get).handler(({ input }) =>
+      this.genres.getById(input.id),
+    )
   }
 
   @Roles(['admin'])

@@ -175,9 +175,9 @@ export function createAuth(opts: AuthOptions) {
             ? (ctx.headers?.get('x-api-key') ?? null)
             : null,
         rateLimit: {
-          enabled: true,
-          timeWindow: 1000 * 60 * 60,
-          maxRequests: 1000,
+          enabled: false,
+          timeWindow: 60_000,
+          maxRequests: 60,
         },
       }),
     ],

@@ -20,5 +20,11 @@ export const paginationMetaSchema = z.object({
   offset: z.number().int().min(0),
 })
 
+export const cursorPaginationMetaSchema = paginationMetaSchema.extend({
+  hasMore: z.boolean(),
+  nextCursor: z.string().nullable(),
+})
+
 export type PaginationInput = z.output<typeof paginationInputSchema>
 export type PaginationMeta = z.output<typeof paginationMetaSchema>
+export type CursorPaginationMeta = z.output<typeof cursorPaginationMetaSchema>

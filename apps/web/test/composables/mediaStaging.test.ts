@@ -156,11 +156,13 @@ describe('useStagedMedia', () => {
         return detail()
       },
     ),
-    removeMedia: vi.fn(async ({ id }: { id: string }) => {
-      calls.push(`remove:${id}`)
-      media = media.filter((m) => m.id !== id)
-      return detail()
-    }),
+    removeMedia: vi.fn(
+      async ({ id, mediaId }: { id: string; mediaId: string }) => {
+        calls.push(`remove:${id}:${mediaId}`)
+        media = media.filter((m) => m.id !== mediaId)
+        return detail()
+      },
+    ),
     reorderMedia: vi.fn(
       async ({
         type,
@@ -207,7 +209,7 @@ describe('useStagedMedia', () => {
     staged.addGallery(file('new.png'))
     await staged.commit('a1')
     expect(calls).toEqual([
-      'remove:c1',
+      'remove:a1:c1',
       'add:COVER:cover.png',
       'add:BANNER:banner.png',
       'add:GALLERY:new.png',
@@ -220,14 +222,14 @@ describe('useStagedMedia', () => {
     staged.removeSingle('COVER')
     staged.removeSingle('BANNER')
     await staged.commit('a1')
-    expect(calls).toEqual(['remove:c1'])
+    expect(calls).toEqual(['remove:a1:c1'])
   })
 
   it('gallery commit removes dropped items, then reorders the survivors because the length changed', async () => {
     const staged = inScope(() => useStagedMedia(detail, api))
     staged.removeGallery('g1')
     await staged.commit('a1')
-    expect(calls).toEqual(['remove:g1', 'reorder:GALLERY:g2'])
+    expect(calls).toEqual(['remove:a1:g1', 'reorder:GALLERY:g2'])
   })
 
   it('a gallery reorder that ends in the original order issues no call', async () => {

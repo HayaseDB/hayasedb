@@ -16,12 +16,12 @@ export const ANIME_STATUSES = [
 ] as const
 export const ANIME_MEDIA_TYPES = ['COVER', 'BANNER', 'GALLERY'] as const
 export const ANIME_SORT_KEYS = [
-  'recent-desc',
-  'recent-asc',
-  'title-asc',
-  'title-desc',
-  'start-desc',
-  'start-asc',
+  '-createdAt',
+  'createdAt',
+  'title',
+  '-title',
+  '-startDate',
+  'startDate',
 ] as const
 
 export type AnimeFormat = (typeof ANIME_FORMATS)[number]

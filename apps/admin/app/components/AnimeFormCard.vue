@@ -2,7 +2,7 @@
 import type { CreateAnimeInput, Genre } from '@hayasedb/contract'
 import type { ApiClient } from '#imports'
 
-type AnimeDetail = Awaited<ReturnType<ApiClient['anime']['getById']>>
+type AnimeDetail = Awaited<ReturnType<ApiClient['anime']['get']>>
 
 const props = defineProps<{
   anime: AnimeDetail | null

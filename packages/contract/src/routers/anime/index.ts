@@ -1,7 +1,6 @@
 import { addAnimeMediaContract } from './add-media'
 import { createAnimeContract } from './create'
-import { getAnimeByIdContract } from './get-by-id'
-import { getAnimeBySlugContract } from './get-by-slug'
+import { getAnimeContract } from './get'
 import { listAnimeContract } from './list'
 import { removeAnimeContract } from './remove'
 import { removeAnimeMediaContract } from './remove-media'
@@ -10,8 +9,7 @@ import { updateAnimeContract } from './update'
 
 export const animeContract = {
   list: listAnimeContract,
-  getBySlug: getAnimeBySlugContract,
-  getById: getAnimeByIdContract,
+  get: getAnimeContract,
   create: createAnimeContract,
   update: updateAnimeContract,
   remove: removeAnimeContract,
@@ -22,8 +20,7 @@ export const animeContract = {
 
 export * from './add-media'
 export * from './create'
-export * from './get-by-id'
-export * from './get-by-slug'
+export * from './get'
 export * from './list'
 export * from './remove'
 export * from './remove-media'

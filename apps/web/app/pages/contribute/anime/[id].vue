@@ -8,7 +8,7 @@ const { genres } = useGenres()
 
 const { data: anime, error } = await useAsyncData(
   () => `contribute-anime-${id.value}`,
-  () => api.anime.getById({ id: id.value }),
+  () => api.anime.get({ id: id.value }),
   { watch: [id] },
 )
 

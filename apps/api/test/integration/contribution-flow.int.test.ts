@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { schema } from '@hayasedb/db'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
+  animeBySlug,
   animeCreate,
   createTestApp,
   createTestHttp,
@@ -105,9 +106,7 @@ describe('contribution flow', () => {
     expect(detail.display.refs.genre?.[genreId]).toBe('Isekai')
     expect([...new Set(detail.entityKinds)].sort()).toEqual(['anime', 'genre'])
 
-    const missing = await errorOf(
-      alice.client.anime.getBySlug({ slug: 'fresh-anime' }),
-    )
+    const missing = await errorOf(animeBySlug(alice.client, 'fresh-anime'))
     expect(missing?.code).toBe('NOT_FOUND')
   })
 

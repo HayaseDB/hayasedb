@@ -12,7 +12,7 @@ export const user = pgTable('user', {
   createdAt: timestamptz('created_at').defaultNow().notNull(),
   updatedAt: timestamptz('updated_at')
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
   role: text('role'),
   banned: boolean('banned').default(false),
@@ -28,7 +28,7 @@ export const session = pgTable(
     token: text('token').notNull().unique(),
     createdAt: timestamptz('created_at').defaultNow().notNull(),
     updatedAt: timestamptz('updated_at')
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
@@ -58,7 +58,7 @@ export const account = pgTable(
     password: text('password'),
     createdAt: timestamptz('created_at').defaultNow().notNull(),
     updatedAt: timestamptz('updated_at')
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [index('account_userId_idx').on(table.userId)],
@@ -74,7 +74,7 @@ export const verification = pgTable(
     createdAt: timestamptz('created_at').defaultNow().notNull(),
     updatedAt: timestamptz('updated_at')
       .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [index('verification_identifier_idx').on(table.identifier)],
@@ -97,8 +97,8 @@ export const apikey = pgTable(
     lastRefillAt: timestamptz('last_refill_at'),
     enabled: boolean('enabled').default(true),
     rateLimitEnabled: boolean('rate_limit_enabled').default(true),
-    rateLimitTimeWindow: integer('rate_limit_time_window').default(3600000),
-    rateLimitMax: integer('rate_limit_max').default(1000),
+    rateLimitTimeWindow: integer('rate_limit_time_window').default(60000),
+    rateLimitMax: integer('rate_limit_max').default(60),
     requestCount: integer('request_count').default(0),
     remaining: integer('remaining'),
     lastRequest: timestamptz('last_request'),

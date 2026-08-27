@@ -1,7 +1,7 @@
 import * as z from 'zod'
 import { base } from '../../../base'
 import { bff } from '../../../meta'
-import { apiKeyWithSecretSchema } from '../../../schemas/auth'
+import { apiKeyNameSchema, apiKeyWithSecretSchema } from '../../../schemas/auth'
 
 export const apiKeyCreateContract = base
   .meta(bff('web', 'admin'))
@@ -13,7 +13,7 @@ export const apiKeyCreateContract = base
   })
   .input(
     z.object({
-      name: z.string().trim().min(1).max(100),
+      name: apiKeyNameSchema,
       expiresIn: z.number().int().positive().nullish(),
     }),
   )

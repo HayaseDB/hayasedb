@@ -14,18 +14,44 @@ const CODE_BY_STATUS = new Map(
 
 const STATUS_BY_CODE = COMMON_ERROR_STATUS_MAP as Record<string, number>
 
-function toOrpcError(exception: HttpException | APIError) {
+interface OrpcErrorJson {
+  defined: boolean
+  inferable: boolean
+  code: string
+  message: string
+  data?: unknown
+}
+
+function isOrpcErrorJson(value: unknown): value is OrpcErrorJson {
+  if (typeof value !== 'object' || value === null) return false
+  const json = value as Record<string, unknown>
+  return (
+    typeof json.defined === 'boolean' &&
+    typeof json.inferable === 'boolean' &&
+    typeof json.code === 'string' &&
+    typeof json.message === 'string'
+  )
+}
+
+function toOrpcError(exception: HttpException | APIError): {
+  status: number
+  json: OrpcErrorJson
+} {
   if (exception instanceof HttpException) {
     const status = exception.getStatus()
+    const body = exception.getResponse()
+    if (isOrpcErrorJson(body)) {
+      return { status, json: body }
+    }
     const code = CODE_BY_STATUS.get(status) ?? 'INTERNAL_SERVER_ERROR'
     return {
       status,
-      error: new ORPCError(code, { message: exception.message }),
+      json: new ORPCError(code, { message: exception.message }).toJSON(),
     }
   }
   const error =
     mapAuthError(exception) ?? new ORPCError('INTERNAL_SERVER_ERROR')
-  return { status: STATUS_BY_CODE[error.code] ?? 500, error }
+  return { status: STATUS_BY_CODE[error.code] ?? 500, json: error.toJSON() }
 }
 
 @Catch(HttpException, APIError)
@@ -34,7 +60,7 @@ export class HttpExceptionFilter implements ExceptionFilter<
 > {
   catch(exception: HttpException | APIError, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>()
-    const { status, error } = toOrpcError(exception)
-    response.status(status).json(error.toJSON())
+    const { status, json } = toOrpcError(exception)
+    response.status(status).json(json)
   }
 }

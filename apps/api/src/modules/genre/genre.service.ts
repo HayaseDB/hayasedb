@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ORPCError } from '@orpc/server'
-import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
+import { and, asc, eq, ilike, isNull, ne, sql } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { type Database, schema } from '@hayasedb/db'
-import type { Genre, GenreListItem } from '@hayasedb/contract'
+import type { Genre, GenreListItem, ListGenresInput } from '@hayasedb/contract'
 import { DRIZZLE } from '../../database/database.constants'
 import { genreHandler } from '../revision/registry/genre.handler'
 import type { Tx } from '../revision/registry'
@@ -18,7 +19,7 @@ export class GenreService {
     private readonly revisions: RevisionService,
   ) {}
 
-  async list(): Promise<GenreListItem[]> {
+  private baseQuery(where: SQL | undefined) {
     const animeEntity = alias(schema.entity, 'anime_entity')
     return this.db
       .select({
@@ -33,9 +34,32 @@ export class GenreService {
         eq(schema.animeGenre.genreId, schema.genre.id),
       )
       .leftJoin(animeEntity, eq(animeEntity.id, schema.animeGenre.animeId))
-      .where(isNull(schema.entity.deletedAt))
+      .where(where)
       .groupBy(schema.genre.id)
-      .orderBy(asc(schema.genre.name))
+  }
+
+  async list(
+    input: ListGenresInput = {},
+  ): Promise<{ items: GenreListItem[]; meta: { total: number } }> {
+    const conditions = [isNull(schema.entity.deletedAt)]
+    if (input.name) {
+      conditions.push(sql`lower(${schema.genre.name}) = lower(${input.name})`)
+    }
+    if (input.q) {
+      conditions.push(ilike(schema.genre.name, `%${input.q}%`))
+    }
+    const items = await this.baseQuery(and(...conditions)).orderBy(
+      asc(schema.genre.name),
+    )
+    return { items, meta: { total: items.length } }
+  }
+
+  async getById(id: string): Promise<GenreListItem> {
+    const [row] = await this.baseQuery(
+      and(eq(schema.genre.id, id), isNull(schema.entity.deletedAt)),
+    ).limit(1)
+    if (!row) throw new ORPCError('NOT_FOUND', { message: 'Genre not found' })
+    return row
   }
 
   async create(name: string, editorId: string | null): Promise<Genre> {

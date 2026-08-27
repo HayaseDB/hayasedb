@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { schema } from '@hayasedb/db'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
+  animeBySlug,
   createTestApp,
   createTestHttp,
   errorOf,
@@ -62,10 +63,10 @@ describe('anime CRUD', () => {
       deletedAt: null,
     })
 
-    expect(
-      await anon.client.anime.getBySlug({ slug: 'cowboy-bebop' }),
-    ).toMatchObject({ id: created.id })
-    expect(await anon.client.anime.getById({ id: created.id })).toMatchObject({
+    expect(await animeBySlug(anon.client, 'cowboy-bebop')).toMatchObject({
+      id: created.id,
+    })
+    expect(await anon.client.anime.get({ id: created.id })).toMatchObject({
       slug: 'cowboy-bebop',
     })
 
@@ -180,11 +181,11 @@ describe('anime CRUD', () => {
       ['ALTERNATIVE', 'rel-c', true],
     ])
 
-    const fromB = await anon.client.anime.getBySlug({ slug: 'rel-b' })
+    const fromB = await animeBySlug(anon.client, 'rel-b')
     expect(fromB.relations).toMatchObject([
       { kind: 'PREQUEL', owned: false, anime: { slug: 'rel-a' } },
     ])
-    const fromC = await anon.client.anime.getBySlug({ slug: 'rel-c' })
+    const fromC = await animeBySlug(anon.client, 'rel-c')
     expect(fromC.relations).toMatchObject([
       { kind: 'ALTERNATIVE', anime: { slug: 'rel-a' } },
     ])
@@ -195,21 +196,21 @@ describe('anime CRUD', () => {
     ).toHaveLength(2)
 
     await admin.client.anime.update({ id: a.id, relations: [] })
-    expect(
-      (await anon.client.anime.getBySlug({ slug: 'rel-b' })).relations,
-    ).toEqual([])
+    expect((await animeBySlug(anon.client, 'rel-b')).relations).toEqual([])
   })
 
   it('soft deletes: hidden from public reads and list, visible to admins with includeDeleted', async () => {
     const created = await admin.client.anime.create({ slug: 'gone' })
     await admin.client.anime.remove({ id: created.id })
 
-    const missing = await errorOf(anon.client.anime.getBySlug({ slug: 'gone' }))
+    const missing = await errorOf(animeBySlug(anon.client, 'gone'))
     expect(missing?.code).toBe('NOT_FOUND')
     const listed = await anon.client.anime.list({ q: 'gone' })
     expect(listed.meta.total).toBe(0)
 
-    const asAdmin = await admin.client.anime.getBySlug({ slug: 'gone' })
+    const asAdmin = await animeBySlug(admin.client, 'gone', {
+      includeDeleted: true,
+    })
     expect(asAdmin.deletedAt).not.toBeNull()
     expect(
       (await admin.client.anime.list({ q: 'gone', includeDeleted: true })).meta

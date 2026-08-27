@@ -6,13 +6,16 @@ import {
   desc,
   eq,
   exists,
+  gte,
   ilike,
   inArray,
   isNull,
+  lte,
   ne,
   or,
   sql,
 } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
 import { type Database, schema } from '@hayasedb/db'
 import type {
   AddAnimeMediaInput,
@@ -20,10 +23,20 @@ import type {
   AnimeListItem,
   AnimeRelation,
   AnimeRelationTarget,
+  AnimeSort,
   CreateAnimeInput,
+  CursorPaginationMeta,
   ListAnimeInput,
+  RemoveAnimeMediaInput,
   ReorderAnimeMediaInput,
   UpdateAnimeInput,
+} from '@hayasedb/contract'
+import {
+  cursorMatchesSort,
+  decodeCursor,
+  encodeCursor,
+  isCursorSortable,
+  parseAnimeSort,
 } from '@hayasedb/contract'
 import {
   ANIME_RELATION_VIEW_KINDS,
@@ -69,7 +82,7 @@ export class AnimeService {
     opts: { isAdmin?: boolean } = {},
   ): Promise<{
     items: AnimeListItem[]
-    meta: { total: number; limit: number; offset: number }
+    meta: CursorPaginationMeta
   }> {
     const conditions = []
 
@@ -78,11 +91,15 @@ export class AnimeService {
     }
     if (input.format) conditions.push(eq(schema.anime.format, input.format))
     if (input.status) conditions.push(eq(schema.anime.status, input.status))
-    if (input.startYear !== undefined) {
-      conditions.push(eq(schema.anime.startYear, input.startYear))
+    if (input.slug) conditions.push(eq(schema.anime.slug, input.slug))
+    if (input.startYearMin !== undefined) {
+      conditions.push(gte(schema.anime.startYear, input.startYearMin))
+    }
+    if (input.startYearMax !== undefined) {
+      conditions.push(lte(schema.anime.startYear, input.startYearMax))
     }
 
-    if (input.genreId) {
+    if (input.genre) {
       conditions.push(
         exists(
           this.db
@@ -91,7 +108,7 @@ export class AnimeService {
             .where(
               and(
                 eq(schema.animeGenre.animeId, schema.anime.id),
-                eq(schema.animeGenre.genreId, input.genreId),
+                eq(schema.animeGenre.genreId, input.genre),
               ),
             ),
         ),
@@ -109,14 +126,20 @@ export class AnimeService {
       if (search) conditions.push(search)
     }
 
+    const { field, order } = parseAnimeSort(input.sort)
+    const direction = order === 'asc' ? asc : desc
+    const title = sql`lower(coalesce(${schema.anime.titleEnglish}, ${schema.anime.titleRomaji}, ${schema.anime.titleNative}, ${schema.anime.slug}))`
+
+    if (input.cursor) {
+      conditions.push(this.keysetCondition(input.cursor, input.sort, title))
+    }
+
     const where = conditions.length > 0 ? and(...conditions) : undefined
 
-    const direction = input.order === 'asc' ? asc : desc
-    const title = sql`lower(coalesce(${schema.anime.titleEnglish}, ${schema.anime.titleRomaji}, ${schema.anime.titleNative}, ${schema.anime.slug}))`
     const orderBy =
-      input.sort === 'title'
+      field === 'title'
         ? [direction(title), asc(schema.anime.id)]
-        : input.sort === 'start'
+        : field === 'startDate'
           ? [
               sql`${direction(schema.anime.startYear)} nulls last`,
               sql`${direction(schema.anime.startMonth)} nulls last`,
@@ -150,17 +173,75 @@ export class AnimeService {
         .innerJoin(schema.entity, eq(schema.entity.id, schema.anime.id))
         .where(where)
         .orderBy(...orderBy)
-        .limit(input.limit)
-        .offset(input.offset),
+        .limit(input.limit + 1)
+        .offset(input.cursor ? 0 : input.offset),
     ])
     const total = countRow?.total ?? 0
 
-    const items = await this.decorateListItems(rows)
+    const hasMore = rows.length > input.limit
+    const page = hasMore ? rows.slice(0, input.limit) : rows
+
+    const items = await this.decorateListItems(page)
 
     return {
       items,
-      meta: { total, limit: input.limit, offset: input.offset },
+      meta: {
+        total,
+        limit: input.limit,
+        offset: input.cursor ? 0 : input.offset,
+        hasMore,
+        nextCursor: hasMore ? this.mintCursor(page, input.sort) : null,
+      },
     }
+  }
+
+  private keysetCondition(cursor: string, sort: AnimeSort, title: SQL): SQL {
+    const payload = decodeCursor(cursor)
+    if (!payload) {
+      throw new ORPCError('BAD_REQUEST', { message: 'Invalid cursor' })
+    }
+    if (!cursorMatchesSort(payload, sort)) {
+      throw new ORPCError('BAD_REQUEST', {
+        message: 'Cursor does not match the requested sort',
+      })
+    }
+
+    const column = payload.s === 'title' ? title : schema.anime.createdAt
+    const value =
+      payload.s === 'title' ? payload.v : new Date(payload.v as string)
+    const comparator = payload.o === 'asc' ? sql`>` : sql`<`
+
+    return sql`(${column}, ${schema.anime.id}) ${comparator} (${value}, ${payload.id})`
+  }
+
+  private mintCursor(
+    rows: {
+      id: string
+      createdAt: Date
+      slug: string
+      titleEnglish: string | null
+      titleRomaji: string | null
+      titleNative: string | null
+    }[],
+    sort: AnimeSort,
+  ): string | null {
+    const { field, order } = parseAnimeSort(sort)
+    if (!isCursorSortable(field)) return null
+
+    const last = rows.at(-1)
+    if (!last) return null
+
+    const value =
+      field === 'title'
+        ? (
+            last.titleEnglish ??
+            last.titleRomaji ??
+            last.titleNative ??
+            last.slug
+          ).toLowerCase()
+        : last.createdAt.toISOString()
+
+    return encodeCursor({ s: field, o: order, v: value, id: last.id })
   }
 
   private async decorateListItems(
@@ -242,19 +323,6 @@ export class AnimeService {
         updatedAt: r.updatedAt,
       }
     })
-  }
-
-  async getBySlug(
-    slug: string,
-    opts: { includeDeleted?: boolean } = {},
-  ): Promise<AnimeDetail> {
-    const [row] = await this.db
-      .select({ id: schema.anime.id })
-      .from(schema.anime)
-      .where(eq(schema.anime.slug, slug))
-      .limit(1)
-    if (!row) throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
-    return this.getById(row.id, opts)
   }
 
   async getById(
@@ -525,11 +593,19 @@ export class AnimeService {
     return this.buildDetail(input.animeId)
   }
 
-  async removeMedia(id: string, editorId: string | null): Promise<AnimeDetail> {
-    const animeId = await this.db.transaction(async (tx) => {
+  async removeMedia(
+    input: RemoveAnimeMediaInput,
+    editorId: string | null,
+  ): Promise<AnimeDetail> {
+    await this.db.transaction(async (tx) => {
       const [row] = await tx
         .delete(schema.animeMedia)
-        .where(eq(schema.animeMedia.id, id))
+        .where(
+          and(
+            eq(schema.animeMedia.id, input.mediaId),
+            eq(schema.animeMedia.animeId, input.id),
+          ),
+        )
         .returning({ animeId: schema.animeMedia.animeId })
       if (!row) throw new ORPCError('NOT_FOUND', { message: 'Media not found' })
       await this.recordDirectWrite(tx, {
@@ -537,16 +613,15 @@ export class AnimeService {
         op: 'update',
         editorId,
       })
-      return row.animeId
     })
-    return this.buildDetail(animeId)
+    return this.buildDetail(input.id)
   }
 
   async reorderMedia(
     input: ReorderAnimeMediaInput,
     editorId: string | null,
   ): Promise<AnimeDetail> {
-    await this.assertAnimeExists(input.animeId)
+    await this.assertAnimeExists(input.id)
     if (input.orderedIds.length > 0) {
       const cases = sql.join(
         input.orderedIds.map(
@@ -564,18 +639,18 @@ export class AnimeService {
           .where(
             and(
               inArray(schema.animeMedia.id, input.orderedIds),
-              eq(schema.animeMedia.animeId, input.animeId),
+              eq(schema.animeMedia.animeId, input.id),
               eq(schema.animeMedia.type, input.type),
             ),
           )
         await this.recordDirectWrite(tx, {
-          entityId: input.animeId,
+          entityId: input.id,
           op: 'update',
           editorId,
         })
       })
     }
-    return this.buildDetail(input.animeId)
+    return this.buildDetail(input.id)
   }
 
   private async assertAnimeExists(animeId: string): Promise<void> {

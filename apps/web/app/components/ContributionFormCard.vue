@@ -7,7 +7,7 @@ import {
 } from '@hayasedb/contract'
 import type { ApiClient, ProposedGenre } from '#imports'
 
-type AnimeDetail = Awaited<ReturnType<ApiClient['anime']['getBySlug']>>
+type AnimeDetail = Awaited<ReturnType<ApiClient['anime']['get']>>
 type ChangesetDetail = Awaited<ReturnType<ApiClient['changeset']['get']>>
 
 const props = withDefaults(

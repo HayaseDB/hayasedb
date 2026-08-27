@@ -35,6 +35,15 @@ export function configureApp(
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', API_KEY_HEADER],
+    exposedHeaders: [
+      'RateLimit-Limit',
+      'RateLimit-Remaining',
+      'RateLimit-Reset',
+      'RateLimit-Policy',
+      'Retry-After',
+      'ETag',
+      'Link',
+    ],
   })
 
   return app

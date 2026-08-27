@@ -1,16 +1,25 @@
 import { Logger, Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { APP_FILTER, APP_GUARD, REQUEST } from '@nestjs/core'
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, REQUEST } from '@nestjs/core'
 import { ORPCModule } from '@orpc/nest'
 import { ORPCError, onError } from '@orpc/server'
-import { RethrowHandlerPlugin } from '@orpc/server/plugins'
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import {
+  ResponseHeadersHandlerPlugin,
+  RethrowHandlerPlugin,
+} from '@orpc/server/plugins'
+import { ThrottlerModule } from '@nestjs/throttler'
 import { AuthGuard, AuthModule } from '@thallesp/nestjs-better-auth'
 import type { Database } from '@hayasedb/db'
 import type { Mailer } from '@hayasedb/mail'
 import type { Request } from 'express'
 import { ApiAccessGuard } from './auth/api-access.guard'
+import { RateLimitGuard } from './auth/rate-limit.guard'
+import { KeyLimitCache } from './auth/key-limit-cache'
+import { KeyLimitModule } from './auth/key-limit.module'
+import { KeyLimitInterceptor } from './auth/key-limit.interceptor'
 import { HttpExceptionFilter } from './orpc/http-exception.filter'
+import { applyCachePolicy } from './orpc/cache-policy'
+import { ConditionalRequestInterceptor } from './http/cache.interceptor'
 import { mapAuthError } from './auth/map-auth-error'
 import { authFactory } from './auth/auth'
 import { throttlerOptions } from './auth/throttler'
@@ -47,6 +56,7 @@ const orpcLogger = new Logger('ORPC')
       useFactory: (request: Request) => ({
         context: { request } satisfies ORPCContext,
         interceptors: [
+          applyCachePolicy,
           onError((error) => {
             if (error instanceof ORPCError) return
             const mapped = mapAuthError(error)
@@ -59,6 +69,7 @@ const orpcLogger = new Logger('ORPC')
           }),
         ],
         plugins: [
+          new ResponseHeadersHandlerPlugin(),
           new RethrowHandlerPlugin({
             filter: (error) => !(error instanceof ORPCError),
           }),
@@ -81,9 +92,11 @@ const orpcLogger = new Logger('ORPC')
       }),
     }),
     ThrottlerModule.forRootAsync({
-      inject: [RedisThrottlerStorage],
+      imports: [KeyLimitModule],
+      inject: [RedisThrottlerStorage, KeyLimitCache],
       useFactory: throttlerOptions,
     }),
+    KeyLimitModule,
     HealthModule,
     SystemModule,
     AccountModule,
@@ -94,8 +107,10 @@ const orpcLogger = new Logger('ORPC')
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_INTERCEPTOR, useClass: ConditionalRequestInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: KeyLimitInterceptor },
     { provide: APP_GUARD, useClass: ApiAccessGuard },
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
   ],
 })

@@ -210,16 +210,33 @@ export const accountRowSchema = z.object({
   updatedAt: z.date(),
 })
 
+export const apiKeyNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Name is required')
+  .max(100)
+
+export const apiKeyRateLimitSchema = z.object({
+  enabled: z.boolean(),
+  max: z.number().int().nullable(),
+  windowMs: z.number().int().positive(),
+})
+
+export const apiKeyUsageSchema = z.object({
+  used: z.number().int().min(0),
+  limit: z.number().int().nullable(),
+  remaining: z.number().int().nullable(),
+  windowMs: z.number().int().positive(),
+  resetsAt: z.date().nullable(),
+})
+
 const apiKeyFields = {
   id: z.string(),
   name: z.string().nullable(),
   start: z.string().nullable(),
   prefix: z.string().nullable(),
-  referenceId: z.string(),
   enabled: z.boolean(),
-  rateLimitEnabled: z.boolean(),
-  requestCount: z.number(),
-  remaining: z.number().nullable(),
+  rateLimit: apiKeyRateLimitSchema,
   lastRequest: z.date().nullable(),
   expiresAt: z.date().nullable(),
   createdAt: z.date(),
@@ -237,6 +254,8 @@ export type SessionUser = z.output<typeof sessionUserSchema>
 export type SessionRow = z.output<typeof sessionSchema>
 export type SessionEnvelope = z.output<typeof sessionEnvelopeSchema>
 export type AccountRow = z.output<typeof accountRowSchema>
+export type ApiKeyRateLimit = z.output<typeof apiKeyRateLimitSchema>
+export type ApiKeyUsage = z.output<typeof apiKeyUsageSchema>
 export type ApiKey = z.output<typeof apiKeySchema>
 export type ApiKeyWithSecret = z.output<typeof apiKeyWithSecretSchema>
 

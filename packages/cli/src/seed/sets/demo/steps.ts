@@ -18,7 +18,7 @@ import { SEED_GENRES } from './data/genres'
 import { SEED_USERS } from './data/users'
 
 async function genreIdsByName(client: ApiClient): Promise<Map<string, string>> {
-  const { items } = await client.genre.list()
+  const { items } = await client.genre.list({})
   return new Map(items.map((genre) => [genre.name, genre.id]))
 }
 
@@ -27,8 +27,8 @@ async function findAnimeIdBySlug(
   slug: string,
 ): Promise<string | null> {
   try {
-    const detail = await client.anime.getBySlug({ slug })
-    return detail.id
+    const { items } = await client.anime.list({ slug, limit: 1 })
+    return items[0]?.id ?? null
   } catch (error) {
     if (error instanceof ORPCError && error.code === 'NOT_FOUND') return null
     throw error
@@ -45,21 +45,21 @@ async function attachMedia(
   if (!media) return
   if (media.cover) {
     await client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'COVER',
       file: await context.loadAsset(media.cover),
     })
   }
   if (media.banner) {
     await client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'BANNER',
       file: await context.loadAsset(media.banner),
     })
   }
   for (const asset of media.gallery ?? []) {
     await client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'GALLERY',
       file: await context.loadAsset(asset),
     })
@@ -159,7 +159,7 @@ export const relationsStep: SeedStep = {
 
     let linked = 0
     for (const [sourceId, keys] of edgesBySource) {
-      const current = await client.anime.getById({ id: sourceId })
+      const current = await client.anime.get({ id: sourceId })
       const relations = current.relations
         .filter((relation) => relation.owned)
         .map((relation) =>
@@ -242,7 +242,9 @@ export const apiKeysStep: SeedStep = {
 }
 
 async function requireAnime(client: ApiClient, slug: string) {
-  const detail = await client.anime.getBySlug({ slug })
+  const id = await findAnimeIdBySlug(client, slug)
+  if (!id) throw new Error(`Anime "${slug}" not found`)
+  const detail = await client.anime.get({ id })
   return { id: detail.id, headRev: detail.headRev }
 }
 

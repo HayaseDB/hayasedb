@@ -116,12 +116,12 @@ export const animeRelationViewOptions = ANIME_RELATION_VIEW_KINDS.map(
 )
 
 export const ANIME_SORT_LABELS: Record<AnimeSortKey, string> = {
-  'recent-desc': 'Newest',
-  'recent-asc': 'Oldest',
-  'title-asc': 'Title A–Z',
-  'title-desc': 'Title Z–A',
-  'start-desc': 'Release date, newest',
-  'start-asc': 'Release date, oldest',
+  '-createdAt': 'Newest',
+  createdAt: 'Oldest',
+  title: 'Title A–Z',
+  '-title': 'Title Z–A',
+  '-startDate': 'Release date, newest',
+  startDate: 'Release date, oldest',
 }
 
 export const animeSortOptions = ANIME_SORT_KEYS.map((value) => ({

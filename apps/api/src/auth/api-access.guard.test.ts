@@ -123,9 +123,9 @@ describe('API key access', () => {
   it.each([
     ['GET', '/api/anime'],
     ['HEAD', '/api/anime'],
-    ['GET', '/api/anime/by-slug/:slug'],
+    ['GET', '/api/anime/:id'],
     ['GET', '/api/genres'],
-    ['GET', '/api/ping'],
+    ['GET', '/api/genres/:id'],
     ['GET', '/api/stats'],
     ['GET', '/api/version'],
   ])('allows %s %s with a key', (method, path) => {
@@ -142,7 +142,9 @@ describe('API key access', () => {
 
   it.each([
     ['POST', '/api/anime'],
-    ['GET', '/api/anime/:id'],
+    ['PATCH', '/api/anime/:id'],
+    ['DELETE', '/api/anime/:id'],
+    ['DELETE', '/api/genres/:id'],
     ['GET', '/api/auth/get-session'],
     ['GET', '/api/auth/admin/list-users'],
     ['POST', '/api/contributions'],

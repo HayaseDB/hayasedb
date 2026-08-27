@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import type { ArgumentsHost } from '@nestjs/common'
+import { ORPCError } from '@orpc/server'
 import { APIError } from 'better-auth/api'
 import { describe, expect, it } from 'vitest'
 import { HttpExceptionFilter } from './http-exception.filter'
@@ -77,5 +78,16 @@ describe('HttpExceptionFilter', () => {
     )
     expect(status).toBe(429)
     expect(body).toMatchObject({ code: 'TOO_MANY_REQUESTS' })
+  })
+
+  it('preserves the oRPC payload when the handler error carries one', () => {
+    const original = new ORPCError('UNPROCESSABLE_CONTENT', {
+      message: 'Input validation failed',
+      data: { issues: [{ path: ['limit'], message: 'Too big' }] },
+    }).toJSON()
+    const { status, body } = run(new HttpException(original, 422))
+    expect(status).toBe(422)
+    expect(body).toEqual(original)
+    expect(body).toHaveProperty('data.issues')
   })
 })

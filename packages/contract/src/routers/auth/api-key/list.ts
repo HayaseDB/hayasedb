@@ -1,7 +1,7 @@
 import * as z from 'zod'
 import { base } from '../../../base'
 import { bff } from '../../../meta'
-import { apiKeySchema } from '../../../schemas/auth'
+import { apiKeySchema, apiKeyUsageSchema } from '../../../schemas/auth'
 
 export const apiKeyListContract = base
   .meta(bff('web', 'admin'))
@@ -11,4 +11,9 @@ export const apiKeyListContract = base
     tags: ['API Keys'],
     summary: 'List API keys',
   })
-  .output(z.array(apiKeySchema))
+  .output(
+    z.object({
+      items: z.array(apiKeySchema.extend({ usage: apiKeyUsageSchema })),
+      meta: z.object({ total: z.number().int().min(0) }),
+    }),
+  )

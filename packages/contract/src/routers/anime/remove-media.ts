@@ -6,7 +6,7 @@ export const removeAnimeMediaContract = base
   .meta(bff('admin'))
   .route({
     method: 'DELETE',
-    path: '/anime/media/{id}',
+    path: '/anime/{id}/media/{mediaId}',
     tags: ['Anime'],
     summary: 'Remove anime media',
   })

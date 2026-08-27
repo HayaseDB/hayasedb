@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { schema } from '@hayasedb/db'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
+  animeBySlug,
   animeCreate,
   createTestApp,
   createTestHttp,
@@ -92,7 +93,7 @@ describe('changeset apply and moderation', () => {
       before.pending - 1,
     )
 
-    const anime = await user.client.anime.getBySlug({ slug: 'approved-anime' })
+    const anime = await animeBySlug(user.client, 'approved-anime')
     expect(anime).toMatchObject({
       id: animeId,
       titleEnglish: 'Approved',
@@ -140,7 +141,7 @@ describe('changeset apply and moderation', () => {
     await admin.client.anime.update({ id: anime.id, description: 'D2' })
     const approved = await admin.client.changeset.approve({ id: submitted.id })
     expect(approved.status).toBe('approved')
-    const after = await user.client.anime.getById({ id: anime.id })
+    const after = await user.client.anime.get({ id: anime.id })
     expect(after).toMatchObject({
       titleEnglish: 'T2',
       description: 'D2',
@@ -178,9 +179,9 @@ describe('changeset apply and moderation', () => {
     expect(blocked.messages.at(-1)?.body).toContain(
       'conflicting fields: titleEnglish',
     )
-    expect(
-      (await user.client.anime.getById({ id: anime.id })).titleEnglish,
-    ).toBe('Theirs')
+    expect((await user.client.anime.get({ id: anime.id })).titleEnglish).toBe(
+      'Theirs',
+    )
 
     const resubmitted = await user.client.changeset.submit({
       summary: 'Change title again',
@@ -199,9 +200,9 @@ describe('changeset apply and moderation', () => {
       id: resubmitted.id,
     })
     expect(approved.status).toBe('approved')
-    expect(
-      (await user.client.anime.getById({ id: anime.id })).titleEnglish,
-    ).toBe('Mine')
+    expect((await user.client.anime.get({ id: anime.id })).titleEnglish).toBe(
+      'Mine',
+    )
   })
 
   it('reports slug and genre conflicts that appeared after submission', async () => {
@@ -226,7 +227,7 @@ describe('changeset apply and moderation', () => {
     const body = blocked.messages.at(-1)?.body ?? ''
     expect(body).toContain('Slug "race-slug" is already taken')
     expect(body).toMatch(/genre/i)
-    const missing = await errorOf(user.client.anime.getById({ id: animeId }))
+    const missing = await errorOf(user.client.anime.get({ id: animeId }))
     expect(missing?.code).toBe('NOT_FOUND')
   })
 
@@ -271,9 +272,7 @@ describe('changeset apply and moderation', () => {
       body: 'Not enough detail',
       author: { id: adminId },
     })
-    const missing = await errorOf(
-      user.client.anime.getBySlug({ slug: 'rejected-anime' }),
-    )
+    const missing = await errorOf(animeBySlug(user.client, 'rejected-anime'))
     expect(missing?.code).toBe('NOT_FOUND')
     const approve = await errorOf(
       admin.client.changeset.approve({ id: submitted.id }),
@@ -306,7 +305,7 @@ describe('changeset apply and moderation', () => {
     })
     await admin.client.changeset.approve({ id: submitted.id })
     expect(
-      (await user.client.anime.getById({ id: existing.id })).titleEnglish,
+      (await user.client.anime.get({ id: existing.id })).titleEnglish,
     ).toBe('Edited')
 
     const reverted = await admin.client.changeset.revert({ id: submitted.id })
@@ -320,9 +319,9 @@ describe('changeset apply and moderation', () => {
       [createdId, 'delete'],
     ])
     expect(
-      (await user.client.anime.getById({ id: existing.id })).titleEnglish,
+      (await user.client.anime.get({ id: existing.id })).titleEnglish,
     ).toBe('Original')
-    const gone = await errorOf(user.client.anime.getById({ id: createdId }))
+    const gone = await errorOf(user.client.anime.get({ id: createdId }))
     expect(gone?.code).toBe('NOT_FOUND')
 
     const original = await admin.client.changeset.get({ id: submitted.id })
@@ -333,16 +332,16 @@ describe('changeset apply and moderation', () => {
     const twice = await admin.client.changeset.revert({ id: submitted.id })
     expect(twice.status).toBe('approved')
     expect(
-      (await user.client.anime.getById({ id: existing.id })).titleEnglish,
+      (await user.client.anime.get({ id: existing.id })).titleEnglish,
     ).toBe('Original')
 
     const undoRevert = await admin.client.changeset.revert({ id: reverted.id })
     expect(undoRevert.status).toBe('approved')
     expect(
-      (await user.client.anime.getById({ id: existing.id })).titleEnglish,
+      (await user.client.anime.get({ id: existing.id })).titleEnglish,
     ).toBe('Edited')
     expect(
-      (await user.client.anime.getById({ id: createdId })).deletedAt,
+      (await user.client.anime.get({ id: createdId })).deletedAt,
     ).toBeNull()
   })
 
@@ -369,7 +368,7 @@ describe('changeset apply and moderation', () => {
 
     const back = await admin.client.revision.revert({ id: revOne.id })
     expect(back.status).toBe('approved')
-    expect(await user.client.anime.getById({ id: anime.id })).toMatchObject({
+    expect(await user.client.anime.get({ id: anime.id })).toMatchObject({
       titleEnglish: 'One',
       headRev: 4,
     })
@@ -385,16 +384,12 @@ describe('changeset apply and moderation', () => {
       op: 'create',
       entityId: anime.id,
     })
-    expect(
-      (await user.client.anime.getBySlug({ slug: 'time-travel' })).deletedAt,
-    ).toBeNull()
+    expect((await animeBySlug(user.client, 'time-travel')).deletedAt).toBeNull()
     const deleteAgain = await admin.client.revision.revert({
       id: deleted.items[0]!.id,
     })
     expect(deleteAgain.status).toBe('approved')
-    const gone = await errorOf(
-      user.client.anime.getBySlug({ slug: 'time-travel' }),
-    )
+    const gone = await errorOf(animeBySlug(user.client, 'time-travel'))
     expect(gone?.code).toBe('NOT_FOUND')
   })
 
@@ -428,9 +423,9 @@ describe('changeset apply and moderation', () => {
     const approved = await admin.client.changeset.approve({ id: combined.id })
     expect(approved.status).toBe('approved')
     expect(
-      (await user.client.genre.list()).items.map((g) => g.id),
+      (await user.client.genre.list({})).items.map((g) => g.id),
     ).not.toContain(genre.id)
-    const gone = await errorOf(user.client.anime.getById({ id: anime.id }))
+    const gone = await errorOf(user.client.anime.get({ id: anime.id }))
     expect(gone?.code).toBe('NOT_FOUND')
   })
 })

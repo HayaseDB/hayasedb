@@ -10,13 +10,13 @@ import type { CanActivate, ExecutionContext } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Reflector } from '@nestjs/core'
 import { SkipThrottle } from '@nestjs/throttler'
-import { getDynamicPathParams } from '@orpc/openapi'
 import {
   API_KEY_HEADER,
   INTERNAL_TOKEN_HEADER,
   collectRoutes,
 } from '@hayasedb/contract'
 import type { Request } from 'express'
+import { toNestPath } from '../http/nest-path'
 import type { Env } from '../config/env.schema'
 
 export const OPEN_ENDPOINT = 'OPEN_ENDPOINT'
@@ -50,22 +50,6 @@ function isInternalRequest(
     if (timingSafeEqual(candidateDigest, tokenDigest)) matched = true
   }
   return matched
-}
-
-function toNestPath(path: string): string {
-  const params = getDynamicPathParams(path as `/${string}`)
-  if (!params?.length) return path
-
-  let result = path
-  for (let i = params.length - 1; i >= 0; i--) {
-    const param = params[i]!
-    const pattern = param.allowsSlash ? '*' : `:${param.parameterName}`
-    result =
-      result.slice(0, param.startIndex) +
-      pattern +
-      result.slice(param.startIndex + param.segment.length)
-  }
-  return result
 }
 
 const collectAllowedRoutes = () =>

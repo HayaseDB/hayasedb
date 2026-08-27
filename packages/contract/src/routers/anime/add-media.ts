@@ -6,7 +6,7 @@ export const addAnimeMediaContract = base
   .meta(bff('admin'))
   .route({
     method: 'POST',
-    path: '/anime/{animeId}/media',
+    path: '/anime/{id}/media',
     tags: ['Anime'],
     summary: 'Add anime media',
   })

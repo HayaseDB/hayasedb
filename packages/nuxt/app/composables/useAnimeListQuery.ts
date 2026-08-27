@@ -41,14 +41,15 @@ function yearParam(value: unknown): number | undefined {
   return positiveInt(value)
 }
 
-const DEFAULT_SORT_KEY: AnimeSortKey = 'recent-desc'
+const DEFAULT_SORT_KEY: AnimeSortKey = '-createdAt'
 
 interface QueryPatch {
   q?: string
   format?: AnimeFormat
   status?: AnimeStatus
-  genreId?: string
-  year?: number
+  genre?: string
+  yearMin?: number
+  yearMax?: number
   sort?: AnimeSortKey
 }
 
@@ -63,8 +64,9 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
       q: firstParam(route.query.q),
       format: enumParam(route.query.format, ANIME_FORMATS),
       status: enumParam(route.query.status, ANIME_STATUSES),
-      genreId: firstParam(route.query.genreId),
-      year: yearParam(route.query.year),
+      genre: firstParam(route.query.genre),
+      yearMin: yearParam(route.query.yearMin),
+      yearMax: yearParam(route.query.yearMax),
       sort: enumParam(route.query.sort, ANIME_SORT_KEYS),
       ...patch,
     }
@@ -72,8 +74,9 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     if (next.q) query.q = next.q
     if (next.format) query.format = next.format
     if (next.status) query.status = next.status
-    if (next.genreId) query.genreId = next.genreId
-    if (next.year) query.year = String(next.year)
+    if (next.genre) query.genre = next.genre
+    if (next.yearMin) query.yearMin = String(next.yearMin)
+    if (next.yearMax) query.yearMax = String(next.yearMax)
     if (next.sort && next.sort !== DEFAULT_SORT_KEY) query.sort = next.sort
     return query
   }
@@ -95,16 +98,22 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
       void navigate({ status: value })
     },
   })
-  const genreId = computed({
-    get: () => firstParam(route.query.genreId),
+  const genre = computed({
+    get: () => firstParam(route.query.genre),
     set: (value: string | undefined) => {
-      void navigate({ genreId: value })
+      void navigate({ genre: value })
     },
   })
-  const year = computed({
-    get: () => yearParam(route.query.year),
+  const yearMin = computed({
+    get: () => yearParam(route.query.yearMin),
     set: (value: number | undefined) => {
-      void navigate({ year: value })
+      void navigate({ yearMin: value })
+    },
+  })
+  const yearMax = computed({
+    get: () => yearParam(route.query.yearMax),
+    set: (value: number | undefined) => {
+      void navigate({ yearMax: value })
     },
   })
   const sortKey = computed({
@@ -128,21 +137,16 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     if (value !== q.value) q.value = value
   })
 
-  const sort = computed<ListAnimeInput['sort']>(
-    () => sortKey.value.split('-')[0] as ListAnimeInput['sort'],
-  )
-  const order = computed<ListAnimeInput['order']>(() =>
-    sortKey.value.split('-')[1] === 'asc' ? 'asc' : 'desc',
-  )
+  const sort = computed<ListAnimeInput['sort']>(() => sortKey.value)
 
   const data = await useAnimeListData(options.key, pageSize, {
     debouncedQ: urlQ,
     format,
     status,
-    genreId,
-    year,
+    genre,
+    yearMin,
+    yearMax,
     sort,
-    order,
     page,
   })
 
@@ -152,8 +156,9 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
         urlQ.value ||
         format.value ||
         status.value ||
-        genreId.value ||
-        year.value
+        genre.value ||
+        yearMin.value ||
+        yearMax.value
       ),
   )
 
@@ -172,8 +177,9 @@ export async function useAnimeListQuery(options: UseAnimeListQueryOptions) {
     q,
     format,
     status,
-    genreId,
-    year,
+    genre,
+    yearMin,
+    yearMax,
     sortKey,
     page,
     pageSize,

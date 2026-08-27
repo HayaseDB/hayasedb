@@ -1,13 +1,17 @@
+import { ANIME_SORT_KEYS } from '@hayasedb/domain'
 import { describe, expect, it } from 'vitest'
 import {
   animeDocumentMediaListSchema,
   animeDocumentRelationListSchema,
+  animeSortFieldSchema,
   animeTitleFieldSchema,
   createAnimeInputSchema,
   fuzzyDateSchema,
   listAnimeInputSchema,
+  parseAnimeSort,
   releaseDateSchema,
   slugSchema,
+  sortOrderSchema,
 } from './anime'
 
 const uuid = (n: number) => `0195a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5${n}`
@@ -163,21 +167,56 @@ describe('createAnimeInputSchema', () => {
 describe('listAnimeInputSchema', () => {
   it('coerces query values and applies list defaults', () => {
     expect(
-      listAnimeInputSchema.parse({ startYear: '1998', includeDeleted: 'true' }),
+      listAnimeInputSchema.parse({
+        startYearMin: '1998',
+        startYearMax: '2005',
+        includeDeleted: 'true',
+      }),
     ).toMatchObject({
-      startYear: 1998,
+      startYearMin: 1998,
+      startYearMax: 2005,
       includeDeleted: true,
-      sort: 'recent',
-      order: 'desc',
-      limit: 24,
+      sort: '-createdAt',
+      limit: 20,
       offset: 0,
     })
   })
 
   it('rejects unknown sort keys and over-long queries', () => {
     expect(listAnimeInputSchema.safeParse({ sort: 'id' }).success).toBe(false)
+    expect(listAnimeInputSchema.safeParse({ sort: 'recent' }).success).toBe(
+      false,
+    )
     expect(listAnimeInputSchema.safeParse({ q: 'x'.repeat(121) }).success).toBe(
       false,
     )
+  })
+
+  it('accepts every signed sort key', () => {
+    for (const sort of ANIME_SORT_KEYS) {
+      expect(listAnimeInputSchema.parse({ sort }).sort).toBe(sort)
+    }
+  })
+})
+
+describe('parseAnimeSort', () => {
+  it('splits a signed key into a field and a direction', () => {
+    expect(parseAnimeSort('-createdAt')).toEqual({
+      field: 'createdAt',
+      order: 'desc',
+    })
+    expect(parseAnimeSort('title')).toEqual({ field: 'title', order: 'asc' })
+    expect(parseAnimeSort('-startDate')).toEqual({
+      field: 'startDate',
+      order: 'desc',
+    })
+  })
+
+  it('yields a field the sort schema knows for every key', () => {
+    for (const sort of ANIME_SORT_KEYS) {
+      const { field, order } = parseAnimeSort(sort)
+      expect(animeSortFieldSchema.safeParse(field).success).toBe(true)
+      expect(sortOrderSchema.safeParse(order).success).toBe(true)
+    }
   })
 })

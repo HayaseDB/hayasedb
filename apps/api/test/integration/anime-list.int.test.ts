@@ -62,21 +62,26 @@ describe('anime list', () => {
       limit: 2,
       offset: 1,
       sort: 'title',
-      order: 'asc',
     })
-    expect(page.meta).toEqual({ total: 4, limit: 2, offset: 1 })
+    expect(page.meta).toEqual({
+      total: 4,
+      limit: 2,
+      offset: 1,
+      hasMore: true,
+      nextCursor: expect.any(String),
+    })
     expect(page.items.map((i) => i.slug)).toEqual(['beta', 'gamma'])
   })
 
   it('sorts by title case-insensitively, falling back across title columns', async () => {
-    const asc = await anon.client.anime.list({ sort: 'title', order: 'asc' })
+    const asc = await anon.client.anime.list({ sort: 'title' })
     expect(asc.items.map((i) => i.slug)).toEqual([
       'alpha',
       'beta',
       'gamma',
       'delta',
     ])
-    const desc = await anon.client.anime.list({ sort: 'title', order: 'desc' })
+    const desc = await anon.client.anime.list({ sort: '-title' })
     expect(desc.items.map((i) => i.slug)).toEqual([
       'delta',
       'gamma',
@@ -86,14 +91,14 @@ describe('anime list', () => {
   })
 
   it('sorts by fuzzy start date with nulls last in both directions', async () => {
-    const desc = await anon.client.anime.list({ sort: 'start', order: 'desc' })
+    const desc = await anon.client.anime.list({ sort: '-startDate' })
     expect(desc.items.map((i) => i.slug)).toEqual([
       'alpha',
       'beta',
       'gamma',
       'delta',
     ])
-    const asc = await anon.client.anime.list({ sort: 'start', order: 'asc' })
+    const asc = await anon.client.anime.list({ sort: 'startDate' })
     expect(asc.items.map((i) => i.slug)).toEqual([
       'gamma',
       'beta',
@@ -104,15 +109,18 @@ describe('anime list', () => {
 
   it('filters by format, status, year, genre and search', async () => {
     const slugs = async (input: Parameters<typeof anon.client.anime.list>[0]) =>
-      (
-        await anon.client.anime.list({ ...input, sort: 'title', order: 'asc' })
-      ).items.map((i) => i.slug)
+      (await anon.client.anime.list({ ...input, sort: 'title' })).items.map(
+        (i) => i.slug,
+      )
     expect(await slugs({ format: 'TV' })).toEqual(['alpha', 'gamma'])
     expect(await slugs({ status: 'FINISHED', format: 'MOVIE' })).toEqual([
       'beta',
     ])
-    expect(await slugs({ startYear: 2000 })).toEqual(['alpha', 'beta'])
-    expect(await slugs({ genreId: drama.id })).toEqual(['alpha'])
+    expect(await slugs({ startYearMin: 2000, startYearMax: 2000 })).toEqual([
+      'alpha',
+      'beta',
+    ])
+    expect(await slugs({ genre: drama.id })).toEqual(['alpha'])
     expect(await slugs({ q: 'デル' })).toEqual(['delta'])
     expect(await slugs({ q: 'GAM' })).toEqual(['gamma'])
     expect(await slugs({ q: 'zzz' })).toEqual([])
@@ -120,7 +128,7 @@ describe('anime list', () => {
 
   it('coerces query strings and rejects out-of-range limits', async () => {
     const raw = await anon.fetch(
-      '/api/anime?limit=1&startYear=2000&sort=title&order=asc',
+      '/api/anime?limit=1&startYearMin=2000&startYearMax=2000&sort=title',
     )
     expect(raw.status).toBe(200)
     const body = (await raw.json()) as {

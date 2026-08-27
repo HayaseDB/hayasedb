@@ -41,7 +41,7 @@ describe('anime media', () => {
   it('rejects media writes from non-admins', async () => {
     const error = await errorOf(
       user.client.anime.addMedia({
-        animeId,
+        id: animeId,
         type: 'COVER',
         file: await pngFile(32, 32),
       }),
@@ -51,7 +51,7 @@ describe('anime media', () => {
 
   it('stores a processed webp in the bucket, serves it publicly and records a revision', async () => {
     const detail = await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'COVER',
       file: await pngFile(300, 450),
     })
@@ -85,7 +85,7 @@ describe('anime media', () => {
 
   it('downscales oversized images to the maximum dimension', async () => {
     const detail = await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'BANNER',
       file: await pngFile(4096, 1024, '#00ff00'),
     })
@@ -95,12 +95,12 @@ describe('anime media', () => {
 
   it('dedupes identical uploads by content hash and ignores duplicate links', async () => {
     const first = await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'GALLERY',
       file: await pngFile(100, 100, '#123456', 'a.png'),
     })
     const second = await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'GALLERY',
       file: await pngFile(100, 100, '#123456', 'b.png'),
     })
@@ -118,7 +118,7 @@ describe('anime media', () => {
 
     const other = await admin.client.anime.create({ slug: 'media-anime-2' })
     const reused = await admin.client.anime.addMedia({
-      animeId: other.id,
+      id: other.id,
       type: 'COVER',
       file: await pngFile(100, 100, '#123456', 'c.png'),
     })
@@ -127,12 +127,20 @@ describe('anime media', () => {
 
   it('rejects non-image payloads at the schema and the decoder', async () => {
     const wrongMime = await errorOf(
-      admin.client.anime.addMedia({ animeId, type: 'COVER', file: textFile() }),
+      admin.client.anime.addMedia({
+        id: animeId,
+        type: 'COVER',
+        file: textFile(),
+      }),
     )
     expect(wrongMime?.code).toBe('BAD_REQUEST')
 
     const corrupt = await errorOf(
-      admin.client.anime.addMedia({ animeId, type: 'COVER', file: fakePng() }),
+      admin.client.anime.addMedia({
+        id: animeId,
+        type: 'COVER',
+        file: fakePng(),
+      }),
     )
     expect(corrupt?.code).toBe('UNPROCESSABLE_CONTENT')
     expect(corrupt?.message).toBe('The uploaded file is not a valid image')
@@ -150,22 +158,22 @@ describe('anime media', () => {
     const own = await admin.client.anime.create({ slug: 'media-anime-order' })
     const animeId = own.id
     await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'COVER',
       file: await pngFile(120, 180, '#0000aa'),
     })
     await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'GALLERY',
       file: await pngFile(80, 60, '#aa00aa'),
     })
     const s2 = await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'GALLERY',
       file: await pngFile(80, 60, '#aa0000'),
     })
     const s3 = await admin.client.anime.addMedia({
-      animeId,
+      id: animeId,
       type: 'GALLERY',
       file: await pngFile(80, 60, '#00aa00'),
     })
@@ -176,7 +184,7 @@ describe('anime media', () => {
     expect(s2.media.filter((m) => m.type === 'GALLERY')).toHaveLength(2)
 
     const reordered = await admin.client.anime.reorderMedia({
-      animeId,
+      id: animeId,
       type: 'GALLERY',
       orderedIds: [shots[2]!.id, shots[0]!.id, shots[1]!.id],
     })
@@ -192,13 +200,16 @@ describe('anime media', () => {
     expect(cover?.position).toBe(0)
 
     const foreign = await admin.client.anime.reorderMedia({
-      animeId,
+      id: animeId,
       type: 'COVER',
       orderedIds: [shots[1]!.id],
     })
     expect(foreign.media.find((m) => m.id === shots[1]!.id)?.position).toBe(2)
 
-    const removed = await admin.client.anime.removeMedia({ id: shots[0]!.id })
+    const removed = await admin.client.anime.removeMedia({
+      id: animeId,
+      mediaId: shots[0]!.id,
+    })
     expect(removed.media.map((m) => m.id)).not.toContain(shots[0]!.id)
     const [asset] = await app.db
       .select({ id: schema.mediaAsset.id })
@@ -207,9 +218,20 @@ describe('anime media', () => {
     expect(asset).toBeDefined()
 
     const again = await errorOf(
-      admin.client.anime.removeMedia({ id: shots[0]!.id }),
+      admin.client.anime.removeMedia({ id: animeId, mediaId: shots[0]!.id }),
     )
     expect(again?.code).toBe('NOT_FOUND')
+
+    const wrongParent = await errorOf(
+      admin.client.anime.removeMedia({
+        id: (await admin.client.anime.create({ slug: 'media-anime-other' })).id,
+        mediaId: shots[1]!.id,
+      }),
+    )
+    expect(wrongParent?.code).toBe('NOT_FOUND')
+    expect(
+      (await admin.client.anime.get({ id: animeId })).media.map((m) => m.id),
+    ).toContain(shots[1]!.id)
   })
 
   it('refuses media on unknown or deleted anime', async () => {
@@ -217,7 +239,7 @@ describe('anime media', () => {
     await admin.client.anime.remove({ id: ghost.id })
     const error = await errorOf(
       admin.client.anime.addMedia({
-        animeId: ghost.id,
+        id: ghost.id,
         type: 'COVER',
         file: await pngFile(10, 10),
       }),

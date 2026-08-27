@@ -33,7 +33,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 
 export async function assertApiReachable(options: ApiClientOptions) {
   try {
-    await createApiClient(options).system.ping({})
+    await createApiClient(options).system.version()
   } catch {
     throw new CliError(
       `The API at ${options.apiUrl} is not reachable. Start it first (bun dev) or pass --api-url.`,

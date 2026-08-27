@@ -20,8 +20,8 @@ function httpContext(
   } as unknown as ExecutionContext
 }
 
-function single() {
-  const options = throttlerOptions({} as ThrottlerStorage) as {
+function single(keyLimits?: Parameters<typeof throttlerOptions>[1]) {
+  const options = throttlerOptions({} as ThrottlerStorage, keyLimits) as {
     throttlers: unknown[]
   }
   const [throttler] = options.throttlers as Array<{
@@ -47,6 +47,31 @@ describe('throttlerOptions', () => {
     expect(t.ttl).toBe(60_000)
     expect(await t.limit(httpContext({ [API_KEY_HEADER]: 'hyd_x' }))).toBe(60)
     expect(await t.limit(httpContext({}))).toBe(600)
+  })
+
+  it("applies a key's own limit once it has been cached", async () => {
+    const cache = { get: async () => ({ max: 500, windowMs: 60_000 }) }
+    const t = single(cache as never)
+    expect(await t.limit(httpContext({ [API_KEY_HEADER]: 'hyd_x' }))).toBe(500)
+    expect(await t.limit(httpContext({}))).toBe(600)
+  })
+
+  it('normalises a limit configured over a different window', async () => {
+    const cache = { get: async () => ({ max: 1000, windowMs: 3_600_000 }) }
+    const t = single(cache as never)
+    expect(await t.limit(httpContext({ [API_KEY_HEADER]: 'hyd_x' }))).toBe(17)
+  })
+
+  it('falls back to the default while the cache is cold', async () => {
+    const cache = { get: async () => undefined }
+    const t = single(cache as never)
+    expect(await t.limit(httpContext({ [API_KEY_HEADER]: 'hyd_x' }))).toBe(60)
+  })
+
+  it('applies the default ceiling to a key with none configured', async () => {
+    const cache = { get: async () => ({ max: null, windowMs: 60_000 }) }
+    const t = single(cache as never)
+    expect(await t.limit(httpContext({ [API_KEY_HEADER]: 'hyd_x' }))).toBe(60)
   })
 
   it('tracks keyed requests by a key fingerprint, never the raw key', async () => {

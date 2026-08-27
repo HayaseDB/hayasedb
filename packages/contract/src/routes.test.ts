@@ -10,7 +10,7 @@ describe('collectRoutes', () => {
     expect(new Set(keys).size).toBe(keys.length)
     expect(keys).toContain('GET /anime')
     expect(keys).toContain('POST /anime')
-    expect(keys).toContain('GET /anime/by-slug/{slug}')
+    expect(keys).toContain('GET /anime/{id}')
     expect(keys).toContain('GET /auth/callback/{id}')
   })
 
@@ -19,9 +19,9 @@ describe('collectRoutes', () => {
     expect(apiKeyRoutes.every((r) => r.method === 'GET')).toBe(true)
     expect(apiKeyRoutes.map((r) => r.path).sort()).toEqual([
       '/anime',
-      '/anime/by-slug/{slug}',
+      '/anime/{id}',
       '/genres',
-      '/ping',
+      '/genres/{id}',
       '/stats',
       '/version',
     ])
@@ -49,15 +49,14 @@ describe('createBffMatcher', () => {
     ['HEAD', '/anime', true],
     ['head', '/anime', true],
     ['get', '/anime', true],
-    ['GET', '/anime/by-slug/some-slug', true],
-    ['GET', '/anime/by-slug/a/b', false],
-    ['GET', '/anime/by-slug/', false],
+    ['GET', '/anime/some-id', true],
+    ['GET', '/anime/a/b', false],
+    ['GET', '/anime/', false],
     ['GET', '/animex', false],
     ['GET', '/anime.', false],
     ['DELETE', '/anime', false],
     ['GET', '/auth/admin/users', false],
     ['POST', '/auth/sign-in/email', true],
-    ['GET', '/ping', false],
     ['GET', '/version', false],
     ['GET', '/docs', false],
     ['GET', '', false],
@@ -73,7 +72,9 @@ describe('createBffMatcher', () => {
   })
 
   it('does not treat a regex metacharacter in the path as a wildcard', () => {
-    expect(web.matches('GET', '/anime/by-slug/x')).toBe(true)
-    expect(web.matches('GET', '/animeXby-slug/x')).toBe(false)
+    expect(web.matches('GET', '/anime/x/media/order')).toBe(false)
+    expect(web.matches('GET', '/animeXx/media/order')).toBe(false)
+    expect(admin.matches('PUT', '/anime/x/media/order')).toBe(true)
+    expect(admin.matches('PUT', '/animeXx/media/order')).toBe(false)
   })
 })

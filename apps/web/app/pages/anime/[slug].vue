@@ -7,7 +7,7 @@ const slug = computed(() => String(route.params.slug))
 
 const { data: anime, error } = await useAsyncData(
   () => `anime-${slug.value}`,
-  () => api.anime.getBySlug({ slug: slug.value }),
+  () => resolveAnimeBySlug(api, slug.value),
   { watch: [slug] },
 )
 
@@ -49,7 +49,7 @@ const galleryItems = computed(() =>
 const genreItems = computed(() =>
   detail.value.genres.map((genre) => ({
     ...genre,
-    to: `/explore?genreId=${genre.id}`,
+    to: `/explore?genre=${genre.id}`,
   })),
 )
 

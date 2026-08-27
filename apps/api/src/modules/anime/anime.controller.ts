@@ -25,19 +25,9 @@ export class AnimeController {
   }
 
   @AllowAnonymous()
-  @Implement(contract.anime.getBySlug)
-  getBySlug() {
-    return implement(contract.anime.getBySlug).handler(({ input, context }) =>
-      this.anime.getBySlug(input.slug, {
-        includeDeleted: isAdminRequest(context.request),
-      }),
-    )
-  }
-
-  @AllowAnonymous()
-  @Implement(contract.anime.getById)
-  getById() {
-    return implement(contract.anime.getById).handler(({ input, context }) =>
+  @Implement(contract.anime.get)
+  get() {
+    return implement(contract.anime.get).handler(({ input, context }) =>
       this.anime.getById(input.id, {
         includeDeleted: isAdminRequest(context.request),
       }),
@@ -83,7 +73,7 @@ export class AnimeController {
         const asset = await this.media.ingest(input.file, input.file.name)
         return this.anime.attachMedia(
           {
-            animeId: input.animeId,
+            animeId: input.id,
             mediaId: asset.id,
             type: input.type,
           },
@@ -99,7 +89,7 @@ export class AnimeController {
     return implement(contract.anime.removeMedia).handler(
       ({ input, context }) => {
         const editorId = requireAdminUser(context)
-        return this.anime.removeMedia(input.id, editorId)
+        return this.anime.removeMedia(input, editorId)
       },
     )
   }

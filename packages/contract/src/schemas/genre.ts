@@ -16,6 +16,11 @@ export const genreListItemSchema = genreSchema.extend({
   animeCount: z.number().int(),
 })
 
+export const listGenresInputSchema = z.object({
+  q: z.string().trim().max(60).optional(),
+  name: genreNameSchema.optional(),
+})
+
 export const createGenreInputSchema = z.object({
   name: genreNameSchema,
 })
@@ -37,6 +42,7 @@ export const genreDocumentPatchSchema = genreDocumentSchema.partial()
 
 export type Genre = z.output<typeof genreSchema>
 export type GenreListItem = z.output<typeof genreListItemSchema>
+export type ListGenresInput = z.output<typeof listGenresInputSchema>
 export type CreateGenreInput = z.output<typeof createGenreInputSchema>
 export type UpdateGenreInput = z.output<typeof updateGenreInputSchema>
 export type GenreDocument = z.output<typeof genreDocumentSchema>

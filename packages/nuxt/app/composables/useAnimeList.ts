@@ -9,10 +9,10 @@ export interface AnimeListInputs {
   debouncedQ: Ref<string>
   format: Ref<AnimeFormat | undefined>
   status: Ref<AnimeStatus | undefined>
-  genreId: Ref<string | undefined>
-  year?: Ref<number | undefined>
+  genre: Ref<string | undefined>
+  yearMin?: Ref<number | undefined>
+  yearMax?: Ref<number | undefined>
   sort: Ref<ListAnimeInput['sort']>
-  order: Ref<ListAnimeInput['order']>
   page: Ref<number>
 }
 
@@ -31,10 +31,10 @@ export async function useAnimeListData(
         q: inputs.debouncedQ.value || undefined,
         format: inputs.format.value,
         status: inputs.status.value,
-        genreId: inputs.genreId.value,
-        startYear: inputs.year?.value,
+        genre: inputs.genre.value,
+        startYearMin: inputs.yearMin?.value,
+        startYearMax: inputs.yearMax?.value,
         sort: inputs.sort.value,
-        order: inputs.order.value,
         limit: pageSize,
         offset: (inputs.page.value - 1) * pageSize,
       }),
@@ -43,10 +43,10 @@ export async function useAnimeListData(
         inputs.debouncedQ,
         inputs.format,
         inputs.status,
-        inputs.genreId,
-        ...(inputs.year ? [inputs.year] : []),
+        inputs.genre,
+        ...(inputs.yearMin ? [inputs.yearMin] : []),
+        ...(inputs.yearMax ? [inputs.yearMax] : []),
         inputs.sort,
-        inputs.order,
         inputs.page,
       ],
     },
@@ -69,7 +69,7 @@ export interface UseAnimeListOptions {
     q?: string
     format?: AnimeFormat
     status?: AnimeStatus
-    genreId?: string
+    genre?: string
   }
 }
 
@@ -80,12 +80,11 @@ export async function useAnimeList(options: UseAnimeListOptions) {
   const debouncedQ = refDebounced(q, 300)
   const format = ref<AnimeFormat | undefined>(options.initial?.format)
   const status = ref<AnimeStatus | undefined>(options.initial?.status)
-  const genreId = ref<string | undefined>(options.initial?.genreId)
-  const sort = ref<ListAnimeInput['sort']>('recent')
-  const order = ref<ListAnimeInput['order']>('desc')
+  const genre = ref<string | undefined>(options.initial?.genre)
+  const sort = ref<ListAnimeInput['sort']>('-createdAt')
   const page = ref(1)
 
-  watch([debouncedQ, format, status, genreId, sort, order], () => {
+  watch([debouncedQ, format, status, genre, sort], () => {
     page.value = 1
   })
 
@@ -93,21 +92,20 @@ export async function useAnimeList(options: UseAnimeListOptions) {
     debouncedQ,
     format,
     status,
-    genreId,
+    genre,
     sort,
-    order,
     page,
   })
 
   const hasFilters = computed(
-    () => !!(q.value || format.value || status.value || genreId.value),
+    () => !!(q.value || format.value || status.value || genre.value),
   )
 
   function resetFilters() {
     q.value = ''
     format.value = undefined
     status.value = undefined
-    genreId.value = undefined
+    genre.value = undefined
   }
 
   return {
@@ -115,9 +113,8 @@ export async function useAnimeList(options: UseAnimeListOptions) {
     debouncedQ,
     format,
     status,
-    genreId,
+    genre,
     sort,
-    order,
     page,
     pageSize,
     hasFilters,

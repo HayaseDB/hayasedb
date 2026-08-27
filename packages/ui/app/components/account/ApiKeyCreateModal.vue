@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import * as z from 'zod'
+import { apiKeyNameSchema } from '@hayasedb/contract'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 const props = withDefaults(
@@ -17,7 +18,7 @@ const props = withDefaults(
 const emit = defineEmits<{ close: [boolean] }>()
 
 const schema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(32),
+  name: apiKeyNameSchema,
   expiresIn: z.number(),
 })
 

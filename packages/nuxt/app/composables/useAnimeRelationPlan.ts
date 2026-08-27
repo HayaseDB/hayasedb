@@ -65,7 +65,7 @@ export function useAnimeRelationPlan() {
 
     const foreign: ForeignRelationUpdate[] = []
     for (const ownerId of owners) {
-      const other = await api.anime.getById({ id: ownerId })
+      const other = await api.anime.get({ id: ownerId })
       const owned = other.relations
         .filter((relation) => relation.owned)
         .map((relation): AnimeRelationEdge => ({

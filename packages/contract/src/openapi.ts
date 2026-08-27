@@ -4,7 +4,13 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { API_KEY_HEADER, isApiKeyAllowed } from './meta'
 import { contract } from './routers'
 
-export const PUBLIC_API_DESCRIPTION = `Read-only anime data for third-party applications. Every request requires an API key sent in the ${API_KEY_HEADER} header: requests without one are rejected with 401. Create a key from your account settings. Keys are limited to 60 requests per minute.`
+export const PUBLIC_API_DESCRIPTION = [
+  'Read-only anime data for third-party applications.',
+  `Every request requires an API key sent in the ${API_KEY_HEADER} header; requests without one are rejected with 401. Create a key from your account settings.`,
+  'Each key carries its own rate limit, reported on every response through the `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset` headers. New keys default to 60 requests per minute.',
+  'Responses are cacheable: read endpoints send `Cache-Control` and an `ETag`, so replaying the tag as `If-None-Match` yields a `304 Not Modified`.',
+  'Resources are addressed by their identifier — `GET /anime/{id}`, `GET /genres/{id}`. To look one up by an alternate key, filter the collection instead: `GET /anime?slug=…` or `GET /genres?name=…`.',
+].join('\n\n')
 
 const shouldHoistDef = (defName: string) => defName !== 'UndefinedError'
 

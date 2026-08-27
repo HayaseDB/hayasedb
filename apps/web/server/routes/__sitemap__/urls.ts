@@ -29,8 +29,7 @@ export default defineSitemapEventHandler(
             query: {
               limit: PAGE_SIZE,
               offset,
-              sort: 'recent',
-              order: 'desc',
+              sort: '-createdAt',
             },
           },
         )

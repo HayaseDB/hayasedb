@@ -18,16 +18,6 @@ export class SystemController {
   constructor(private readonly system: SystemService) {}
 
   @AllowAnonymous()
-  @Implement(contract.system.ping)
-  ping() {
-    return implement(contract.system.ping).handler(({ input }) => ({
-      ok: true as const,
-      ts: Date.now(),
-      echo: input.message,
-    }))
-  }
-
-  @AllowAnonymous()
   @Implement(contract.system.version)
   version() {
     return implement(contract.system.version).handler(() => ({

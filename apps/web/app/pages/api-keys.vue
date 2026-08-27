@@ -35,8 +35,9 @@ useSeoMeta({ title: 'API keys' })
         <h1 class="text-highlighted text-2xl font-semibold">API keys</h1>
         <p class="text-muted text-sm">
           A key is required to reach the HayaseDB API from your own
-          applications. Send it as the x-api-key header to get your own rate
-          limit of 60 requests per minute.
+          applications. Send it as the <code>x-api-key</code> header. Each key
+          carries its own rate limit, shown below and mirrored on every response
+          in the <code>RateLimit-*</code> headers.
         </p>
       </div>
       <UButton
