@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      force_release:
+        description: >
+          Deploy to production even if this commit carries no new release tag.
+          Use to recover a release whose pipeline failed after tagging.
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -20,8 +27,8 @@ jobs:
       contents: write
       pull-requests: write
     outputs:
-      released: ${{ steps.changesets.outputs.published }}
-      version: ${{ steps.version.outputs.version }}
+      released: ${{ steps.release.outputs.released }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -46,16 +53,68 @@ jobs:
           publish-script: bun run tag
           commit-message: 'chore: release'
           pr-title: 'chore: release'
+          create-github-releases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve release version
-        id: version
-        if: steps.changesets.outputs.published == 'true'
+      - name: Resolve release state
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_RELEASE: ${{ inputs.force_release || false }}
         run: |
+          set -euo pipefail
+
           version="$(node -p "require('./apps/api/package.json').version")"
+          tag="@hayasedb/api@${version}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "Release version: ${version}"
+
+          if [ -n "$(git tag --list "${tag}")" ] \
+            && [ "$(git rev-list -n1 "${tag}")" = "${GITHUB_SHA}" ]; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${version} is tagged at this commit; releasing."
+          elif [ "${FORCE_RELEASE}" = "true" ]; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::Forced release of ${version} without a matching tag at this commit."
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No release tag at this commit; staging only."
+          fi
+
+      - name: Publish GitHub releases
+        if: steps.release.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -uo pipefail
+
+          failed=0
+          for tag in $(git tag --points-at "${GITHUB_SHA}" | grep -F "@${VERSION}" || true); do
+            if gh release view "${tag}" >/dev/null 2>&1; then
+              echo "Release ${tag} already exists; skipping."
+              continue
+            fi
+
+            for attempt in 1 2 3 4 5; do
+              if gh release create "${tag}" --title "${tag}" \
+                --notes "See CHANGELOG.md for details." --verify-tag; then
+                echo "Created release ${tag}."
+                break
+              fi
+              if [ "${attempt}" -eq 5 ]; then
+                echo "::warning::Could not create release ${tag} after 5 attempts."
+                failed=1
+                break
+              fi
+              sleep $((attempt * 5))
+            done
+            sleep 1
+          done
+
+          if [ "${failed}" -eq 1 ]; then
+            echo "::warning::Some GitHub releases were not created. Deployment continues; re-run this job to retry them."
+          fi
 
   images:
     runs-on: ubuntu-24.04
@@ -125,8 +184,20 @@ jobs:
       contents: read
     steps:
       - name: Trigger Portainer redeploy
+        env:
+          WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
         run: |
-          curl --fail --silent --show-error -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
+          set -euo pipefail
+
+          if [ -z "${WEBHOOK_URL}" ]; then
+            echo "::error::PORTAINER_WEBHOOK_URL is not set for this environment."
+            exit 1
+          fi
+
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 5 --retry-connrefused --retry-all-errors \
+            --max-time 60 \
+            -X POST "${WEBHOOK_URL}"
 
   retag:
     needs: [version, images]
@@ -148,12 +219,32 @@ jobs:
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
+          set -euo pipefail
+
           for app in api web admin; do
             image="ghcr.io/hayasedb/hayasedb-${app}"
-            docker buildx imagetools create \
-              --tag "${image}:${VERSION}" \
-              --tag "${image}:latest" \
-              "${image}:sha-${GITHUB_SHA}"
+            source="${image}:sha-${GITHUB_SHA}"
+
+            if ! docker buildx imagetools inspect "${source}" >/dev/null 2>&1; then
+              echo "::error::${source} is missing from the registry."
+              echo "::error::Re-run the 'images' job for this commit before retrying."
+              exit 1
+            fi
+
+            for attempt in 1 2 3; do
+              if docker buildx imagetools create \
+                --tag "${image}:${VERSION}" \
+                --tag "${image}:latest" \
+                "${source}"; then
+                echo "Retagged ${app} as ${VERSION} and latest."
+                break
+              fi
+              if [ "${attempt}" -eq 3 ]; then
+                echo "::error::Failed to retag ${app} after 3 attempts."
+                exit 1
+              fi
+              sleep $((attempt * 5))
+            done
           done
 
   deploy-production:
@@ -166,5 +257,17 @@ jobs:
       contents: read
     steps:
       - name: Trigger Portainer redeploy
+        env:
+          WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
         run: |
-          curl --fail --silent --show-error -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
+          set -euo pipefail
+
+          if [ -z "${WEBHOOK_URL}" ]; then
+            echo "::error::PORTAINER_WEBHOOK_URL is not set for this environment."
+            exit 1
+          fi
+
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 5 --retry-connrefused --retry-all-errors \
+            --max-time 60 \
+            -X POST "${WEBHOOK_URL}"
