@@ -127,6 +127,13 @@
       "when": 1787825344745,
       "tag": "0017_curly_archangel",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788243841514,
+      "tag": "0018_localized_anime_and_genre",
+      "breakpoints": true
     }
   ]
 }

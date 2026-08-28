@@ -4,9 +4,11 @@ import {
   ANIME_RELATION_KINDS,
   ANIME_STATUSES,
   SYMMETRIC_RELATION_KINDS,
+  type LocalizationLocale,
 } from '@hayasedb/domain'
 import { relations, sql } from 'drizzle-orm'
 import {
+  boolean,
   check,
   index,
   integer,
@@ -46,10 +48,6 @@ export const anime = pgTable(
     slug: text('slug').notNull().unique(),
     format: animeFormat('format'),
     status: animeStatus('status'),
-    titleRomaji: text('title_romaji'),
-    titleEnglish: text('title_english'),
-    titleNative: text('title_native'),
-    description: text('description'),
     startYear: smallint('start_year'),
     startMonth: smallint('start_month'),
     startDay: smallint('start_day'),
@@ -75,6 +73,26 @@ export const anime = pgTable(
       'anime_end_date_check',
       sql`(${table.endMonth} is null or (${table.endYear} is not null and ${table.endMonth} between 1 and 12)) and (${table.endDay} is null or (${table.endMonth} is not null and ${table.endDay} between 1 and 31))`,
     ),
+  ],
+)
+
+export const animeTranslation = pgTable(
+  'anime_translation',
+  {
+    animeId: uuid('anime_id')
+      .notNull()
+      .references(() => anime.id, { onDelete: 'cascade' }),
+    locale: text('locale').$type<LocalizationLocale>().notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    original: boolean('original').default(false).notNull(),
+    ...timestamps(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.animeId, table.locale] }),
+    uniqueIndex('anime_translation_original_uq')
+      .on(table.animeId)
+      .where(sql`${table.original}`),
   ],
 )
 
@@ -107,8 +125,27 @@ export const genre = pgTable('genre', {
   id: uuid('id')
     .primaryKey()
     .references(() => entity.id),
-  name: text('name').notNull().unique(),
+  slug: text('slug').notNull().unique(),
 })
+
+export const genreTranslation = pgTable(
+  'genre_translation',
+  {
+    genreId: uuid('genre_id')
+      .notNull()
+      .references(() => genre.id, { onDelete: 'cascade' }),
+    locale: text('locale').$type<LocalizationLocale>().notNull(),
+    name: text('name').notNull(),
+    ...timestamps(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.genreId, table.locale] }),
+    uniqueIndex('genre_translation_locale_name_uq').on(
+      table.locale,
+      sql`lower(${table.name})`,
+    ),
+  ],
+)
 
 export const animeGenre = pgTable(
   'anime_genre',
@@ -155,6 +192,7 @@ export const animeMedia = pgTable(
 )
 
 export const animeRelations = relations(anime, ({ many }) => ({
+  translations: many(animeTranslation),
   genres: many(animeGenre),
   media: many(animeMedia),
   outgoingRelations: many(animeRelation, { relationName: 'source' }),
@@ -176,7 +214,28 @@ export const animeRelationRelations = relations(animeRelation, ({ one }) => ({
 
 export const genreRelations = relations(genre, ({ many }) => ({
   anime: many(animeGenre),
+  translations: many(genreTranslation),
 }))
+
+export const animeTranslationRelations = relations(
+  animeTranslation,
+  ({ one }) => ({
+    anime: one(anime, {
+      fields: [animeTranslation.animeId],
+      references: [anime.id],
+    }),
+  }),
+)
+
+export const genreTranslationRelations = relations(
+  genreTranslation,
+  ({ one }) => ({
+    genre: one(genre, {
+      fields: [genreTranslation.genreId],
+      references: [genre.id],
+    }),
+  }),
+)
 
 export const animeGenreRelations = relations(animeGenre, ({ one }) => ({
   anime: one(anime, {
