@@ -24,6 +24,7 @@ import {
   timestampsSchema,
 } from './common'
 import { genreSchema } from './genre'
+import { localizedTitleSchema } from './localization'
 import { mediaFileSchema } from './media'
 
 export const animeFormatSchema = z.enum(ANIME_FORMATS)
@@ -63,6 +64,46 @@ export const animeDescriptionSchema = z.preprocess(
   blankToNull,
   z.string().trim().max(5000, 'Description is too long').nullish(),
 )
+
+export const animeTranslationSchema = localizedTitleSchema.extend({
+  description: z
+    .string()
+    .trim()
+    .min(1)
+    .max(5_000, 'Description is too long')
+    .transform((description) => description.normalize('NFC'))
+    .nullable()
+    .default(null),
+})
+
+export const animeTranslationListSchema = z
+  .array(animeTranslationSchema)
+  .min(1, 'At least one localized title is required')
+  .max(100)
+  .superRefine((translations, ctx) => {
+    const locales = new Set<string>()
+    let originals = 0
+    for (const [index, translation] of translations.entries()) {
+      if (locales.has(translation.locale)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Duplicate locale',
+          path: [index, 'locale'],
+        })
+      }
+      locales.add(translation.locale)
+      if (translation.original) originals += 1
+    }
+    if (originals !== 1) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Exactly one anime title must be original',
+      })
+    }
+  })
+  .transform((items) =>
+    [...items].sort((a, b) => a.locale.localeCompare(b.locale)),
+  )
 
 export const animeYearSchema = z.number().int()
 
@@ -117,9 +158,8 @@ const animeCoreSchema = z.object({
   slug: z.string(),
   format: animeFormatSchema.nullable(),
   status: animeStatusSchema.nullable(),
-  titleRomaji: z.string().nullable(),
-  titleEnglish: z.string().nullable(),
-  titleNative: z.string().nullable(),
+  title: localizedTitleSchema,
+  translations: animeTranslationListSchema,
   startDate: fuzzyDateSchema.nullable(),
   ...timestampsSchema.shape,
 })
@@ -129,8 +169,7 @@ export const animeRelationTargetSchema = z.object({
   slug: z.string(),
   format: animeFormatSchema.nullable(),
   status: animeStatusSchema.nullable(),
-  titleRomaji: z.string().nullable(),
-  titleEnglish: z.string().nullable(),
+  title: localizedTitleSchema,
   startYear: z.number().int().nullable(),
   coverUrl: z.string().nullable(),
   coverBlurhash: z.string().nullable(),
@@ -213,10 +252,7 @@ export const createAnimeInputSchema = z.object({
   slug: slugSchema,
   format: animeFormatSchema.nullish(),
   status: animeStatusSchema.nullish(),
-  titleRomaji: animeTitleFieldSchema,
-  titleEnglish: animeTitleFieldSchema,
-  titleNative: animeTitleFieldSchema,
-  description: animeDescriptionSchema,
+  translations: animeTranslationListSchema.optional(),
   startDate: releaseDateSchema,
   endDate: releaseDateSchema,
   genreIds: z.array(idSchema).optional(),
@@ -262,6 +298,7 @@ export const animeDocumentMediaListSchema = z
   })
 
 export const animeDocumentSchema = createAnimeInputSchema.extend({
+  translations: animeTranslationListSchema,
   genreIds: z.array(idSchema).max(50),
   relations: animeDocumentRelationListSchema.optional(),
   media: animeDocumentMediaListSchema,
@@ -273,6 +310,7 @@ export type AnimeDocument = z.output<typeof animeDocumentSchema>
 export type AnimeDocumentPatch = z.output<typeof animeDocumentPatchSchema>
 export type AnimeDocumentMedia = z.output<typeof animeDocumentMediaSchema>
 export type AnimeDocumentRelation = z.output<typeof animeDocumentRelationSchema>
+export type AnimeTranslation = z.output<typeof animeTranslationSchema>
 export type AnimeRelation = z.output<typeof animeRelationSchema>
 export type AnimeRelationTarget = z.output<typeof animeRelationTargetSchema>
 
