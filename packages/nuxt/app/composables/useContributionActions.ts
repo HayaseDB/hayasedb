@@ -4,6 +4,7 @@ import type {
   ChangeInput,
   CreateAnimeInput,
 } from '@hayasedb/contract'
+import { genreSlug } from '@hayasedb/domain'
 import type { AnimeFormField, AnimeRelationInput } from '#imports'
 
 export interface ProposedGenre {
@@ -112,7 +113,10 @@ export function useContributionActions() {
         op: 'create',
         entityKind: 'genre',
         entityId: genre.id,
-        payload: { name: genre.name },
+        payload: {
+          slug: genreSlug(genre.name),
+          translations: [{ locale: 'en', name: genre.name }],
+        },
       }))
 
       const changeset = await api.changeset.submit({

@@ -78,13 +78,13 @@ const columns: TableColumn<AnimeListItem>[] = [
     cell: ({ row }) =>
       h(AnimeCoverImage, {
         src: row.original.coverUrl,
-        alt: row.original.titleEnglish ?? undefined,
+        alt: row.original.title.title,
         class: 'aspect-[2/3] h-10 shrink-0 rounded',
       }),
   },
   {
     id: 'title',
-    accessorKey: 'titleRomaji',
+    accessorKey: 'title',
     header: () =>
       h(
         UButton,
@@ -104,7 +104,7 @@ const columns: TableColumn<AnimeListItem>[] = [
             class:
               'text-highlighted truncate text-sm font-medium hover:underline',
           },
-          () => row.original.titleEnglish ?? '',
+          () => row.original.title.title,
         ),
         h(
           'span',

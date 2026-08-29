@@ -9,13 +9,17 @@ import {
   type AnimeRelationViewKind,
   type FuzzyDate,
 } from '@hayasedb/domain'
-import type { AnimeDetail, AnimeFormat, AnimeStatus } from '@hayasedb/contract'
+import type {
+  AnimeDetail,
+  AnimeFormat,
+  AnimeStatus,
+  AnimeTranslation,
+} from '@hayasedb/contract'
 
 export interface AnimeRelationSearchResult {
   id: string
   slug: string
-  titleEnglish: string | null
-  titleRomaji: string | null
+  title: { title: string }
   startDate: FuzzyDate | null
 }
 
@@ -29,10 +33,7 @@ export interface AnimeFormState {
   slug: string
   format: AnimeFormat | null
   status: AnimeStatus | null
-  titleRomaji: string
-  titleEnglish: string
-  titleNative: string
-  description: string
+  translations: AnimeTranslation[]
   startDate: FuzzyDate | null
   endDate: FuzzyDate | null
   genreIds: string[]
@@ -85,10 +86,19 @@ export function buildAnimeFormState(
     state.relationEdges = anime.relations.map(
       (relation): AnimeRelationEdgeItem => ({
         animeId: relation.anime.id,
-        title: relation.anime.titleEnglish ?? '',
+        title: relation.anime.title.title,
         kind: relation.kind,
       }),
     )
+  } else {
+    state.translations = [
+      {
+        locale: 'en',
+        title: '',
+        description: null,
+        original: true,
+      },
+    ]
   }
 
   return state as unknown as AnimeFormState
@@ -115,7 +125,11 @@ export function applyPayloadToState(
     const value = payload[field]
     const { as, empty } = ANIME_FIELD_META[field]
 
-    if (empty === 'emptyArray') {
+    if (as === 'localized') {
+      state[field] = Array.isArray(value)
+        ? value.map((item) => ({ ...(item as object) }))
+        : []
+    } else if (empty === 'emptyArray') {
       state[field] = Array.isArray(value)
         ? value.filter((item): item is string => typeof item === 'string')
         : []

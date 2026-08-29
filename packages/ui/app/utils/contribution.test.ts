@@ -15,7 +15,7 @@ describe('buildDiffRows', () => {
         op: 'create',
         baseRev: null,
         payload: {
-          titleEnglish: 'Bebop',
+          translations: [{ locale: 'en', title: 'Bebop', original: true }],
           slug: 'bebop',
           genreIds: [],
           format: 'TV',
@@ -25,7 +25,7 @@ describe('buildDiffRows', () => {
     expect(rows.map((r) => r.field)).toEqual([
       'slug',
       'format',
-      'titleEnglish',
+      'translations',
       'genreIds',
     ])
     expect(rows.find((r) => r.field === 'genreIds')).toMatchObject({
@@ -43,14 +43,14 @@ describe('buildDiffRows', () => {
   it('keeps only changed fields for an update and treats empty-ish values as equal', () => {
     const rows = buildDiffRows(
       change({
-        payload: { titleRomaji: '', titleEnglish: 'New', description: 'x' },
-        oldValues: { titleRomaji: null, titleEnglish: 'Old', description: 'x' },
+        payload: { slug: '', status: 'FINISHED', format: 'TV' },
+        oldValues: { slug: null, status: 'RELEASING', format: 'TV' },
       }),
     )
-    expect(rows.map((r) => r.field)).toEqual(['titleEnglish'])
+    expect(rows.map((r) => r.field)).toEqual(['status'])
     expect(rows[0]).toMatchObject({
-      before: 'Old',
-      after: 'New',
+      before: 'RELEASING',
+      after: 'FINISHED',
       drifted: false,
     })
   })
@@ -76,23 +76,23 @@ describe('buildDiffRows', () => {
   it('flags drift against the current head only for tracked fields', () => {
     const rows = buildDiffRows(
       change({
-        payload: { titleEnglish: 'Mine', slug: 'same' },
-        oldValues: { titleEnglish: 'Base', slug: 'same' },
-        currentValues: { titleEnglish: 'Someone else', slug: 'same' },
+        payload: { status: 'FINISHED', slug: 'same' },
+        oldValues: { status: 'RELEASING', slug: 'same' },
+        currentValues: { status: 'CANCELLED', slug: 'same' },
         conflicted: true,
       }),
     )
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({
-      field: 'titleEnglish',
-      currentValue: 'Someone else',
+      field: 'status',
+      currentValue: 'CANCELLED',
       drifted: true,
     })
 
     const untracked = buildDiffRows(
       change({
-        payload: { titleEnglish: 'Mine' },
-        oldValues: { titleEnglish: 'Base' },
+        payload: { status: 'FINISHED' },
+        oldValues: { status: 'RELEASING' },
         currentValues: { slug: 'other' },
       }),
     )
@@ -129,15 +129,15 @@ describe('buildDiffRows', () => {
         op: 'delete',
         entityKind: 'genre',
         payload: {},
-        oldValues: { name: 'Drama' },
+        oldValues: { slug: 'drama' },
       }),
     )
     expect(rows).toEqual([
       expect.objectContaining({
-        field: 'name',
-        label: 'Name',
+        field: 'slug',
+        label: 'Slug',
         before: null,
-        after: 'Drama',
+        after: 'drama',
         changed: true,
       }),
     ])
@@ -146,11 +146,13 @@ describe('buildDiffRows', () => {
 
 describe('labels', () => {
   it('falls back to the raw key or value when no label exists', () => {
-    expect(contributionFieldLabel('anime', 'titleNative')).toBe('Native title')
+    expect(contributionFieldLabel('anime', 'translations')).toBe(
+      'Localized content',
+    )
     expect(contributionFieldLabel('genre', 'unknown')).toBe('unknown')
     expect(contributionEnumLabel('anime', 'format', 'TV')).toBe('TV')
     expect(contributionEnumLabel('anime', 'format', 'NOPE')).toBe('NOPE')
-    expect(contributionEnumLabel('genre', 'name', 42)).toBe('42')
+    expect(contributionEnumLabel('genre', 'slug', 42)).toBe('42')
   })
 })
 

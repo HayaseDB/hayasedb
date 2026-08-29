@@ -48,7 +48,9 @@ async function mount(overrides: Record<string, unknown> = {}) {
 }
 
 const genreSelect = (wrapper: Awaited<ReturnType<typeof mount>>['wrapper']) =>
-  wrapper.findComponent({ name: 'USelectMenu' })
+  wrapper
+    .findAllComponents({ name: 'USelectMenu' })
+    .find((component) => component.props('id') === 'anime-genres')!
 
 describe('AnimeForm', () => {
   it('rejects an invalid slug before calling onSubmit', async () => {
@@ -63,20 +65,23 @@ describe('AnimeForm', () => {
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it('submits the schema-parsed payload with blank titles as null', async () => {
+  it('submits the schema-parsed payload with the localized title trimmed', async () => {
     const { wrapper, onSubmit } = await mount()
     await wrapper.find('#anime-slug').setValue('cowboy-bebop')
-    await wrapper.find('#anime-titleEnglish').setValue('  Cowboy Bebop ')
+    await wrapper.find('#anime-title').setValue('  Cowboy Bebop ')
     await wrapper.find('form').trigger('submit')
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
     const payload = onSubmit.mock.calls[0]![0]
     expect(payload).toMatchObject({
       slug: 'cowboy-bebop',
-      titleEnglish: 'Cowboy Bebop',
-      titleRomaji: null,
-      titleNative: null,
-      description: null,
       genreIds: [],
+      translations: [
+        expect.objectContaining({
+          locale: 'en',
+          title: 'Cowboy Bebop',
+          original: true,
+        }),
+      ],
     })
   })
 

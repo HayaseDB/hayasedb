@@ -81,6 +81,44 @@ function handleSubmit(event: FormSubmitEvent<Record<string, unknown>>) {
   void props.onSubmit(event.data as CreateAnimeInput)
 }
 
+const translations = computed({
+  get: () => state.value.translations,
+  set: (value) => {
+    state.value.translations = value
+  },
+})
+
+const formErrors = ref<{ name?: string }[]>()
+
+const localization = useTranslationEditor({
+  translations,
+  fields: ['title', 'description'],
+  errors: formErrors,
+  create: (locale) => ({
+    locale,
+    title: '',
+    description: null,
+    original: state.value.translations.length === 0,
+  }),
+})
+
+const activeTranslationIndex = localization.activeIndex
+const activeTranslation = localization.active
+
+function makeActiveOriginal() {
+  state.value.translations.forEach((item, itemIndex) => {
+    item.original = itemIndex === activeTranslationIndex.value
+  })
+}
+
+function removeActiveTranslation() {
+  const wasOriginal = activeTranslation.value?.original
+  localization.removeActive()
+  if (wasOriginal && state.value.translations[0]) {
+    state.value.translations[0].original = true
+  }
+}
+
 const mediaLabel = (type: AnimeMediaType) => ANIME_MEDIA_TYPE_LABELS[type]
 
 const dragIndex = ref<number | null>(null)
@@ -92,7 +130,7 @@ function onDrop(index: number) {
   if (from !== null) props.media.reorderGallery(from, index)
 }
 
-const tabs = [
+const tabs = computed(() => [
   { label: 'General', icon: 'i-lucide-file-text', slot: 'general' as const },
   {
     label: 'Relations',
@@ -100,14 +138,19 @@ const tabs = [
     slot: 'relations' as const,
   },
   { label: 'Images', icon: 'i-lucide-images', slot: 'images' as const },
-]
+])
 const activeTab = ref('0')
 
 const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
 </script>
 
 <template>
-  <UForm :schema="createAnimeInputSchema" :state="state" @submit="handleSubmit">
+  <UForm
+    :schema="createAnimeInputSchema"
+    :state="state"
+    @submit="handleSubmit"
+    @error="(event) => (formErrors = event.errors)"
+  >
     <UTabs
       v-model="activeTab"
       :items="tabs"
@@ -122,7 +165,7 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
     >
       <template #general>
         <div class="flex flex-col gap-6">
-          <UPageCard title="Titles" variant="subtle">
+          <UPageCard title="General information" variant="subtle">
             <div class="flex flex-col gap-4">
               <UFormField label="Slug" name="slug" required>
                 <UInput
@@ -134,38 +177,54 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
                   :color="changed('slug') ? 'info' : undefined"
                 />
               </UFormField>
-              <div class="grid gap-4 sm:grid-cols-2">
-                <UFormField label="English title" name="titleEnglish">
+
+              <LocaleSwitcher
+                v-model:locale="localization.activeLocale.value"
+                :items="localization.switcherItems.value"
+                :add-options="localization.remainingOptions.value"
+                :can-add="localization.canAdd.value"
+                :can-remove="localization.canRemove.value"
+                :changed="changed('translations')"
+                show-original
+                :is-original="activeTranslation?.original"
+                @add="localization.add"
+                @remove="removeActiveTranslation"
+                @make-original="makeActiveOriginal"
+              />
+
+              <template v-if="activeTranslation">
+                <UFormField
+                  label="Title"
+                  :name="`translations.${activeTranslationIndex}.title`"
+                  required
+                >
                   <UInput
-                    id="anime-titleEnglish"
-                    v-model="state.titleEnglish"
-                    placeholder="Attack on Titan"
+                    id="anime-title"
+                    v-model="activeTranslation.title"
+                    placeholder="Localized title"
                     class="w-full"
-                    :highlight="changed('titleEnglish')"
-                    :color="changed('titleEnglish') ? 'info' : undefined"
+                    :highlight="changed('translations')"
+                    :color="changed('translations') ? 'info' : undefined"
                   />
                 </UFormField>
-                <UFormField label="Romaji title" name="titleRomaji">
-                  <UInput
-                    id="anime-titleRomaji"
-                    v-model="state.titleRomaji"
-                    placeholder="Shingeki no Kyojin"
+                <UFormField
+                  label="Description"
+                  :name="`translations.${activeTranslationIndex}.description`"
+                >
+                  <UTextarea
+                    :model-value="activeTranslation.description ?? undefined"
+                    :rows="4"
+                    placeholder="Localized anime description…"
                     class="w-full"
-                    :highlight="changed('titleRomaji')"
-                    :color="changed('titleRomaji') ? 'info' : undefined"
+                    :highlight="changed('translations')"
+                    :color="changed('translations') ? 'info' : undefined"
+                    @update:model-value="
+                      (value) =>
+                        (activeTranslation!.description = value || null)
+                    "
                   />
                 </UFormField>
-                <UFormField label="Native title" name="titleNative">
-                  <UInput
-                    id="anime-titleNative"
-                    v-model="state.titleNative"
-                    placeholder="進撃の巨人"
-                    class="w-full"
-                    :highlight="changed('titleNative')"
-                    :color="changed('titleNative') ? 'info' : undefined"
-                  />
-                </UFormField>
-              </div>
+              </template>
             </div>
           </UPageCard>
 
@@ -217,19 +276,6 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
             </div>
           </UPageCard>
 
-          <UPageCard title="Description" variant="subtle">
-            <UFormField name="description">
-              <UTextarea
-                v-model="state.description"
-                :rows="6"
-                placeholder="English description…"
-                class="w-full"
-                :highlight="changed('description')"
-                :color="changed('description') ? 'info' : undefined"
-              />
-            </UFormField>
-          </UPageCard>
-
           <UPageCard title="Genres" variant="subtle">
             <UFormField
               name="genreIds"
@@ -240,6 +286,7 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
               "
             >
               <USelectMenu
+                id="anime-genres"
                 v-model="state.genreIds"
                 :items="genreItems"
                 value-key="value"

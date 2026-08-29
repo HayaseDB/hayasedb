@@ -3,7 +3,7 @@ import { Motion, useReducedMotion } from 'motion-v'
 import type { AnimeListItem } from '@hayasedb/contract'
 
 const props = defineProps<{
-  items: Pick<AnimeListItem, 'id' | 'slug' | 'coverUrl' | 'titleEnglish'>[]
+  items: Pick<AnimeListItem, 'id' | 'slug' | 'coverUrl' | 'title'>[]
 }>()
 
 const reducedMotion = useReducedMotion()
@@ -47,7 +47,7 @@ function rowIntro(index: number) {
         >
           <AnimeCoverImage
             :src="anime.coverUrl"
-            :alt="anime.titleEnglish ?? undefined"
+            :alt="anime.title.title"
             lazy
           />
         </NuxtLink>

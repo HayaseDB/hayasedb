@@ -40,7 +40,7 @@ const { data: prefill } = await useAsyncData(
 )
 
 const title = computed(
-  () => anime.value?.titleEnglish ?? anime.value?.slug ?? '',
+  () => anime.value?.title.title ?? anime.value?.slug ?? '',
 )
 
 useSeoMeta({

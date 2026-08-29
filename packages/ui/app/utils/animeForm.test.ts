@@ -18,10 +18,9 @@ describe('buildAnimeFormState', () => {
       slug: '',
       format: null,
       status: null,
-      titleRomaji: '',
-      titleEnglish: '',
-      titleNative: '',
-      description: '',
+      translations: [
+        { locale: 'en', title: '', description: null, original: true },
+      ],
       startDate: null,
       endDate: null,
       genreIds: [],
@@ -34,13 +33,20 @@ describe('buildAnimeFormState', () => {
       slug: 'bebop',
       format: 'TV',
       status: null,
-      titleRomaji: null,
-      titleEnglish: 'Bebop',
-      titleNative: null,
-      description: null,
+      translations: [
+        { locale: 'en', title: 'Bebop', description: null, original: true },
+      ],
       startDate: { year: 1998, month: 4, day: 3 },
       endDate: null,
-      genres: [{ id: 'g1', name: 'Action' }],
+      genres: [
+        {
+          id: 'g1',
+          slug: 'action',
+          name: 'Action',
+          locale: 'en',
+          translations: [{ locale: 'en', name: 'Action' }],
+        },
+      ],
       relations: [
         {
           kind: 'SEQUEL',
@@ -50,8 +56,7 @@ describe('buildAnimeFormState', () => {
             slug: 'b',
             format: null,
             status: null,
-            titleEnglish: null,
-            titleRomaji: 'Bee',
+            title: { locale: 'en', title: 'Bee', original: true },
             startYear: null,
             coverUrl: null,
             coverBlurhash: null,
@@ -63,11 +68,12 @@ describe('buildAnimeFormState', () => {
       slug: 'bebop',
       format: 'TV',
       status: null,
-      titleRomaji: '',
-      description: '',
+      translations: [
+        { locale: 'en', title: 'Bebop', description: null, original: true },
+      ],
       startDate: { year: 1998, month: 4, day: 3 },
       genreIds: ['g1'],
-      relationEdges: [{ animeId: B, title: '', kind: 'SEQUEL' }],
+      relationEdges: [{ animeId: B, title: 'Bee', kind: 'SEQUEL' }],
     })
   })
 })
@@ -75,7 +81,7 @@ describe('buildAnimeFormState', () => {
 describe('applyPayloadToState', () => {
   it('only touches fields present in the payload and coerces by field meta', () => {
     const state = buildAnimeFormState()
-    state.titleEnglish = 'keep'
+    state.translations[0]!.title = 'keep'
     applyPayloadToState(state, {
       slug: 42,
       genreIds: ['g1', 7, null],
@@ -86,7 +92,9 @@ describe('applyPayloadToState', () => {
       media: [{ type: 'COVER' }],
     })
     expect(state).toMatchObject({
-      titleEnglish: 'keep',
+      translations: [
+        { locale: 'en', title: 'keep', description: null, original: true },
+      ],
       slug: '',
       genreIds: ['g1'],
       startDate: { year: 2001, month: 2, day: 3 },
@@ -99,6 +107,20 @@ describe('applyPayloadToState', () => {
     applyPayloadToState(state, { startDate: 'not-a-date', genreIds: 'g1' })
     expect(state.startDate).toBeNull()
     expect(state.genreIds).toEqual([])
+  })
+
+  it('restores localized translations, which are objects rather than ids', () => {
+    const state = buildAnimeFormState()
+    applyPayloadToState(state, {
+      translations: [
+        { locale: 'en', title: 'Star', description: 'A show', original: true },
+        { locale: 'de', title: 'Stern', description: null, original: false },
+      ],
+    })
+    expect(state.translations).toEqual([
+      { locale: 'en', title: 'Star', description: 'A show', original: true },
+      { locale: 'de', title: 'Stern', description: null, original: false },
+    ])
   })
 })
 

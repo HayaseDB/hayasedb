@@ -2,7 +2,7 @@
 import type { AnimeListItem } from '@hayasedb/contract'
 
 defineProps<{
-  anime: Pick<AnimeListItem, 'coverUrl' | 'slug' | 'titleEnglish'>
+  anime: Pick<AnimeListItem, 'coverUrl' | 'slug' | 'title'>
   to: string
 }>()
 </script>
@@ -17,7 +17,7 @@ defineProps<{
     >
       <AnimeCoverImage
         :src="anime.coverUrl"
-        :alt="anime.titleEnglish ?? undefined"
+        :alt="anime.title.title"
         lazy
         class="transition-transform duration-300 group-hover:scale-105"
       />
@@ -25,7 +25,7 @@ defineProps<{
     <span
       class="text-highlighted group-hover:text-primary line-clamp-2 text-sm leading-snug font-medium transition-colors"
     >
-      {{ anime.titleEnglish }}
+      {{ anime.title.title }}
     </span>
   </NuxtLink>
 </template>

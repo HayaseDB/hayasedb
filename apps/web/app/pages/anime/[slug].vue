@@ -24,13 +24,7 @@ if (error.value || !anime.value) {
 
 const detail = computed(() => anime.value!)
 
-const displayTitle = computed(
-  () =>
-    detail.value.titleEnglish ??
-    detail.value.titleRomaji ??
-    detail.value.titleNative ??
-    detail.value.slug,
-)
+const displayTitle = computed(() => detail.value.title.title)
 
 const banner = computed(() =>
   detail.value.media.find((m) => m.type === 'BANNER'),
@@ -174,12 +168,6 @@ useSchemaOrg([
             <h1 class="text-highlighted text-2xl font-semibold lg:text-3xl">
               {{ displayTitle }}
             </h1>
-            <p
-              v-if="detail.titleNative && detail.titleNative !== displayTitle"
-              class="text-muted text-sm"
-            >
-              {{ detail.titleNative }}
-            </p>
           </div>
 
           <div class="mt-4">

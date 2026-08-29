@@ -15,8 +15,8 @@ interface RefItem {
 }
 
 const items = computed<RefItem[]>(() => {
-  if (!Array.isArray(props.value)) return []
-  return props.value.flatMap((entry: unknown): RefItem[] => {
+  const values = Array.isArray(props.value) ? props.value : [props.value]
+  return values.flatMap((entry: unknown): RefItem[] => {
     if (typeof entry === 'string') return [{ id: entry }]
     if (!entry || typeof entry !== 'object' || !props.refPath) return []
     const record = entry as Record<string, unknown>

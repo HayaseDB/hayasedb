@@ -124,7 +124,7 @@ const exhaustedIds = computed(
 )
 
 const toItem = (item: AnimeRelationSearchResult) => ({
-  label: item.titleEnglish ?? '',
+  label: item.title.title,
   suffix: item.startDate?.year ? String(item.startDate.year) : undefined,
   value: item.id,
 })
@@ -173,7 +173,7 @@ function add() {
     ...model.value,
     {
       animeId: selected.value.id,
-      title: selected.value.titleEnglish ?? '',
+      title: selected.value.title.title,
       kind: kind.value,
     },
   ]

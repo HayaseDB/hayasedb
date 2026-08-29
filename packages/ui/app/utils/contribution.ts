@@ -54,10 +54,7 @@ export const ANIME_FIELD_LABELS = {
   slug: 'Slug',
   format: 'Format',
   status: 'Status',
-  titleRomaji: 'Romaji title',
-  titleEnglish: 'English title',
-  titleNative: 'Native title',
-  description: 'Description',
+  translations: 'Localized content',
   startDate: 'Start date',
   endDate: 'End date',
   genreIds: 'Genres',
@@ -75,7 +72,8 @@ const ANIME_ENUM_LABELS: Readonly<
 }
 
 export const GENRE_FIELD_LABELS = {
-  name: 'Name',
+  slug: 'Slug',
+  translations: 'Localized names',
 } satisfies Record<string, string>
 
 const ENTITY_FIELD_LABELS: Record<

@@ -10,7 +10,7 @@ interface PanelRow {
 const props = defineProps<{
   anime: Pick<
     AnimeDetail,
-    'format' | 'status' | 'startDate' | 'endDate' | 'titleRomaji'
+    'format' | 'status' | 'startDate' | 'endDate' | 'translations' | 'title'
   >
   genres?: { id: string; name: string; to: string }[]
 }>()
@@ -32,8 +32,14 @@ const rows = computed<PanelRow[]>(() => {
     props.anime.endDate,
   )
   if (released) entries.push({ label: 'Released', value: released })
-  if (props.anime.titleRomaji) {
-    entries.push({ label: 'Romaji', value: props.anime.titleRomaji })
+  for (const translation of props.anime.translations) {
+    if (translation.locale === props.anime.title.locale) continue
+    entries.push({
+      label: translation.original
+        ? `Original title (${translation.locale})`
+        : `Title (${translation.locale})`,
+      value: translation.title,
+    })
   }
   return entries
 })

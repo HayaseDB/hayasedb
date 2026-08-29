@@ -43,6 +43,7 @@ const isEmpty = computed(() => {
     :value="value"
   />
   <DiffMedia v-else-if="resolved?.as === 'media'" :value="value" />
+  <DiffLocalized v-else-if="resolved?.as === 'localized'" :value="value" />
   <DiffLongText v-else-if="resolved?.as === 'longtext'" :value="value" />
 
   <DiffText v-else :value="value" />
