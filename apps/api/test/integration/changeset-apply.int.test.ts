@@ -469,4 +469,33 @@ describe('changeset apply and moderation', () => {
     const gone = await errorOf(user.client.anime.get({ id: anime.id }))
     expect(gone?.code).toBe('NOT_FOUND')
   })
+
+  it('restores genre translations when a delete is reverted', async () => {
+    const genre = await admin.client.genre.create({
+      slug: 'revivable',
+      translations: [
+        { locale: 'en', name: 'Revivable' },
+        { locale: 'de', name: 'Wiederbelebbar' },
+      ],
+    })
+    const removal = await user.client.changeset.submit({
+      summary: 'Delete revivable genre',
+      changes: [
+        { op: 'delete', entityKind: 'genre', entityId: genre.id, baseRev: 1 },
+      ],
+    })
+    await admin.client.changeset.approve({ id: removal.id })
+    expect(
+      (await user.client.genre.list({})).items.map((item) => item.id),
+    ).not.toContain(genre.id)
+
+    const reverted = await admin.client.changeset.revert({ id: removal.id })
+    expect(reverted.status).toBe('approved')
+    const restored = await user.client.genre.get({ id: genre.id })
+    expect(restored.slug).toBe('revivable')
+    expect(restored.translations).toEqual([
+      { locale: 'de', name: 'Wiederbelebbar' },
+      { locale: 'en', name: 'Revivable' },
+    ])
+  })
 })

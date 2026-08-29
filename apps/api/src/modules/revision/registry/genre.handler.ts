@@ -8,6 +8,22 @@ import { schema } from '@hayasedb/db'
 import type { ChangeOp } from '@hayasedb/domain'
 import type { EntityKindHandler, Tx } from './types'
 
+async function replaceTranslations(
+  tx: Tx,
+  entityId: string,
+  translations: GenreDocument['translations'],
+): Promise<void> {
+  await tx
+    .delete(schema.genreTranslation)
+    .where(eq(schema.genreTranslation.genreId, entityId))
+  await tx.insert(schema.genreTranslation).values(
+    translations.map((translation) => ({
+      genreId: entityId,
+      ...translation,
+    })),
+  )
+}
+
 export const genreHandler: EntityKindHandler<GenreDocument> = {
   kind: 'genre',
 
@@ -110,12 +126,7 @@ export const genreHandler: EntityKindHandler<GenreDocument> = {
           target: schema.genre.id,
           set: { slug: doc.slug },
         })
-      await tx.insert(schema.genreTranslation).values(
-        doc.translations.map((translation) => ({
-          genreId: entityId,
-          ...translation,
-        })),
-      )
+      await replaceTranslations(tx, entityId, doc.translations)
       return
     }
 
@@ -127,15 +138,7 @@ export const genreHandler: EntityKindHandler<GenreDocument> = {
         .where(eq(schema.genre.id, entityId))
     }
     if (patch.translations !== undefined) {
-      await tx
-        .delete(schema.genreTranslation)
-        .where(eq(schema.genreTranslation.genreId, entityId))
-      await tx.insert(schema.genreTranslation).values(
-        patch.translations.map((translation) => ({
-          genreId: entityId,
-          ...translation,
-        })),
-      )
+      await replaceTranslations(tx, entityId, patch.translations)
     }
   },
 }
