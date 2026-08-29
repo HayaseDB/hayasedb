@@ -138,7 +138,10 @@ describe('useStagedMedia', () => {
     url: string
   }
   let media: Media[]
-  const detail = () => ({ media: media.map((m) => ({ ...m })) })
+  const detail = () => ({
+    media: media.map((m) => ({ ...m })),
+    mediaOrderEtag: `"${media.map((m) => m.id).join('-')}"`,
+  })
   const calls: string[] = []
   let nextId = 100
 
@@ -167,10 +170,15 @@ describe('useStagedMedia', () => {
       async ({
         type,
         orderedIds,
+        expectedOrderEtag,
       }: {
         type: Media['type']
         orderedIds: string[]
+        expectedOrderEtag: string
       }) => {
+        if (expectedOrderEtag !== detail().mediaOrderEtag) {
+          throw new Error('stale order etag')
+        }
         calls.push(`reorder:${type}:${orderedIds.join(',')}`)
         return detail()
       },

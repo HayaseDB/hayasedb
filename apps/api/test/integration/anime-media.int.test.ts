@@ -192,6 +192,7 @@ describe('anime media', () => {
       id: animeId,
       type: 'GALLERY',
       orderedIds: [shots[2]!.id, shots[0]!.id, shots[1]!.id],
+      expectedOrderEtag: s3.mediaOrderEtag,
     })
     const after = reordered.media
       .filter((m) => m.type === 'GALLERY')
@@ -204,12 +205,25 @@ describe('anime media', () => {
     const cover = reordered.media.find((m) => m.type === 'COVER')
     expect(cover?.position).toBe(0)
 
-    const foreign = await admin.client.anime.reorderMedia({
-      id: animeId,
-      type: 'COVER',
-      orderedIds: [shots[1]!.id],
-    })
-    expect(foreign.media.find((m) => m.id === shots[1]!.id)?.position).toBe(2)
+    const stale = await errorOf(
+      admin.client.anime.reorderMedia({
+        id: animeId,
+        type: 'GALLERY',
+        orderedIds: [shots[0]!.id, shots[1]!.id, shots[2]!.id],
+        expectedOrderEtag: s3.mediaOrderEtag,
+      }),
+    )
+    expect(stale?.code).toBe('PRECONDITION_FAILED')
+
+    const foreign = await errorOf(
+      admin.client.anime.reorderMedia({
+        id: animeId,
+        type: 'COVER',
+        orderedIds: [shots[1]!.id],
+        expectedOrderEtag: reordered.mediaOrderEtag,
+      }),
+    )
+    expect(foreign?.code).toBe('BAD_REQUEST')
 
     const removed = await admin.client.anime.removeMedia({
       id: animeId,

@@ -51,6 +51,7 @@ import {
   requirePreferredLocalized,
 } from '../localization'
 import { MediaService } from '../media/media.service'
+import { assertOrderCovers, assertOrderEtag, orderEtag } from '../ordering'
 import { entityHandler, type Tx } from '../revision/registry'
 import { RevisionService } from '../revision/revision.service'
 
@@ -413,7 +414,7 @@ export class AnimeService {
       throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
 
     const media = [...record.media]
-      .sort((a, b) => a.position - b.position)
+      .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id))
       .map((m) => ({
         id: m.id,
         mediaId: m.mediaId,
@@ -474,6 +475,7 @@ export class AnimeService {
         .sort((a, b) => a.name.localeCompare(b.name)),
       relations,
       media,
+      mediaOrderEtag: orderEtag(media.map((item) => item.id)),
       headRev: entityRow.headRev,
       deletedAt: entityRow.deletedAt,
       createdAt: record.createdAt,
@@ -739,7 +741,26 @@ export class AnimeService {
     editorId: string | null,
   ): Promise<AnimeDetail> {
     await this.assertAnimeExists(input.id)
-    if (input.orderedIds.length > 0) {
+    await this.db.transaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: schema.animeMedia.id,
+          type: schema.animeMedia.type,
+        })
+        .from(schema.animeMedia)
+        .where(eq(schema.animeMedia.animeId, input.id))
+        .orderBy(asc(schema.animeMedia.position), asc(schema.animeMedia.id))
+        .for('update')
+      assertOrderEtag(
+        input.expectedOrderEtag,
+        rows.map((row) => row.id),
+      )
+      const ofType = rows
+        .filter((row) => row.type === input.type)
+        .map((row) => row.id)
+      assertOrderCovers(input.orderedIds, ofType)
+      if (input.orderedIds.every((id, index) => id === ofType[index])) return
+
       const cases = sql.join(
         input.orderedIds.map(
           (id, index) =>
@@ -747,26 +768,16 @@ export class AnimeService {
         ),
         sql` `,
       )
-      await this.db.transaction(async (tx) => {
-        await tx
-          .update(schema.animeMedia)
-          .set({
-            position: sql`case ${cases} else ${schema.animeMedia.position} end`,
-          })
-          .where(
-            and(
-              inArray(schema.animeMedia.id, input.orderedIds),
-              eq(schema.animeMedia.animeId, input.id),
-              eq(schema.animeMedia.type, input.type),
-            ),
-          )
-        await this.recordDirectWrite(tx, {
-          entityId: input.id,
-          op: 'update',
-          editorId,
-        })
+      await tx
+        .update(schema.animeMedia)
+        .set({ position: sql`case ${cases} end` })
+        .where(inArray(schema.animeMedia.id, input.orderedIds))
+      await this.recordDirectWrite(tx, {
+        entityId: input.id,
+        op: 'update',
+        editorId,
       })
-    }
+    })
     return this.buildDetail(input.id)
   }
 

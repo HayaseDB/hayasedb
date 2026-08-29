@@ -25,6 +25,14 @@ export const cursorPaginationMetaSchema = paginationMetaSchema.extend({
   nextCursor: z.string().nullable(),
 })
 
+export const orderEtagSchema = z.string().min(1)
+
+export const orderInputSchema = z.object({
+  orderedIds: z.array(idSchema).max(500),
+  expectedOrderEtag: orderEtagSchema,
+})
+
 export type PaginationInput = z.output<typeof paginationInputSchema>
 export type PaginationMeta = z.output<typeof paginationMetaSchema>
 export type CursorPaginationMeta = z.output<typeof cursorPaginationMetaSchema>
+export type OrderInput = z.output<typeof orderInputSchema>

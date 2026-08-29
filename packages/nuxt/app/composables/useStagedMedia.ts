@@ -8,7 +8,7 @@ type MediaItem = {
   url: string
 }
 
-type AnimeDetail = { media: MediaItem[] }
+type AnimeDetail = { media: MediaItem[]; mediaOrderEtag: string }
 
 type MediaApi = {
   addMedia: (input: {
@@ -21,6 +21,7 @@ type MediaApi = {
     id: string
     type: AnimeMediaType
     orderedIds: string[]
+    expectedOrderEtag: string
   }) => Promise<AnimeDetail>
 }
 
@@ -56,30 +57,36 @@ export function useStagedMedia(
   const staging = useMediaStaging(initial)
   const { cover, banner, gallery, isDirty } = staging
 
-  async function commitSingle(animeId: string, type: 'COVER' | 'BANNER') {
+  async function commitSingle(
+    animeId: string,
+    type: 'COVER' | 'BANNER',
+  ): Promise<AnimeDetail | null> {
     const item = type === 'COVER' ? cover.value : banner.value
     const currentId = singleOf(source(), type)?.id ?? null
 
     if (!item) {
-      if (currentId) await api.removeMedia({ id: animeId, mediaId: currentId })
-      return
+      return currentId
+        ? await api.removeMedia({ id: animeId, mediaId: currentId })
+        : null
     }
     if (item.kind === 'pending') {
       if (currentId) await api.removeMedia({ id: animeId, mediaId: currentId })
-      await api.addMedia({ id: animeId, type, file: item.file })
+      return await api.addMedia({ id: animeId, type, file: item.file })
     }
+    return null
   }
 
-  async function commitGallery(animeId: string) {
+  async function commitGallery(animeId: string, latest: AnimeDetail | null) {
     const currentIds = existingOf(source(), 'GALLERY').map((m) => m.id)
     const keptIds = new Set(
       gallery.value
         .filter((m): m is StagedExistingItem => m.kind === 'existing')
         .map((m) => m.id),
     )
+    let head = latest
     for (const mediaId of currentIds) {
       if (!keptIds.has(mediaId)) {
-        await api.removeMedia({ id: animeId, mediaId })
+        head = await api.removeMedia({ id: animeId, mediaId })
       }
     }
 
@@ -95,6 +102,7 @@ export function useStagedMedia(
         type: 'GALLERY',
         file: item.file,
       })
+      head = detail
       const added = detail.media.find(
         (m) => m.type === 'GALLERY' && !known.has(m.id),
       )
@@ -108,19 +116,21 @@ export function useStagedMedia(
       resolvedIds.length > 0 &&
       (resolvedIds.length !== currentIds.length ||
         resolvedIds.some((id, i) => id !== currentIds[i]))
-    if (needsReorder) {
+    const expectedOrderEtag = (head ?? source())?.mediaOrderEtag
+    if (needsReorder && expectedOrderEtag) {
       await api.reorderMedia({
         id: animeId,
         type: 'GALLERY',
         orderedIds: resolvedIds,
+        expectedOrderEtag,
       })
     }
   }
 
   async function commit(animeId: string) {
-    await commitSingle(animeId, 'COVER')
-    await commitSingle(animeId, 'BANNER')
-    await commitGallery(animeId)
+    const afterCover = await commitSingle(animeId, 'COVER')
+    const afterBanner = await commitSingle(animeId, 'BANNER')
+    await commitGallery(animeId, afterBanner ?? afterCover)
   }
 
   return {

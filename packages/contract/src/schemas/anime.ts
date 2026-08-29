@@ -19,6 +19,8 @@ import {
 import * as z from 'zod'
 import {
   idSchema,
+  orderEtagSchema,
+  orderInputSchema,
   paginationInputSchema,
   queryBooleanSchema,
   timestampsSchema,
@@ -164,6 +166,7 @@ export const animeDetailSchema = animeCoreSchema.extend({
   genres: z.array(genreSchema),
   relations: z.array(animeRelationSchema),
   media: z.array(animeMediaSchema),
+  mediaOrderEtag: orderEtagSchema,
   headRev: z.number().int(),
   deletedAt: z.date().nullable(),
 })
@@ -245,10 +248,9 @@ export const removeAnimeMediaInputSchema = z.object({
   mediaId: idSchema,
 })
 
-export const reorderAnimeMediaInputSchema = z.object({
+export const reorderAnimeMediaInputSchema = orderInputSchema.extend({
   id: idSchema,
   type: animeMediaTypeSchema,
-  orderedIds: z.array(idSchema),
 })
 
 export const animeDocumentMediaSchema = z.object({
