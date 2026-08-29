@@ -52,7 +52,7 @@ describe('account deletion', () => {
             entityId: crypto.randomUUID(),
             payload: {
               slug: 'orphaned-contribution',
-              titleEnglish: 'Orphan',
+              translations: [{ locale: 'en', title: 'Orphan', original: true }],
               genreIds: [],
               media: [],
             },

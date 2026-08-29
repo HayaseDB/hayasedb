@@ -1,4 +1,6 @@
+import { createAnimeInput } from '../harness/helpers'
 import { eq } from 'drizzle-orm'
+import { genreSlug } from '@hayasedb/domain'
 import { schema } from '@hayasedb/db'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
@@ -33,20 +35,24 @@ describe('anime CRUD', () => {
   })
 
   it('rejects writes from non-admins and anonymous callers', async () => {
-    const forbidden = await errorOf(user.client.anime.create({ slug: 'nope' }))
+    const forbidden = await errorOf(
+      user.client.anime.create(createAnimeInput('nope')),
+    )
     expect(forbidden?.code).toBe('FORBIDDEN')
     const unauthorized = await errorOf(
-      anon.client.anime.create({ slug: 'nope' }),
+      anon.client.anime.create(createAnimeInput('nope')),
     )
     expect(unauthorized?.code).toBe('UNAUTHORIZED')
   })
 
   it('creates with genres, fuzzy dates and a first revision, then reads back by id and slug', async () => {
-    const genre = await admin.client.genre.create({ name: 'Action' })
+    const genre = await admin.client.genre.create({
+      slug: genreSlug('Action'),
+      translations: [{ locale: 'en', name: 'Action' }],
+    })
     const created = await admin.client.anime.create({
       slug: 'cowboy-bebop',
-      titleEnglish: 'Cowboy Bebop',
-      titleRomaji: '',
+      translations: [{ locale: 'en', title: 'Cowboy Bebop', original: true }],
       format: 'TV',
       status: 'FINISHED',
       startDate: '1998-04-03',
@@ -55,7 +61,8 @@ describe('anime CRUD', () => {
     })
     expect(created).toMatchObject({
       slug: 'cowboy-bebop',
-      titleRomaji: null,
+      title: { locale: 'en', title: 'Cowboy Bebop', original: true },
+      translations: [{ locale: 'en', title: 'Cowboy Bebop', original: true }],
       startDate: { year: 1998, month: 4, day: 3 },
       endDate: { year: 1999, month: 4, day: null },
       genres: [{ id: genre.id, name: 'Action' }],
@@ -80,29 +87,31 @@ describe('anime CRUD', () => {
 
   it('validates fuzzy dates and slugs at the boundary', async () => {
     const badDay = await errorOf(
-      admin.client.anime.create({
-        slug: 'bad-day',
-        startDate: { year: 2024, month: 2, day: 30 },
-      }),
+      admin.client.anime.create(
+        createAnimeInput('bad-day', {
+          startDate: { year: 2024, month: 2, day: 30 },
+        }),
+      ),
     )
     expect(badDay?.code).toBe('BAD_REQUEST')
     const dayWithoutMonth = await errorOf(
-      admin.client.anime.create({
-        slug: 'bad-day',
-        startDate: { year: 2024, day: 3 },
-      }),
+      admin.client.anime.create(
+        createAnimeInput('bad-day', { startDate: { year: 2024, day: 3 } }),
+      ),
     )
     expect(dayWithoutMonth?.code).toBe('BAD_REQUEST')
     const badSlug = await errorOf(
-      admin.client.anime.create({ slug: 'Bad Slug' }),
+      admin.client.anime.create(createAnimeInput('Bad Slug')),
     )
     expect(badSlug?.code).toBe('BAD_REQUEST')
   })
 
   it('refuses duplicate slugs on create and update with CONFLICT', async () => {
-    await admin.client.anime.create({ slug: 'taken' })
-    const other = await admin.client.anime.create({ slug: 'other' })
-    const dup = await errorOf(admin.client.anime.create({ slug: 'taken' }))
+    await admin.client.anime.create(createAnimeInput('taken'))
+    const other = await admin.client.anime.create(createAnimeInput('other'))
+    const dup = await errorOf(
+      admin.client.anime.create(createAnimeInput('taken')),
+    )
     expect(dup?.code).toBe('CONFLICT')
     const move = await errorOf(
       admin.client.anime.update({ id: other.id, slug: 'taken' }),
@@ -117,10 +126,11 @@ describe('anime CRUD', () => {
 
   it('rejects unknown genre references with NOT_FOUND', async () => {
     const error = await errorOf(
-      admin.client.anime.create({
-        slug: 'ghost-genre',
-        genreIds: ['00000000-0000-7000-8000-000000000000'],
-      }),
+      admin.client.anime.create(
+        createAnimeInput('ghost-genre', {
+          genreIds: ['00000000-0000-7000-8000-000000000000'],
+        }),
+      ),
     )
     expect(error?.code).toBe('NOT_FOUND')
   })
@@ -128,36 +138,42 @@ describe('anime CRUD', () => {
   it('patches only provided fields and bumps headRev per write', async () => {
     const created = await admin.client.anime.create({
       slug: 'patchy',
-      titleEnglish: 'Before',
+      translations: [{ locale: 'en', title: 'Before', original: true }],
     })
     const updated = await admin.client.anime.update({
       id: created.id,
-      description: 'Desc',
+      translations: [
+        { locale: 'en', title: 'Before', description: 'Desc', original: true },
+      ],
     })
     expect(updated).toMatchObject({
-      titleEnglish: 'Before',
+      title: { locale: 'en', title: 'Before' },
       description: 'Desc',
       headRev: 2,
     })
     const cleared = await admin.client.anime.update({
       id: created.id,
-      titleEnglish: '',
+      translations: [
+        { locale: 'en', title: 'Before', description: null, original: true },
+      ],
     })
-    expect(cleared).toMatchObject({ titleEnglish: null, headRev: 3 })
+    expect(cleared).toMatchObject({
+      title: { locale: 'en', title: 'Before' },
+      description: null,
+      headRev: 3,
+    })
     const noop = await admin.client.anime.update({ id: created.id })
     expect(noop.headRev).toBe(3)
   })
 
   it('stores relations once and shows the inverse on the other side', async () => {
-    const a = await admin.client.anime.create({
-      slug: 'rel-a',
-      startDate: { year: 2001 },
-    })
-    const b = await admin.client.anime.create({
-      slug: 'rel-b',
-      startDate: { year: 2002 },
-    })
-    const c = await admin.client.anime.create({ slug: 'rel-c' })
+    const a = await admin.client.anime.create(
+      createAnimeInput('rel-a', { startDate: { year: 2001 } }),
+    )
+    const b = await admin.client.anime.create(
+      createAnimeInput('rel-b', { startDate: { year: 2002 } }),
+    )
+    const c = await admin.client.anime.create(createAnimeInput('rel-c'))
     const self = await errorOf(
       admin.client.anime.update({
         id: a.id,
@@ -200,7 +216,7 @@ describe('anime CRUD', () => {
   })
 
   it('soft deletes: hidden from public reads and list, visible to admins with includeDeleted', async () => {
-    const created = await admin.client.anime.create({ slug: 'gone' })
+    const created = await admin.client.anime.create(createAnimeInput('gone'))
     await admin.client.anime.remove({ id: created.id })
 
     const missing = await errorOf(animeBySlug(anon.client, 'gone'))
@@ -224,7 +240,10 @@ describe('anime CRUD', () => {
     const again = await errorOf(admin.client.anime.remove({ id: created.id }))
     expect(again?.code).toBe('NOT_FOUND')
     const edit = await errorOf(
-      admin.client.anime.update({ id: created.id, description: 'x' }),
+      admin.client.anime.update({
+        id: created.id,
+        translations: [{ locale: 'en', title: 'x', original: true }],
+      }),
     )
     expect(edit?.code).toBe('NOT_FOUND')
   })

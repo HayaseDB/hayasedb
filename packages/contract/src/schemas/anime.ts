@@ -24,7 +24,7 @@ import {
   timestampsSchema,
 } from './common'
 import { genreSchema } from './genre'
-import { localizedTitleSchema } from './localization'
+import { localizedListSchema, localizedTitleSchema } from './localization'
 import { mediaFileSchema } from './media'
 
 export const animeFormatSchema = z.enum(ANIME_FORMATS)
@@ -55,16 +55,6 @@ export const slugSchema = z
 const blankToNull = (value: unknown) =>
   typeof value === 'string' && value.trim() === '' ? null : value
 
-export const animeTitleFieldSchema = z.preprocess(
-  blankToNull,
-  z.string().trim().max(255, 'Title is too long').nullish(),
-)
-
-export const animeDescriptionSchema = z.preprocess(
-  blankToNull,
-  z.string().trim().max(5000, 'Description is too long').nullish(),
-)
-
 export const animeTranslationSchema = localizedTitleSchema.extend({
   description: z
     .string()
@@ -76,34 +66,15 @@ export const animeTranslationSchema = localizedTitleSchema.extend({
     .default(null),
 })
 
-export const animeTranslationListSchema = z
-  .array(animeTranslationSchema)
-  .min(1, 'At least one localized title is required')
-  .max(100)
-  .superRefine((translations, ctx) => {
-    const locales = new Set<string>()
-    let originals = 0
-    for (const [index, translation] of translations.entries()) {
-      if (locales.has(translation.locale)) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Duplicate locale',
-          path: [index, 'locale'],
-        })
-      }
-      locales.add(translation.locale)
-      if (translation.original) originals += 1
-    }
-    if (originals !== 1) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Exactly one anime title must be original',
-      })
-    }
-  })
-  .transform((items) =>
-    [...items].sort((a, b) => a.locale.localeCompare(b.locale)),
-  )
+export const animeTranslationListSchema = localizedListSchema(
+  animeTranslationSchema,
+  {
+    minimum: 1,
+    requiredMessage: 'At least one localized title is required',
+    exactlyOneOriginal: true,
+    originalMessage: 'Exactly one anime title must be original',
+  },
+)
 
 export const animeYearSchema = z.number().int()
 
@@ -252,7 +223,7 @@ export const createAnimeInputSchema = z.object({
   slug: slugSchema,
   format: animeFormatSchema.nullish(),
   status: animeStatusSchema.nullish(),
-  translations: animeTranslationListSchema.optional(),
+  translations: animeTranslationListSchema,
   startDate: releaseDateSchema,
   endDate: releaseDateSchema,
   genreIds: z.array(idSchema).optional(),

@@ -1,16 +1,18 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ORPCError } from '@orpc/server'
 import { and, asc, desc, eq, inArray, sql, type SQL } from 'drizzle-orm'
-import type {
-  ChangeDetail,
-  ChangesetAuthor,
-  ChangesetDetail,
-  ChangesetListItem,
-  ChangesetStatus,
+import {
+  genreDocumentSchema,
+  type ChangeDetail,
+  type ChangesetAuthor,
+  type ChangesetDetail,
+  type ChangesetListItem,
+  type ChangesetStatus,
 } from '@hayasedb/contract'
 import type { EntityKind } from '@hayasedb/domain'
 import { type Database, schema } from '@hayasedb/db'
 import { DRIZZLE } from '../../database/database.constants'
+import { preferredLocalized } from '../localization'
 import { pickDocumentKeys, type KindedDocument } from '../revision/diff'
 import { DisplayService } from '../revision/display.service'
 import { entityHandler } from '../revision/registry'
@@ -249,8 +251,10 @@ export class ChangesetDetailService {
     const pending: Record<string, string> = {}
     for (const change of changes) {
       if (change.entityKind !== 'genre' || change.op !== 'create') continue
-      const name = asDocument(change.payload).name
-      if (typeof name === 'string') pending[change.entityId] = name
+      const parsed = genreDocumentSchema.safeParse(change.payload)
+      if (!parsed.success) continue
+      const preferred = preferredLocalized(parsed.data.translations)
+      if (preferred) pending[change.entityId] = preferred.name
     }
     if (Object.keys(pending).length === 0) return display
     return {

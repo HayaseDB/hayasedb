@@ -2,7 +2,13 @@ import { ANIME_MEDIA_TYPES } from './anime'
 import type { EntityKind } from './contribution'
 
 export type FieldRender =
-  'text' | 'longtext' | 'enum' | 'fuzzydate' | 'ref' | 'media'
+  | 'text'
+  | 'longtext'
+  | 'enum'
+  | 'fuzzydate'
+  | 'ref'
+  | 'media'
+  | 'localized'
 
 export type RefTarget = 'genre' | 'mediaAsset' | 'anime'
 
@@ -32,10 +38,7 @@ export const ANIME_FIELD_META = {
   slug: { as: 'text', empty: '' },
   format: { as: 'enum', empty: null },
   status: { as: 'enum', empty: null },
-  titleRomaji: { as: 'text', empty: '' },
-  titleEnglish: { as: 'text', empty: '' },
-  titleNative: { as: 'text', empty: '' },
-  description: { as: 'longtext', empty: '' },
+  translations: { as: 'localized', empty: 'emptyArray' },
   startDate: { as: 'fuzzydate', empty: null },
   endDate: { as: 'fuzzydate', empty: null },
   genreIds: {
@@ -66,21 +69,20 @@ export const ANIME_FIELD_META = {
 } as const satisfies Record<string, FieldMeta>
 
 export const GENRE_FIELD_META = {
-  name: { as: 'text', empty: '' },
+  slug: { as: 'text', empty: '' },
+  translations: { as: 'localized', empty: 'emptyArray' },
 } as const satisfies Record<string, FieldMeta>
 
-export const GENRE_FIELD_ORDER = ['name'] as const satisfies ReadonlyArray<
-  keyof typeof GENRE_FIELD_META
->
+export const GENRE_FIELD_ORDER = [
+  'slug',
+  'translations',
+] as const satisfies ReadonlyArray<keyof typeof GENRE_FIELD_META>
 
 export const ANIME_FIELD_ORDER = [
   'slug',
   'format',
   'status',
-  'titleRomaji',
-  'titleEnglish',
-  'titleNative',
-  'description',
+  'translations',
   'startDate',
   'endDate',
   'genreIds',

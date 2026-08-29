@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ORPCError } from '@orpc/server'
-import { and, asc, eq, ilike, isNull, ne, sql } from 'drizzle-orm'
+import { and, asc, eq, exists, ilike, isNull, ne, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { type Database, schema } from '@hayasedb/db'
@@ -9,6 +9,7 @@ import { DRIZZLE } from '../../database/database.constants'
 import { genreHandler } from '../revision/registry/genre.handler'
 import type { Tx } from '../revision/registry'
 import { RevisionService } from '../revision/revision.service'
+import { preferredLocalized } from '../localization'
 
 const NO_SIBLING_DELETES: ReadonlySet<string> = new Set()
 
@@ -24,7 +25,7 @@ export class GenreService {
     return this.db
       .select({
         id: schema.genre.id,
-        name: schema.genre.name,
+        slug: schema.genre.slug,
         animeCount: sql<number>`count(${animeEntity.id}) filter (where ${animeEntity.deletedAt} is null)::int`,
       })
       .from(schema.genre)
@@ -40,70 +41,97 @@ export class GenreService {
 
   async list(
     input: ListGenresInput = {},
+    acceptLanguage?: string,
   ): Promise<{ items: GenreListItem[]; meta: { total: number } }> {
     const conditions = [isNull(schema.entity.deletedAt)]
     if (input.name) {
-      conditions.push(sql`lower(${schema.genre.name}) = lower(${input.name})`)
+      conditions.push(
+        exists(
+          this.db
+            .select({ one: sql`1` })
+            .from(schema.genreTranslation)
+            .where(
+              and(
+                eq(schema.genreTranslation.genreId, schema.genre.id),
+                sql`lower(${schema.genreTranslation.name}) = lower(${input.name})`,
+              ),
+            ),
+        ),
+      )
     }
     if (input.q) {
-      conditions.push(ilike(schema.genre.name, `%${input.q}%`))
+      conditions.push(
+        exists(
+          this.db
+            .select({ one: sql`1` })
+            .from(schema.genreTranslation)
+            .where(
+              and(
+                eq(schema.genreTranslation.genreId, schema.genre.id),
+                ilike(schema.genreTranslation.name, `%${input.q}%`),
+              ),
+            ),
+        ),
+      )
     }
-    const items = await this.baseQuery(and(...conditions)).orderBy(
-      asc(schema.genre.name),
+    const rows = await this.baseQuery(and(...conditions)).orderBy(
+      asc(schema.genre.slug),
     )
+    const items = await this.decorate(rows, acceptLanguage)
+    items.sort((a, b) => a.name.localeCompare(b.name))
     return { items, meta: { total: items.length } }
   }
 
-  async getById(id: string): Promise<GenreListItem> {
+  async getById(id: string, acceptLanguage?: string): Promise<GenreListItem> {
     const [row] = await this.baseQuery(
       and(eq(schema.genre.id, id), isNull(schema.entity.deletedAt)),
     ).limit(1)
     if (!row) throw new ORPCError('NOT_FOUND', { message: 'Genre not found' })
-    return row
+    return (await this.decorate([row], acceptLanguage))[0]!
   }
 
-  async create(name: string, editorId: string | null): Promise<Genre> {
-    await this.assertNameAvailable(this.db, name)
-    return this.db.transaction(async (tx) => {
+  async create(
+    document: {
+      slug: string
+      translations: { locale: string; name: string }[]
+    },
+    editorId: string | null,
+  ): Promise<Genre> {
+    await this.assertSlugAvailable(this.db, document.slug)
+    const id = await this.db.transaction(async (tx) => {
       const entityId = await this.revisions.createEntity(tx, { kind: 'genre' })
-      const [row] = await tx
-        .insert(schema.genre)
-        .values({ id: entityId, name })
-        .returning({ id: schema.genre.id, name: schema.genre.name })
+      await genreHandler.apply(tx, 'create', entityId, document, null)
       await this.revisions.record(tx, {
         entityId,
         op: 'create',
         editorId,
         changesetId: null,
-        document: { name },
+        document,
       })
-      return row!
+      return entityId
     })
+    return this.getById(id)
   }
 
   async update(
     id: string,
-    name: string,
+    patch: { slug?: string; translations?: { locale: string; name: string }[] },
     editorId: string | null,
   ): Promise<Genre> {
     await this.assertGenreLive(id)
-    await this.assertNameAvailable(this.db, name, id)
-    return this.db.transaction(async (tx) => {
-      const [row] = await tx
-        .update(schema.genre)
-        .set({ name })
-        .where(eq(schema.genre.id, id))
-        .returning({ id: schema.genre.id, name: schema.genre.name })
-      if (!row) throw new ORPCError('NOT_FOUND', { message: 'Genre not found' })
+    if (patch.slug) await this.assertSlugAvailable(this.db, patch.slug, id)
+    await this.db.transaction(async (tx) => {
+      const previous = await genreHandler.serialize(tx, id)
+      await genreHandler.apply(tx, 'update', id, patch, previous)
       await this.revisions.record(tx, {
         entityId: id,
         op: 'update',
         editorId,
         changesetId: null,
-        document: { name: row.name },
+        document: await genreHandler.serialize(tx, id),
       })
-      return row
     })
+    return this.getById(id)
   }
 
   async remove(id: string, editorId: string | null): Promise<void> {
@@ -141,12 +169,12 @@ export class GenreService {
     if (!row) throw new ORPCError('NOT_FOUND', { message: 'Genre not found' })
   }
 
-  private async assertNameAvailable(
+  private async assertSlugAvailable(
     tx: Tx,
-    name: string,
+    slug: string,
     excludeId?: string,
   ): Promise<void> {
-    const conditions = [sql`lower(${schema.genre.name}) = lower(${name})`]
+    const conditions = [eq(schema.genre.slug, slug)]
     if (excludeId) conditions.push(ne(schema.genre.id, excludeId))
     const [existing] = await tx
       .select({ id: schema.genre.id })
@@ -158,5 +186,30 @@ export class GenreService {
         message: 'A genre with that name already exists',
       })
     }
+  }
+
+  private async decorate(
+    rows: { id: string; slug: string; animeCount: number }[],
+    acceptLanguage?: string,
+  ): Promise<GenreListItem[]> {
+    const documents = await genreHandler.serializeMany(
+      this.db,
+      rows.map((row) => row.id),
+    )
+    return rows.map((row) => {
+      const document = documents.get(row.id)!
+      const selected = preferredLocalized(
+        document.translations,
+        acceptLanguage,
+      )!
+      return {
+        id: row.id,
+        slug: row.slug,
+        name: selected.name,
+        locale: selected.locale,
+        translations: document.translations,
+        animeCount: row.animeCount,
+      }
+    })
   }
 }

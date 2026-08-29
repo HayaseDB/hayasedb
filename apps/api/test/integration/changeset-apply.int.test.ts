@@ -1,3 +1,4 @@
+import { createAnimeInput } from '../harness/helpers'
 import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { schema } from '@hayasedb/db'
@@ -69,14 +70,17 @@ describe('changeset apply and moderation', () => {
             slug: 'approved-anime',
             genreIds: [genreId],
             media: [],
-            titleEnglish: 'Approved',
+            translations: [{ locale: 'en', title: 'Approved', original: true }],
           },
         },
         {
           op: 'create',
           entityKind: 'genre',
           entityId: genreId,
-          payload: { name: 'Approved Genre' },
+          payload: {
+            slug: 'approved-genre',
+            translations: [{ locale: 'en', name: 'Approved Genre' }],
+          },
         },
       ],
     })
@@ -96,7 +100,7 @@ describe('changeset apply and moderation', () => {
     const anime = await animeBySlug(user.client, 'approved-anime')
     expect(anime).toMatchObject({
       id: animeId,
-      titleEnglish: 'Approved',
+      title: { locale: 'en', title: 'Approved' },
       headRev: 1,
       genres: [{ id: genreId, name: 'Approved Genre' }],
     })
@@ -123,8 +127,8 @@ describe('changeset apply and moderation', () => {
   it('applies a stale update when the intervening edits touched other fields', async () => {
     const anime = await admin.client.anime.create({
       slug: 'stale-ok',
-      titleEnglish: 'T',
-      description: 'D',
+      translations: [{ locale: 'en', title: 'T', original: true }],
+      status: 'RELEASING',
     })
     const submitted = await user.client.changeset.submit({
       summary: 'Change title',
@@ -134,17 +138,19 @@ describe('changeset apply and moderation', () => {
           entityKind: 'anime',
           entityId: anime.id,
           baseRev: 1,
-          payload: { titleEnglish: 'T2' },
+          payload: {
+            translations: [{ locale: 'en', title: 'T2', original: true }],
+          },
         },
       ],
     })
-    await admin.client.anime.update({ id: anime.id, description: 'D2' })
+    await admin.client.anime.update({ id: anime.id, status: 'FINISHED' })
     const approved = await admin.client.changeset.approve({ id: submitted.id })
     expect(approved.status).toBe('approved')
     const after = await user.client.anime.get({ id: anime.id })
     expect(after).toMatchObject({
-      titleEnglish: 'T2',
-      description: 'D2',
+      title: { locale: 'en', title: 'T2' },
+      status: 'FINISHED',
       headRev: 3,
     })
   })
@@ -152,7 +158,7 @@ describe('changeset apply and moderation', () => {
   it('blocks a stale update on overlapping fields, keeps it pending with a system message, and applies after resubmission', async () => {
     const anime = await admin.client.anime.create({
       slug: 'stale-bad',
-      titleEnglish: 'T',
+      translations: [{ locale: 'en', title: 'T', original: true }],
     })
     const submitted = await user.client.changeset.submit({
       summary: 'Change title',
@@ -162,24 +168,33 @@ describe('changeset apply and moderation', () => {
           entityKind: 'anime',
           entityId: anime.id,
           baseRev: 1,
-          payload: { titleEnglish: 'Mine' },
+          payload: {
+            translations: [{ locale: 'en', title: 'Mine', original: true }],
+          },
         },
       ],
     })
-    await admin.client.anime.update({ id: anime.id, titleEnglish: 'Theirs' })
+    await admin.client.anime.update({
+      id: anime.id,
+      translations: [{ locale: 'en', title: 'Theirs', original: true }],
+    })
 
     const blocked = await admin.client.changeset.approve({ id: submitted.id })
     expect(blocked.status).toBe('pending')
     expect(blocked.changes[0]).toMatchObject({
       conflicted: true,
       headRev: 2,
-      currentValues: { titleEnglish: 'Theirs' },
+      currentValues: {
+        translations: [
+          { locale: 'en', title: 'Theirs', description: null, original: true },
+        ],
+      },
     })
     expect(blocked.messages.at(-1)).toMatchObject({ kind: 'system' })
     expect(blocked.messages.at(-1)?.body).toContain(
-      'conflicting fields: titleEnglish',
+      'conflicting fields: translations',
     )
-    expect((await user.client.anime.get({ id: anime.id })).titleEnglish).toBe(
+    expect((await user.client.anime.get({ id: anime.id })).title.title).toBe(
       'Theirs',
     )
 
@@ -191,7 +206,9 @@ describe('changeset apply and moderation', () => {
           entityKind: 'anime',
           entityId: anime.id,
           baseRev: 2,
-          payload: { titleEnglish: 'Mine' },
+          payload: {
+            translations: [{ locale: 'en', title: 'Mine', original: true }],
+          },
         },
       ],
       supersedesId: submitted.id,
@@ -200,13 +217,16 @@ describe('changeset apply and moderation', () => {
       id: resubmitted.id,
     })
     expect(approved.status).toBe('approved')
-    expect((await user.client.anime.get({ id: anime.id })).titleEnglish).toBe(
+    expect((await user.client.anime.get({ id: anime.id })).title.title).toBe(
       'Mine',
     )
   })
 
   it('reports slug and genre conflicts that appeared after submission', async () => {
-    const genre = await admin.client.genre.create({ name: 'Doomed' })
+    const genre = await admin.client.genre.create({
+      slug: 'doomed',
+      translations: [{ locale: 'en', name: 'Doomed' }],
+    })
     const animeId = randomUUID()
     const submitted = await user.client.changeset.submit({
       summary: 'Will conflict',
@@ -215,11 +235,18 @@ describe('changeset apply and moderation', () => {
           op: 'create',
           entityKind: 'anime',
           entityId: animeId,
-          payload: { slug: 'race-slug', genreIds: [genre.id], media: [] },
+          payload: {
+            slug: 'race-slug',
+            translations: [
+              { locale: 'en', title: 'Race Slug', original: true },
+            ],
+            genreIds: [genre.id],
+            media: [],
+          },
         },
       ],
     })
-    await admin.client.anime.create({ slug: 'race-slug' })
+    await admin.client.anime.create(createAnimeInput('race-slug'))
     await admin.client.genre.remove({ id: genre.id })
 
     const blocked = await admin.client.changeset.approve({ id: submitted.id })
@@ -287,7 +314,7 @@ describe('changeset apply and moderation', () => {
   it('reverts an approved changeset by inverting its changes in reverse order', async () => {
     const existing = await admin.client.anime.create({
       slug: 'revert-target',
-      titleEnglish: 'Original',
+      translations: [{ locale: 'en', title: 'Original', original: true }],
     })
     const createdId = randomUUID()
     const submitted = await user.client.changeset.submit({
@@ -299,14 +326,16 @@ describe('changeset apply and moderation', () => {
           entityKind: 'anime',
           entityId: existing.id,
           baseRev: 1,
-          payload: { titleEnglish: 'Edited' },
+          payload: {
+            translations: [{ locale: 'en', title: 'Edited', original: true }],
+          },
         },
       ],
     })
     await admin.client.changeset.approve({ id: submitted.id })
-    expect(
-      (await user.client.anime.get({ id: existing.id })).titleEnglish,
-    ).toBe('Edited')
+    expect((await user.client.anime.get({ id: existing.id })).title.title).toBe(
+      'Edited',
+    )
 
     const reverted = await admin.client.changeset.revert({ id: submitted.id })
     expect(reverted).toMatchObject({
@@ -318,9 +347,9 @@ describe('changeset apply and moderation', () => {
       [existing.id, 'update'],
       [createdId, 'delete'],
     ])
-    expect(
-      (await user.client.anime.get({ id: existing.id })).titleEnglish,
-    ).toBe('Original')
+    expect((await user.client.anime.get({ id: existing.id })).title.title).toBe(
+      'Original',
+    )
     const gone = await errorOf(user.client.anime.get({ id: createdId }))
     expect(gone?.code).toBe('NOT_FOUND')
 
@@ -331,15 +360,15 @@ describe('changeset apply and moderation', () => {
     })
     const twice = await admin.client.changeset.revert({ id: submitted.id })
     expect(twice.status).toBe('approved')
-    expect(
-      (await user.client.anime.get({ id: existing.id })).titleEnglish,
-    ).toBe('Original')
+    expect((await user.client.anime.get({ id: existing.id })).title.title).toBe(
+      'Original',
+    )
 
     const undoRevert = await admin.client.changeset.revert({ id: reverted.id })
     expect(undoRevert.status).toBe('approved')
-    expect(
-      (await user.client.anime.get({ id: existing.id })).titleEnglish,
-    ).toBe('Edited')
+    expect((await user.client.anime.get({ id: existing.id })).title.title).toBe(
+      'Edited',
+    )
     expect(
       (await user.client.anime.get({ id: createdId })).deletedAt,
     ).toBeNull()
@@ -348,10 +377,16 @@ describe('changeset apply and moderation', () => {
   it('reverts an entity to an earlier revision, including undeleting it', async () => {
     const anime = await admin.client.anime.create({
       slug: 'time-travel',
-      titleEnglish: 'One',
+      translations: [{ locale: 'en', title: 'One', original: true }],
     })
-    await admin.client.anime.update({ id: anime.id, titleEnglish: 'Two' })
-    await admin.client.anime.update({ id: anime.id, titleEnglish: 'Three' })
+    await admin.client.anime.update({
+      id: anime.id,
+      translations: [{ locale: 'en', title: 'Two', original: true }],
+    })
+    await admin.client.anime.update({
+      id: anime.id,
+      translations: [{ locale: 'en', title: 'Three', original: true }],
+    })
     const history = await admin.client.revision.list({
       entityKind: 'anime',
       entityId: anime.id,
@@ -362,14 +397,18 @@ describe('changeset apply and moderation', () => {
     const detail = await admin.client.revision.get({ id: revOne.id })
     expect(detail).toMatchObject({
       rev: 1,
-      snapshot: { titleEnglish: 'One' },
+      snapshot: {
+        translations: [
+          { locale: 'en', title: 'One', description: null, original: true },
+        ],
+      },
       previousSnapshot: null,
     })
 
     const back = await admin.client.revision.revert({ id: revOne.id })
     expect(back.status).toBe('approved')
     expect(await user.client.anime.get({ id: anime.id })).toMatchObject({
-      titleEnglish: 'One',
+      title: { title: 'One' },
       headRev: 4,
     })
 
@@ -394,11 +433,13 @@ describe('changeset apply and moderation', () => {
   })
 
   it('blocks deleting a genre through a changeset while anime use it, unless the same changeset deletes them', async () => {
-    const genre = await admin.client.genre.create({ name: 'Linked' })
-    const anime = await admin.client.anime.create({
-      slug: 'linked-anime',
-      genreIds: [genre.id],
+    const genre = await admin.client.genre.create({
+      slug: 'linked',
+      translations: [{ locale: 'en', name: 'Linked' }],
     })
+    const anime = await admin.client.anime.create(
+      createAnimeInput('linked-anime', { genreIds: [genre.id] }),
+    )
     const blocked = await errorOf(
       user.client.changeset.submit({
         summary: 'Delete linked genre',

@@ -4,7 +4,9 @@ import { schema } from '@hayasedb/db'
 import {
   canonicalizeRelation,
   CHANGESET_STATUSES,
+  genreSlug,
   type AnimeRelationKind,
+  type LocalizationLocale,
 } from '@hayasedb/domain'
 import { ORPCError } from '@orpc/client'
 import { log } from '../../../tui'
@@ -20,6 +22,45 @@ import { SEED_USERS } from './data/users'
 async function genreIdsByName(client: ApiClient): Promise<Map<string, string>> {
   const { items } = await client.genre.list({})
   return new Map(items.map((genre) => [genre.name, genre.id]))
+}
+
+const genreInput = (name: string) => ({
+  slug: genreSlug(name),
+  translations: [{ locale: 'en' as LocalizationLocale, name }],
+})
+
+function animeTranslations(entry: SeedAnime) {
+  const translations: {
+    locale: LocalizationLocale
+    title: string
+    description: string | null
+    original: boolean
+  }[] = []
+  if (entry.titleNative) {
+    translations.push({
+      locale: 'ja-Jpan',
+      title: entry.titleNative,
+      description: null,
+      original: true,
+    })
+  }
+  if (entry.titleRomaji) {
+    translations.push({
+      locale: 'ja-Latn',
+      title: entry.titleRomaji,
+      description: null,
+      original: false,
+    })
+  }
+  if (entry.titleEnglish) {
+    translations.push({
+      locale: 'en',
+      title: entry.titleEnglish,
+      description: entry.description ?? null,
+      original: false,
+    })
+  }
+  return translations
 }
 
 async function findAnimeIdBySlug(
@@ -83,7 +124,7 @@ export const genresStep: SeedStep = {
     const existing = await genreIdsByName(client)
     for (const name of SEED_GENRES) {
       if (existing.has(name)) continue
-      await client.genre.create({ name })
+      await client.genre.create(genreInput(name))
       log.success(`Created genre ${name}.`)
     }
   },
@@ -98,7 +139,7 @@ export const animeStep: SeedStep = {
     const needed = new Set(SEED_ANIME.flatMap((entry) => entry.genres))
     for (const name of needed) {
       if (genreIds.has(name)) continue
-      const genre = await client.genre.create({ name })
+      const genre = await client.genre.create(genreInput(name))
       genreIds.set(name, genre.id)
       log.success(`Created genre ${name}.`)
     }
@@ -111,10 +152,7 @@ export const animeStep: SeedStep = {
         slug: entry.slug,
         format: entry.format,
         status: entry.status,
-        titleRomaji: entry.titleRomaji,
-        titleEnglish: entry.titleEnglish,
-        titleNative: entry.titleNative,
-        description: entry.description,
+        translations: animeTranslations(entry),
         startDate: entry.startDate ?? null,
         endDate: entry.endDate ?? null,
         genreIds: entry.genres.map((name) => {
@@ -310,8 +348,15 @@ export const contributionsStep: SeedStep = {
             entityId: target.id,
             baseRev: target.headRev,
             payload: {
-              description:
-                `${first.description ?? ''}\n\nThis entry is part of the demo dataset and is pending community review.`.trim(),
+              translations: animeTranslations(first).map((translation) =>
+                translation.locale === 'en'
+                  ? {
+                      ...translation,
+                      description:
+                        `${first.description ?? ''}\n\nThis entry is part of the demo dataset and is pending community review.`.trim(),
+                    }
+                  : translation,
+              ),
             },
           },
         ],
@@ -334,7 +379,7 @@ export const contributionsStep: SeedStep = {
             op: 'create',
             entityKind: 'genre',
             entityId: randomUUID(),
-            payload: { name: 'Award Winning' },
+            payload: genreInput('Award Winning'),
           },
         ],
       })
@@ -383,8 +428,15 @@ export const contributionsStep: SeedStep = {
             entityId: target.id,
             baseRev: target.headRev,
             payload: {
-              description:
-                `${second.description ?? ''}\n\nDraft rewrite that still needs sources.`.trim(),
+              translations: animeTranslations(second).map((translation) =>
+                translation.locale === 'en'
+                  ? {
+                      ...translation,
+                      description:
+                        `${second.description ?? ''}\n\nDraft rewrite that still needs sources.`.trim(),
+                    }
+                  : translation,
+              ),
             },
           },
         ],
@@ -406,10 +458,7 @@ export const contributionsStep: SeedStep = {
             entityKind: 'anime',
             entityId: target.id,
             baseRev: target.headRev,
-            payload: {
-              titleEnglish:
-                third.titleEnglish ?? third.titleRomaji ?? third.slug,
-            },
+            payload: { translations: animeTranslations(third) },
           },
         ],
       })
@@ -423,10 +472,15 @@ export const contributionsStep: SeedStep = {
             entityId: target.id,
             baseRev: target.headRev,
             payload: {
-              titleEnglish:
-                third.titleEnglish ?? third.titleRomaji ?? third.slug,
-              description:
-                `${third.description ?? ''}\n\nRevised submission that supersedes my earlier draft.`.trim(),
+              translations: animeTranslations(third).map((translation) =>
+                translation.locale === 'en'
+                  ? {
+                      ...translation,
+                      description:
+                        `${third.description ?? ''}\n\nRevised submission that supersedes my earlier draft.`.trim(),
+                    }
+                  : translation,
+              ),
             },
           },
         ],

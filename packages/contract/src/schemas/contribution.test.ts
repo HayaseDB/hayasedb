@@ -14,7 +14,10 @@ describe('changeInputSchema', () => {
         op: 'create',
         entityKind: 'genre',
         entityId: id,
-        payload: { name: 'Action' },
+        payload: {
+          slug: 'action',
+          translations: [{ locale: 'en', name: 'Action' }],
+        },
       }).success,
     ).toBe(true)
   })
@@ -36,7 +39,14 @@ describe('changeInputSchema', () => {
         op: 'create',
         entityKind: 'anime',
         entityId: id,
-        payload: { slug: 'bebop', genreIds: [], media: [] },
+        payload: {
+          slug: 'bebop',
+          genreIds: [],
+          media: [],
+          translations: [
+            { locale: 'en', title: 'Cowboy Bebop', original: true },
+          ],
+        },
       }).success,
     ).toBe(true)
   })
@@ -102,7 +112,10 @@ describe('submitChangesetInputSchema', () => {
     op: 'create',
     entityKind: 'genre',
     entityId: id,
-    payload: { name: 'Action' },
+    payload: {
+      slug: 'action',
+      translations: [{ locale: 'en', name: 'Action' }],
+    },
   }
 
   it('needs a summary and at least one change', () => {

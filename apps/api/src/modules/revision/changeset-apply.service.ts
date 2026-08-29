@@ -10,17 +10,19 @@ import {
   lockPendingChangeset,
 } from './changeset-guards'
 import { entityHandler, type Tx } from './registry'
+import { pickDocumentKeys } from './diff'
 import { RevisionService } from './revision.service'
 
 export type ApplyResult =
   { result: 'applied' } | { result: 'conflict'; messages: string[] }
 
-interface RevertChangeDraft {
+export interface RevertChangeDraft {
   entityKind: EntityKind
   entityId: string
   op: ChangeOp
   baseRev: number | null
   payload: Record<string, unknown>
+  oldValues?: Record<string, unknown> | null
 }
 
 export function isUniqueViolation(error: unknown): boolean {
@@ -171,6 +173,7 @@ export class ChangesetApplyService {
             tx,
             change.entityId,
             siblingDeletes,
+            changes,
           )
           if (blocked) {
             conflicts.push({
@@ -370,12 +373,20 @@ export class ChangesetApplyService {
               payload: {},
             })
           } else if (change.op === 'update') {
-            const previous = await this.revisions.findRevision(
-              tx,
-              change.entityId,
-              appliedRevision.rev - 1,
-            )
-            if (!previous) {
+            const oldValues = change.oldValues as Record<string, unknown> | null
+            if (!oldValues) {
+              throw new ORPCError('INTERNAL_SERVER_ERROR', {
+                message: 'Pre-change values are missing',
+              })
+            }
+            const previous = entityRow.deletedAt
+              ? await this.revisions.findRevision(
+                  tx,
+                  change.entityId,
+                  appliedRevision.rev - 1,
+                )
+              : null
+            if (entityRow.deletedAt && !previous) {
               throw new ORPCError('INTERNAL_SERVER_ERROR', {
                 message: 'Pre-change revision is missing',
               })
@@ -385,7 +396,7 @@ export class ChangesetApplyService {
               entityId: change.entityId,
               op: entityRow.deletedAt ? 'create' : 'update',
               baseRev: entityRow.deletedAt ? null : entityRow.headRev,
-              payload: previous.snapshot,
+              payload: entityRow.deletedAt ? previous!.snapshot : oldValues,
             })
           } else {
             drafts.push({
@@ -454,7 +465,7 @@ export class ChangesetApplyService {
     )
   }
 
-  private async submitAndApply(
+  async submitAndApply(
     adminId: string,
     summary: string,
     revertsId: string | null,
@@ -469,6 +480,18 @@ export class ChangesetApplyService {
       () =>
         this.db.transaction(async (tx) => {
           const drafts = await prepare(tx)
+
+          for (const draft of drafts) {
+            if (draft.oldValues !== undefined || draft.op === 'create') continue
+            const document = await entityHandler(draft.entityKind).serialize(
+              tx,
+              draft.entityId,
+            )
+            draft.oldValues =
+              draft.op === 'delete'
+                ? document
+                : pickDocumentKeys(document, Object.keys(draft.payload))
+          }
 
           const [cs] = await tx
             .insert(schema.changeset)
@@ -491,6 +514,7 @@ export class ChangesetApplyService {
               op: draft.op,
               baseRev: draft.baseRev,
               payload: draft.payload,
+              oldValues: draft.oldValues ?? null,
             })),
           )
 

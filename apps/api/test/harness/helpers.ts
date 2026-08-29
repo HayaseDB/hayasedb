@@ -1,5 +1,8 @@
 import { ORPCError } from '@orpc/client'
-import type { animeDocumentSchema } from '@hayasedb/contract'
+import type {
+  animeDocumentSchema,
+  createAnimeInputSchema,
+} from '@hayasedb/contract'
 import type * as z from 'zod'
 import { createTestHttp, type TestClient } from './client'
 import { INTERNAL_TOKEN, type TestApp } from './create-test-app'
@@ -17,6 +20,17 @@ export type ChangeInput = Parameters<
   TestClient['changeset']['submit']
 >[0]['changes'][number]
 
+export const createAnimeInput = (
+  slug: string,
+  extra: Partial<z.input<typeof createAnimeInputSchema>> = {},
+): z.input<typeof createAnimeInputSchema> => ({
+  slug,
+  translations: [
+    { locale: 'en', title: slug, description: null, original: true },
+  ],
+  ...extra,
+})
+
 export const animeCreate = (
   entityId: string,
   slug: string,
@@ -25,7 +39,15 @@ export const animeCreate = (
   op: 'create',
   entityKind: 'anime',
   entityId,
-  payload: { slug, genreIds: [], media: [], ...extra },
+  payload: {
+    slug,
+    translations: [
+      { locale: 'en', title: slug, description: null, original: true },
+    ],
+    genreIds: [],
+    media: [],
+    ...extra,
+  },
 })
 
 export const animeBySlug = async (

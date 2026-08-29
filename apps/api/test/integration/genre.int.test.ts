@@ -1,3 +1,5 @@
+import { createAnimeInput } from '../harness/helpers'
+import { genreSlug } from '@hayasedb/domain'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
   createTestApp,
@@ -8,6 +10,11 @@ import {
   type TestApp,
   type TestHttp,
 } from '../harness'
+
+const genreInput = (name: string) => ({
+  slug: genreSlug(name),
+  translations: [{ locale: 'en' as const, name }],
+})
 
 describe('genres', () => {
   let app: TestApp
@@ -26,30 +33,32 @@ describe('genres', () => {
   })
 
   it('treats names as case-insensitively unique on create and rename', async () => {
-    const comedy = await admin.client.genre.create({ name: '  Comedy ' })
+    const comedy = await admin.client.genre.create(genreInput('  Comedy '))
     expect(comedy.name).toBe('Comedy')
-    const dup = await errorOf(admin.client.genre.create({ name: 'comedy' }))
+    expect(comedy.slug).toBe('comedy')
+    const dup = await errorOf(admin.client.genre.create(genreInput('comedy')))
     expect(dup?.code).toBe('CONFLICT')
 
-    const horror = await admin.client.genre.create({ name: 'Horror' })
+    const horror = await admin.client.genre.create(genreInput('Horror'))
     const rename = await errorOf(
-      admin.client.genre.update({ id: horror.id, name: 'COMEDY' }),
+      admin.client.genre.update({ id: horror.id, ...genreInput('COMEDY') }),
     )
     expect(rename?.code).toBe('CONFLICT')
     const recase = await admin.client.genre.update({
       id: comedy.id,
-      name: 'COMEDY',
+      translations: [{ locale: 'en', name: 'COMEDY' }],
     })
     expect(recase.name).toBe('COMEDY')
   })
 
   it('counts only live anime per genre in the public list', async () => {
-    const mecha = await admin.client.genre.create({ name: 'Mecha' })
-    const a = await admin.client.anime.create({
-      slug: 'mecha-a',
-      genreIds: [mecha.id],
-    })
-    await admin.client.anime.create({ slug: 'mecha-b', genreIds: [mecha.id] })
+    const mecha = await admin.client.genre.create(genreInput('Mecha'))
+    const a = await admin.client.anime.create(
+      createAnimeInput('mecha-a', { genreIds: [mecha.id] }),
+    )
+    await admin.client.anime.create(
+      createAnimeInput('mecha-b', { genreIds: [mecha.id] }),
+    )
     const before = (await anon.client.genre.list({})).items.find(
       (g) => g.id === mecha.id,
     )
@@ -63,11 +72,10 @@ describe('genres', () => {
   })
 
   it('blocks deleting a used genre, allows it once unlinked, and keeps the name reserved after soft delete', async () => {
-    const sports = await admin.client.genre.create({ name: 'Sports' })
-    const anime = await admin.client.anime.create({
-      slug: 'sports-a',
-      genreIds: [sports.id],
-    })
+    const sports = await admin.client.genre.create(genreInput('Sports'))
+    const anime = await admin.client.anime.create(
+      createAnimeInput('sports-a', { genreIds: [sports.id] }),
+    )
     const blocked = await errorOf(admin.client.genre.remove({ id: sports.id }))
     expect(blocked?.code).toBe('CONFLICT')
 
@@ -81,12 +89,12 @@ describe('genres', () => {
 
     const again = await errorOf(admin.client.genre.remove({ id: sports.id }))
     expect(again?.code).toBe('NOT_FOUND')
-    const reuse = await errorOf(admin.client.genre.create({ name: 'Sports' }))
+    const reuse = await errorOf(admin.client.genre.create(genreInput('Sports')))
     expect(reuse?.code).toBe('CONFLICT')
   })
 
   it('fetches a single genre by id and filters the collection by name', async () => {
-    const isekai = await admin.client.genre.create({ name: 'Isekai' })
+    const isekai = await admin.client.genre.create(genreInput('Isekai'))
 
     const fetched = await anon.client.genre.get({ id: isekai.id })
     expect(fetched).toMatchObject({
@@ -106,7 +114,7 @@ describe('genres', () => {
   })
 
   it('forbids genre writes for anonymous callers', async () => {
-    const error = await errorOf(anon.client.genre.create({ name: 'Nope' }))
+    const error = await errorOf(anon.client.genre.create(genreInput('Nope')))
     expect(error?.code).toBe('UNAUTHORIZED')
   })
 })

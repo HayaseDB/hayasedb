@@ -1,3 +1,4 @@
+import { genreSlug } from '@hayasedb/domain'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
   createTestApp,
@@ -19,11 +20,14 @@ describe('anime list', () => {
     admin = createTestHttp(app.baseUrl, { internalToken: INTERNAL_TOKEN })
     await signUpAdmin(admin, app.mailer, app.db)
     anon = createTestHttp(app.baseUrl, { internalToken: INTERNAL_TOKEN })
-    drama = await admin.client.genre.create({ name: 'Drama' })
+    drama = await admin.client.genre.create({
+      slug: genreSlug('Drama'),
+      translations: [{ locale: 'en', name: 'Drama' }],
+    })
     const seeds = [
       {
         slug: 'alpha',
-        titleEnglish: 'Alpha',
+        translations: [{ locale: 'en', title: 'Alpha', original: true }],
         format: 'TV',
         status: 'FINISHED',
         startDate: { year: 2000, month: 5 },
@@ -31,21 +35,21 @@ describe('anime list', () => {
       },
       {
         slug: 'beta',
-        titleEnglish: 'beta',
+        translations: [{ locale: 'en', title: 'beta', original: true }],
         format: 'MOVIE',
         status: 'FINISHED',
         startDate: { year: 2000, month: 1, day: 2 },
       },
       {
         slug: 'gamma',
-        titleRomaji: 'Gamma',
+        translations: [{ locale: 'ja-Latn', title: 'Gamma', original: true }],
         format: 'TV',
         status: 'RELEASING',
         startDate: { year: 1995 },
       },
       {
         slug: 'delta',
-        titleNative: 'デルタ',
+        translations: [{ locale: 'ja-Jpan', title: 'デルタ', original: true }],
         format: 'OVA',
         status: 'NOT_YET_RELEASED',
       },
@@ -73,7 +77,7 @@ describe('anime list', () => {
     expect(page.items.map((i) => i.slug)).toEqual(['beta', 'gamma'])
   })
 
-  it('sorts by title case-insensitively, falling back across title columns', async () => {
+  it('sorts by title case-insensitively, falling back across locales', async () => {
     const asc = await anon.client.anime.list({ sort: 'title' })
     expect(asc.items.map((i) => i.slug)).toEqual([
       'alpha',

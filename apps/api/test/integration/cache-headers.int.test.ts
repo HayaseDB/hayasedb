@@ -1,3 +1,4 @@
+import { createAnimeInput } from '../harness/helpers'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
   createTestApp,
@@ -16,7 +17,7 @@ describe('http caching', () => {
     app = await createTestApp()
     admin = createTestHttp(app.baseUrl, { internalToken: INTERNAL_TOKEN })
     await signUpAdmin(admin, app.mailer, app.db)
-    await admin.client.anime.create({ slug: 'cache-anime' })
+    await admin.client.anime.create(createAnimeInput('cache-anime'))
   })
 
   afterAll(async () => {

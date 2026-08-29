@@ -44,10 +44,11 @@ export function collectDocumentRefs(
     for (const [field, meta] of Object.entries(ENTITY_FIELD_META[kind])) {
       if (!meta.ref) continue
       const value = record[field]
-      if (!Array.isArray(value)) continue
+      const isList = Array.isArray(value)
+      const values = isList ? value : [value]
 
       const ids = collected.get(meta.ref) ?? new Set<string>()
-      for (const item of value) {
+      for (const item of values) {
         const id =
           meta.refPath === 'self'
             ? item
@@ -56,7 +57,7 @@ export function collectDocumentRefs(
               : undefined
         if (typeof id === 'string') ids.add(id)
       }
-      collected.set(meta.ref, ids)
+      if (isList || ids.size > 0) collected.set(meta.ref, ids)
     }
   }
 

@@ -1,3 +1,4 @@
+import { createAnimeInput } from '../harness/helpers'
 import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { schema } from '@hayasedb/db'
@@ -60,7 +61,7 @@ describe('contribution flow', () => {
   it('submits a pending changeset with pre-minted ids, server-assigned ord and old values', async () => {
     const existing = await admin.client.anime.create({
       slug: 'existing',
-      titleEnglish: 'Old',
+      translations: [{ locale: 'en', title: 'Old', original: true }],
     })
     const animeId = randomUUID()
     const genreId = randomUUID()
@@ -69,20 +70,25 @@ describe('contribution flow', () => {
       changes: [
         animeCreate(animeId, 'fresh-anime', {
           genreIds: [genreId],
-          titleEnglish: 'Fresh',
+          translations: [{ locale: 'en', title: 'Fresh', original: true }],
         }),
         {
           op: 'update',
           entityKind: 'anime',
           entityId: existing.id,
           baseRev: 1,
-          payload: { titleEnglish: 'New' },
+          payload: {
+            translations: [{ locale: 'en', title: 'New', original: true }],
+          },
         },
         {
           op: 'create',
           entityKind: 'genre',
           entityId: genreId,
-          payload: { name: 'Isekai' },
+          payload: {
+            slug: 'isekai',
+            translations: [{ locale: 'en', name: 'Isekai' }],
+          },
         },
       ],
     })
@@ -99,7 +105,11 @@ describe('contribution flow', () => {
     const update = detail.changes.find((c) => c.op === 'update')
     expect(update).toMatchObject({
       baseRev: 1,
-      oldValues: { titleEnglish: 'Old' },
+      oldValues: {
+        translations: [
+          { locale: 'en', title: 'Old', description: null, original: true },
+        ],
+      },
       headRev: 1,
       conflicted: false,
     })
@@ -115,7 +125,7 @@ describe('contribution flow', () => {
     const existing = () => created
 
     beforeAll(async () => {
-      created = await admin.client.anime.create({ slug: 'dupe-target' })
+      created = await admin.client.anime.create(createAnimeInput('dupe-target'))
     })
 
     it.each<
@@ -167,7 +177,7 @@ describe('contribution flow', () => {
               entityKind: 'anime',
               entityId: existing().id,
               baseRev: 5,
-              payload: { description: 'x' },
+              payload: { slug: 'ghost-slug' },
             },
           ],
         }),
@@ -183,7 +193,7 @@ describe('contribution flow', () => {
               entityKind: 'anime',
               entityId: randomUUID(),
               baseRev: 1,
-              payload: { description: 'x' },
+              payload: { slug: 'ghost-slug' },
             },
           ],
         }),

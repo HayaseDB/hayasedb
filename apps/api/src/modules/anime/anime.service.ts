@@ -41,12 +41,27 @@ import {
 import {
   ANIME_RELATION_VIEW_KINDS,
   fuzzyFromParts,
+  type LocalizationLocale,
   relationViewKind,
 } from '@hayasedb/domain'
 import { DRIZZLE } from '../../database/database.constants'
+import {
+  localeRankSql,
+  preferredLocalized,
+  requirePreferredLocalized,
+} from '../localization'
 import { MediaService } from '../media/media.service'
 import { entityHandler, type Tx } from '../revision/registry'
 import { RevisionService } from '../revision/revision.service'
+
+function fallbackTranslation(slug: string) {
+  return {
+    locale: 'en' as LocalizationLocale,
+    title: slug,
+    description: null,
+    original: true,
+  }
+}
 
 @Injectable()
 export class AnimeService {
@@ -79,7 +94,7 @@ export class AnimeService {
 
   async list(
     input: ListAnimeInput,
-    opts: { isAdmin?: boolean } = {},
+    opts: { isAdmin?: boolean; acceptLanguage?: string } = {},
   ): Promise<{
     items: AnimeListItem[]
     meta: CursorPaginationMeta
@@ -119,16 +134,24 @@ export class AnimeService {
       const pattern = `%${input.q}%`
       const search = or(
         ilike(schema.anime.slug, pattern),
-        ilike(schema.anime.titleEnglish, pattern),
-        ilike(schema.anime.titleRomaji, pattern),
-        ilike(schema.anime.titleNative, pattern),
+        exists(
+          this.db
+            .select({ one: sql`1` })
+            .from(schema.animeTranslation)
+            .where(
+              and(
+                eq(schema.animeTranslation.animeId, schema.anime.id),
+                ilike(schema.animeTranslation.title, pattern),
+              ),
+            ),
+        ),
       )
       if (search) conditions.push(search)
     }
 
     const { field, order } = parseAnimeSort(input.sort)
     const direction = order === 'asc' ? asc : desc
-    const title = sql`lower(coalesce(${schema.anime.titleEnglish}, ${schema.anime.titleRomaji}, ${schema.anime.titleNative}, ${schema.anime.slug}))`
+    const title = this.localizedTitleSql(opts.acceptLanguage)
 
     if (input.cursor) {
       conditions.push(this.keysetCondition(input.cursor, input.sort, title))
@@ -160,9 +183,7 @@ export class AnimeService {
           slug: schema.anime.slug,
           format: schema.anime.format,
           status: schema.anime.status,
-          titleRomaji: schema.anime.titleRomaji,
-          titleEnglish: schema.anime.titleEnglish,
-          titleNative: schema.anime.titleNative,
+          sortTitle: title,
           startYear: schema.anime.startYear,
           startMonth: schema.anime.startMonth,
           startDay: schema.anime.startDay,
@@ -181,7 +202,7 @@ export class AnimeService {
     const hasMore = rows.length > input.limit
     const page = hasMore ? rows.slice(0, input.limit) : rows
 
-    const items = await this.decorateListItems(page)
+    const items = await this.decorateListItems(page, opts.acceptLanguage)
 
     return {
       items,
@@ -219,9 +240,7 @@ export class AnimeService {
       id: string
       createdAt: Date
       slug: string
-      titleEnglish: string | null
-      titleRomaji: string | null
-      titleNative: string | null
+      sortTitle: string
     }[],
     sort: AnimeSort,
   ): string | null {
@@ -232,14 +251,7 @@ export class AnimeService {
     if (!last) return null
 
     const value =
-      field === 'title'
-        ? (
-            last.titleEnglish ??
-            last.titleRomaji ??
-            last.titleNative ??
-            last.slug
-          ).toLowerCase()
-        : last.createdAt.toISOString()
+      field === 'title' ? last.sortTitle : last.createdAt.toISOString()
 
     return encodeCursor({ s: field, o: order, v: value, id: last.id })
   }
@@ -250,27 +262,36 @@ export class AnimeService {
       slug: string
       format: AnimeListItem['format']
       status: AnimeListItem['status']
-      titleRomaji: string | null
-      titleEnglish: string | null
-      titleNative: string | null
+      sortTitle: string
       startYear: number | null
       startMonth: number | null
       startDay: number | null
       createdAt: Date
       updatedAt: Date
     }>,
+    acceptLanguage?: string,
   ): Promise<AnimeListItem[]> {
     if (rows.length === 0) return []
     const ids = rows.map((r) => r.id)
 
-    const [genreLinks, covers] = await Promise.all([
+    const [animeTranslations, genreLinks, covers] = await Promise.all([
+      this.db
+        .select()
+        .from(schema.animeTranslation)
+        .where(inArray(schema.animeTranslation.animeId, ids)),
       this.db
         .select({
           animeId: schema.animeGenre.animeId,
-          name: schema.genre.name,
+          genreId: schema.genre.id,
+          locale: schema.genreTranslation.locale,
+          name: schema.genreTranslation.name,
         })
         .from(schema.animeGenre)
         .innerJoin(schema.genre, eq(schema.genre.id, schema.animeGenre.genreId))
+        .innerJoin(
+          schema.genreTranslation,
+          eq(schema.genreTranslation.genreId, schema.genre.id),
+        )
         .where(inArray(schema.animeGenre.animeId, ids)),
       this.db
         .select({
@@ -293,11 +314,23 @@ export class AnimeService {
         .orderBy(asc(schema.animeMedia.position)),
     ])
 
-    const genresByAnime = new Map<string, string[]>()
+    const translationsByAnime = new Map<string, typeof animeTranslations>()
+    for (const translation of animeTranslations) {
+      const list = translationsByAnime.get(translation.animeId) ?? []
+      list.push(translation)
+      translationsByAnime.set(translation.animeId, list)
+    }
+
+    const genreTranslationsByAnime = new Map<
+      string,
+      Map<string, { locale: string; name: string }[]>
+    >()
     for (const g of genreLinks) {
-      const list = genresByAnime.get(g.animeId) ?? []
-      list.push(g.name)
-      genresByAnime.set(g.animeId, list)
+      const byGenre = genreTranslationsByAnime.get(g.animeId) ?? new Map()
+      const list = byGenre.get(g.genreId) ?? []
+      list.push({ locale: g.locale, name: g.name })
+      byGenre.set(g.genreId, list)
+      genreTranslationsByAnime.set(g.animeId, byGenre)
     }
 
     const coverByAnime = new Map<string, (typeof covers)[number]>()
@@ -307,18 +340,40 @@ export class AnimeService {
 
     return rows.map((r) => {
       const cover = coverByAnime.get(r.id)
+      const translations = (translationsByAnime.get(r.id) ?? []).map(
+        ({ locale, title, description, original }) => ({
+          locale,
+          title,
+          description,
+          original,
+        }),
+      )
+      const preferred = requirePreferredLocalized(
+        translations,
+        acceptLanguage,
+        fallbackTranslation(r.slug),
+      )
+      const genres = [...(genreTranslationsByAnime.get(r.id)?.values() ?? [])]
+        .flatMap((values) => {
+          const selected = preferredLocalized(values, acceptLanguage)
+          return selected ? [selected.name] : []
+        })
+        .sort()
       return {
         id: r.id,
         slug: r.slug,
         format: r.format,
         status: r.status,
-        titleRomaji: r.titleRomaji,
-        titleEnglish: r.titleEnglish,
-        titleNative: r.titleNative,
+        title: {
+          locale: preferred.locale,
+          title: preferred.title,
+          original: preferred.original,
+        },
+        translations,
         startDate: fuzzyFromParts(r.startYear, r.startMonth, r.startDay),
         coverUrl: cover ? this.media.publicUrl(cover) : null,
         coverBlurhash: cover?.blurhash ?? null,
-        genres: (genresByAnime.get(r.id) ?? []).sort(),
+        genres,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
       }
@@ -327,28 +382,32 @@ export class AnimeService {
 
   async getById(
     id: string,
-    opts: { includeDeleted?: boolean } = {},
+    opts: { includeDeleted?: boolean; acceptLanguage?: string } = {},
   ): Promise<AnimeDetail> {
-    const detail = await this.buildDetail(id)
+    const detail = await this.buildDetail(id, opts.acceptLanguage)
     if (detail.deletedAt && !opts.includeDeleted) {
       throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
     }
     return detail
   }
 
-  private async buildDetail(animeId: string): Promise<AnimeDetail> {
+  private async buildDetail(
+    animeId: string,
+    acceptLanguage?: string,
+  ): Promise<AnimeDetail> {
     const [record, entityRow, relations] = await Promise.all([
       this.db.query.anime.findFirst({
         where: eq(schema.anime.id, animeId),
         with: {
-          genres: { with: { genre: true } },
+          translations: true,
+          genres: { with: { genre: { with: { translations: true } } } },
           media: { with: { asset: true } },
         },
       }),
       this.db.query.entity.findFirst({
         where: eq(schema.entity.id, animeId),
       }),
-      this.relationsOf(animeId),
+      this.relationsOf(animeId, acceptLanguage),
     ])
     if (!record || !entityRow)
       throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
@@ -366,15 +425,32 @@ export class AnimeService {
         height: m.asset.height,
       }))
 
+    const translations = record.translations.map(
+      ({ locale, title, description, original }) => ({
+        locale,
+        title,
+        description,
+        original,
+      }),
+    )
+    const preferred = requirePreferredLocalized(
+      translations,
+      acceptLanguage,
+      fallbackTranslation(record.slug),
+    )
+
     return {
       id: record.id,
       slug: record.slug,
       format: record.format,
       status: record.status,
-      titleRomaji: record.titleRomaji,
-      titleEnglish: record.titleEnglish,
-      titleNative: record.titleNative,
-      description: record.description,
+      title: {
+        locale: preferred.locale,
+        title: preferred.title,
+        original: preferred.original,
+      },
+      translations,
+      description: preferred.description,
       startDate: fuzzyFromParts(
         record.startYear,
         record.startMonth,
@@ -382,7 +458,19 @@ export class AnimeService {
       ),
       endDate: fuzzyFromParts(record.endYear, record.endMonth, record.endDay),
       genres: record.genres
-        .map((g) => ({ id: g.genre.id, name: g.genre.name }))
+        .map((g) => {
+          const translation = preferredLocalized(
+            g.genre.translations,
+            acceptLanguage,
+          )!
+          return {
+            id: g.genre.id,
+            slug: g.genre.slug,
+            name: translation.name,
+            locale: translation.locale,
+            translations: g.genre.translations,
+          }
+        })
         .sort((a, b) => a.name.localeCompare(b.name)),
       relations,
       media,
@@ -393,7 +481,10 @@ export class AnimeService {
     }
   }
 
-  private async relationsOf(animeId: string): Promise<AnimeRelation[]> {
+  private async relationsOf(
+    animeId: string,
+    acceptLanguage?: string,
+  ): Promise<AnimeRelation[]> {
     const edges = await this.db
       .select({
         sourceId: schema.animeRelation.sourceId,
@@ -414,15 +505,13 @@ export class AnimeService {
         edges.map((e) => (e.sourceId === animeId ? e.targetId : e.sourceId)),
       ),
     ]
-    const [rows, covers] = await Promise.all([
+    const [rows, translations, covers] = await Promise.all([
       this.db
         .select({
           id: schema.anime.id,
           slug: schema.anime.slug,
           format: schema.anime.format,
           status: schema.anime.status,
-          titleRomaji: schema.anime.titleRomaji,
-          titleEnglish: schema.anime.titleEnglish,
           startYear: schema.anime.startYear,
         })
         .from(schema.anime)
@@ -433,6 +522,10 @@ export class AnimeService {
             isNull(schema.entity.deletedAt),
           ),
         ),
+      this.db
+        .select()
+        .from(schema.animeTranslation)
+        .where(inArray(schema.animeTranslation.animeId, otherIds)),
       this.db
         .select({
           animeId: schema.animeMedia.animeId,
@@ -460,8 +553,26 @@ export class AnimeService {
     const targets = new Map<string, AnimeRelationTarget>()
     for (const row of rows) {
       const cover = coverByAnime.get(row.id)
+      const localized = translations
+        .filter((translation) => translation.animeId === row.id)
+        .map(({ locale, title, description, original }) => ({
+          locale,
+          title,
+          description,
+          original,
+        }))
+      const preferred = requirePreferredLocalized(
+        localized,
+        acceptLanguage,
+        fallbackTranslation(row.slug),
+      )
       targets.set(row.id, {
         ...row,
+        title: {
+          locale: preferred.locale,
+          title: preferred.title,
+          original: preferred.original,
+        },
         coverUrl: cover ? this.media.publicUrl(cover) : null,
         coverBlurhash: cover?.blurhash ?? null,
       })
@@ -539,6 +650,12 @@ export class AnimeService {
       if (!entityRow || entityRow.deletedAt) {
         throw new ORPCError('NOT_FOUND', { message: 'Anime not found' })
       }
+      const blocked = await entityHandler('anime').checkDelete?.(
+        tx,
+        id,
+        new Set(),
+      )
+      if (blocked) throw new ORPCError('CONFLICT', { message: blocked })
       const document = await entityHandler('anime').serialize(tx, id)
       await tx
         .update(schema.entity)
@@ -695,5 +812,14 @@ export class AnimeService {
     if (problems.length > 0) {
       throw new ORPCError('NOT_FOUND', { message: problems.join('; ') })
     }
+  }
+
+  private localizedTitleSql(acceptLanguage?: string): SQL<string> {
+    const rank = localeRankSql(
+      schema.animeTranslation.locale,
+      schema.animeTranslation.original,
+      acceptLanguage,
+    )
+    return sql<string>`lower(coalesce((select ${schema.animeTranslation.title} from ${schema.animeTranslation} where ${schema.animeTranslation.animeId} = ${schema.anime.id} order by ${rank}, ${schema.animeTranslation.locale} limit 1), ${schema.anime.slug}))`
   }
 }

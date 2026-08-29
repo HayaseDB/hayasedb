@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, ne, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, ne } from 'drizzle-orm'
 import {
   genreDocumentPatchSchema,
   genreDocumentSchema,
@@ -32,11 +32,27 @@ export const genreHandler: EntityKindHandler<GenreDocument> = {
     const ids = [...new Set(entityIds)]
     if (ids.length === 0) return new Map()
 
-    const rows = await tx
-      .select({ id: schema.genre.id, name: schema.genre.name })
-      .from(schema.genre)
-      .where(inArray(schema.genre.id, ids))
-    return new Map(rows.map((row) => [row.id, { name: row.name }]))
+    const [rows, translations] = await Promise.all([
+      tx
+        .select({ id: schema.genre.id, slug: schema.genre.slug })
+        .from(schema.genre)
+        .where(inArray(schema.genre.id, ids)),
+      tx
+        .select()
+        .from(schema.genreTranslation)
+        .where(inArray(schema.genreTranslation.genreId, ids)),
+    ])
+    return new Map(
+      rows.map((row) => [
+        row.id,
+        genreDocumentSchema.parse({
+          slug: row.slug,
+          translations: translations
+            .filter((translation) => translation.genreId === row.id)
+            .map(({ locale, name }) => ({ locale, name })),
+        }),
+      ]),
+    )
   },
 
   async validateRefs(): Promise<string[]> {
@@ -48,19 +64,14 @@ export const genreHandler: EntityKindHandler<GenreDocument> = {
     entityId: string,
     payload: Record<string, unknown>,
   ): Promise<string | null> {
-    const name = payload.name
-    if (typeof name !== 'string') return null
+    const slug = payload.slug
+    if (typeof slug !== 'string') return null
     const [row] = await tx
       .select({ id: schema.genre.id })
       .from(schema.genre)
-      .where(
-        and(
-          sql`lower(${schema.genre.name}) = lower(${name})`,
-          ne(schema.genre.id, entityId),
-        ),
-      )
+      .where(and(eq(schema.genre.slug, slug), ne(schema.genre.id, entityId)))
       .limit(1)
-    return row ? `A genre named "${name}" already exists` : null
+    return row ? `Genre slug "${slug}" is already taken` : null
   },
 
   async checkDelete(
@@ -94,20 +105,37 @@ export const genreHandler: EntityKindHandler<GenreDocument> = {
       const doc = this.parseDocument(payload)
       await tx
         .insert(schema.genre)
-        .values({ id: entityId, name: doc.name })
+        .values({ id: entityId, slug: doc.slug })
         .onConflictDoUpdate({
           target: schema.genre.id,
-          set: { name: doc.name },
+          set: { slug: doc.slug },
         })
+      await tx.insert(schema.genreTranslation).values(
+        doc.translations.map((translation) => ({
+          genreId: entityId,
+          ...translation,
+        })),
+      )
       return
     }
 
     const patch = this.parsePatch(payload)
-    if (patch.name !== undefined) {
+    if (patch.slug !== undefined) {
       await tx
         .update(schema.genre)
-        .set({ name: patch.name })
+        .set({ slug: patch.slug })
         .where(eq(schema.genre.id, entityId))
+    }
+    if (patch.translations !== undefined) {
+      await tx
+        .delete(schema.genreTranslation)
+        .where(eq(schema.genreTranslation.genreId, entityId))
+      await tx.insert(schema.genreTranslation).values(
+        patch.translations.map((translation) => ({
+          genreId: entityId,
+          ...translation,
+        })),
+      )
     }
   },
 }

@@ -19,12 +19,12 @@ import {
 import type { EntityKindHandler, Tx } from './types'
 
 const SCALAR_FIELDS = ANIME_FIELD_ORDER.filter(
-  (field) => !ENTITY_FIELD_META.anime[field]?.ref,
+  (field) => !ENTITY_FIELD_META.anime[field]?.ref && field !== 'translations',
 ) as ReadonlyArray<ScalarField>
 
 type ScalarField = Exclude<
   keyof AnimeDocument,
-  'genreIds' | 'media' | 'relations'
+  'genreIds' | 'media' | 'relations' | 'translations'
 >
 
 type AnimeColumns = Partial<typeof schema.anime.$inferInsert>
@@ -49,6 +49,22 @@ function scalarColumns(doc: Partial<AnimeDocument>): AnimeColumns {
     }
   }
   return columns as AnimeColumns
+}
+
+async function replaceTranslations(
+  tx: Tx,
+  entityId: string,
+  translations: AnimeDocument['translations'],
+): Promise<void> {
+  await tx
+    .delete(schema.animeTranslation)
+    .where(eq(schema.animeTranslation.animeId, entityId))
+  await tx.insert(schema.animeTranslation).values(
+    translations.map((translation) => ({
+      animeId: entityId,
+      ...translation,
+    })),
+  )
 }
 
 function sortedRelations(
@@ -151,60 +167,73 @@ export const animeHandler: EntityKindHandler<AnimeDocument> = {
     const ids = [...new Set(entityIds)]
     if (ids.length === 0) return new Map()
 
-    const [rows, genreLinks, mediaLinks, relationLinks] = await Promise.all([
-      tx
-        .select({
-          id: schema.anime.id,
-          slug: schema.anime.slug,
-          format: schema.anime.format,
-          status: schema.anime.status,
-          titleRomaji: schema.anime.titleRomaji,
-          titleEnglish: schema.anime.titleEnglish,
-          titleNative: schema.anime.titleNative,
-          description: schema.anime.description,
-          startYear: schema.anime.startYear,
-          startMonth: schema.anime.startMonth,
-          startDay: schema.anime.startDay,
-          endYear: schema.anime.endYear,
-          endMonth: schema.anime.endMonth,
-          endDay: schema.anime.endDay,
-        })
-        .from(schema.anime)
-        .where(inArray(schema.anime.id, ids)),
-      tx
-        .select({
-          animeId: schema.animeGenre.animeId,
-          genreId: schema.animeGenre.genreId,
-        })
-        .from(schema.animeGenre)
-        .where(inArray(schema.animeGenre.animeId, ids)),
-      tx
-        .select({
-          animeId: schema.animeMedia.animeId,
-          mediaId: schema.animeMedia.mediaId,
-          type: schema.animeMedia.type,
-          position: schema.animeMedia.position,
-        })
-        .from(schema.animeMedia)
-        .where(inArray(schema.animeMedia.animeId, ids)),
-      tx
-        .select({
-          sourceId: schema.animeRelation.sourceId,
-          targetId: schema.animeRelation.targetId,
-          kind: schema.animeRelation.kind,
-        })
-        .from(schema.animeRelation)
-        .innerJoin(
-          schema.entity,
-          eq(schema.entity.id, schema.animeRelation.targetId),
-        )
-        .where(
-          and(
-            inArray(schema.animeRelation.sourceId, ids),
-            isNull(schema.entity.deletedAt),
+    const [rows, translations, genreLinks, mediaLinks, relationLinks] =
+      await Promise.all([
+        tx
+          .select({
+            id: schema.anime.id,
+            slug: schema.anime.slug,
+            format: schema.anime.format,
+            status: schema.anime.status,
+            startYear: schema.anime.startYear,
+            startMonth: schema.anime.startMonth,
+            startDay: schema.anime.startDay,
+            endYear: schema.anime.endYear,
+            endMonth: schema.anime.endMonth,
+            endDay: schema.anime.endDay,
+          })
+          .from(schema.anime)
+          .where(inArray(schema.anime.id, ids)),
+        tx
+          .select()
+          .from(schema.animeTranslation)
+          .where(inArray(schema.animeTranslation.animeId, ids)),
+        tx
+          .select({
+            animeId: schema.animeGenre.animeId,
+            genreId: schema.animeGenre.genreId,
+          })
+          .from(schema.animeGenre)
+          .where(inArray(schema.animeGenre.animeId, ids)),
+        tx
+          .select({
+            animeId: schema.animeMedia.animeId,
+            mediaId: schema.animeMedia.mediaId,
+            type: schema.animeMedia.type,
+            position: schema.animeMedia.position,
+          })
+          .from(schema.animeMedia)
+          .where(inArray(schema.animeMedia.animeId, ids)),
+        tx
+          .select({
+            sourceId: schema.animeRelation.sourceId,
+            targetId: schema.animeRelation.targetId,
+            kind: schema.animeRelation.kind,
+          })
+          .from(schema.animeRelation)
+          .innerJoin(
+            schema.entity,
+            eq(schema.entity.id, schema.animeRelation.targetId),
+          )
+          .where(
+            and(
+              inArray(schema.animeRelation.sourceId, ids),
+              isNull(schema.entity.deletedAt),
+            ),
           ),
-        ),
-    ])
+      ])
+
+    const translationsByAnime = new Map<string, AnimeDocument['translations']>()
+    for (const row of translations) {
+      const list = translationsByAnime.get(row.animeId) ?? []
+      list.push({
+        locale: row.locale,
+        title: row.title,
+        description: row.description,
+        original: row.original,
+      })
+      translationsByAnime.set(row.animeId, list)
+    }
 
     const relationsByAnime = new Map<string, AnimeDocumentRelation[]>()
     for (const link of relationLinks) {
@@ -241,6 +270,7 @@ export const animeHandler: EntityKindHandler<AnimeDocument> = {
       } = row
       documents.set(id, {
         ...scalars,
+        translations: translationsByAnime.get(id) ?? [],
         startDate: fuzzyFromParts(startYear, startMonth, startDay),
         endDate: fuzzyFromParts(endYear, endMonth, endDay),
         genreIds: (genresByAnime.get(id) ?? []).sort(),
@@ -393,6 +423,7 @@ export const animeHandler: EntityKindHandler<AnimeDocument> = {
         .values({ id: entityId, ...columns, slug: doc.slug })
         .onConflictDoUpdate({ target: schema.anime.id, set: columns })
       await replaceGenres(tx, entityId, doc.genreIds)
+      await replaceTranslations(tx, entityId, doc.translations)
       await replaceRelations(tx, entityId, doc.relations ?? [])
       await replaceMedia(tx, entityId, doc.media)
       return
@@ -408,6 +439,9 @@ export const animeHandler: EntityKindHandler<AnimeDocument> = {
     }
     if (patch.genreIds !== undefined) {
       await replaceGenres(tx, entityId, patch.genreIds)
+    }
+    if (patch.translations !== undefined) {
+      await replaceTranslations(tx, entityId, patch.translations)
     }
     if (patch.relations !== undefined) {
       await replaceRelations(tx, entityId, patch.relations)

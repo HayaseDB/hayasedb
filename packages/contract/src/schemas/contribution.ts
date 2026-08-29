@@ -9,7 +9,10 @@ import {
   type MessageKind,
 } from '@hayasedb/domain'
 import * as z from 'zod'
-import { ENTITY_DOCUMENT_SCHEMAS } from './entity-documents'
+import {
+  ENTITY_DOCUMENT_PATCH_SCHEMAS,
+  ENTITY_DOCUMENT_SCHEMAS,
+} from './entity-documents'
 import { idSchema, paginationInputSchema } from './common'
 import { mediaFileSchema } from './media'
 
@@ -24,12 +27,12 @@ function changeArmsForKind<K extends EntityKind>(kind: K) {
   const document = ENTITY_DOCUMENT_SCHEMAS[kind]
   const target = { entityKind: z.literal(kind), entityId: idSchema }
 
-  const patchDocument = (document as z.ZodObject)
-    .partial()
-    .refine(
-      (patch: Record<string, unknown>) => Object.keys(patch).length > 0,
-      'Update payload must change at least one field',
-    )
+  const patchDocument = (
+    ENTITY_DOCUMENT_PATCH_SCHEMAS[kind] as z.ZodObject
+  ).refine(
+    (patch: Record<string, unknown>) => Object.keys(patch).length > 0,
+    'Update payload must change at least one field',
+  )
 
   return [
     z.object({

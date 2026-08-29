@@ -1,3 +1,4 @@
+import { createAnimeInput } from '../harness/helpers'
 import { eq } from 'drizzle-orm'
 import { schema } from '@hayasedb/db'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -29,7 +30,7 @@ describe('anime media', () => {
     await signUpVerified(user, app.mailer)
     const created = await admin.client.anime.create({
       slug: 'media-anime',
-      titleEnglish: 'Media Anime',
+      translations: [{ locale: 'en', title: 'Media Anime', original: true }],
     })
     animeId = created.id
   })
@@ -116,7 +117,9 @@ describe('anime media', () => {
     expect(assets.map((a) => a.id)).toContain(shots[0]?.mediaId)
     expect(assets.filter((a) => a.id === shots[0]?.mediaId)).toHaveLength(1)
 
-    const other = await admin.client.anime.create({ slug: 'media-anime-2' })
+    const other = await admin.client.anime.create(
+      createAnimeInput('media-anime-2'),
+    )
     const reused = await admin.client.anime.addMedia({
       id: other.id,
       type: 'COVER',
@@ -155,7 +158,9 @@ describe('anime media', () => {
   })
 
   it('appends positions per type, reorders only within the given type and removes by link id', async () => {
-    const own = await admin.client.anime.create({ slug: 'media-anime-order' })
+    const own = await admin.client.anime.create(
+      createAnimeInput('media-anime-order'),
+    )
     const animeId = own.id
     await admin.client.anime.addMedia({
       id: animeId,
@@ -224,7 +229,9 @@ describe('anime media', () => {
 
     const wrongParent = await errorOf(
       admin.client.anime.removeMedia({
-        id: (await admin.client.anime.create({ slug: 'media-anime-other' })).id,
+        id: (
+          await admin.client.anime.create(createAnimeInput('media-anime-other'))
+        ).id,
         mediaId: shots[1]!.id,
       }),
     )
@@ -235,7 +242,7 @@ describe('anime media', () => {
   })
 
   it('refuses media on unknown or deleted anime', async () => {
-    const ghost = await admin.client.anime.create({ slug: 'ghost' })
+    const ghost = await admin.client.anime.create(createAnimeInput('ghost'))
     await admin.client.anime.remove({ id: ghost.id })
     const error = await errorOf(
       admin.client.anime.addMedia({

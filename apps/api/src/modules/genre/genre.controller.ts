@@ -4,25 +4,32 @@ import { implement } from '@orpc/server'
 import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { requireAdminUser } from '../../auth/require-user'
+import type { ORPCContext } from '../../orpc/context'
 import { GenreService } from './genre.service'
 
 @Controller()
 export class GenreController {
   constructor(private readonly genres: GenreService) {}
 
+  private language(context: ORPCContext): string | undefined {
+    context.resHeaders?.append('Vary', 'Accept-Language')
+    const value = context.request.headers['accept-language']
+    return typeof value === 'string' ? value : undefined
+  }
+
   @AllowAnonymous()
   @Implement(contract.genre.list)
   list() {
-    return implement(contract.genre.list).handler(({ input }) =>
-      this.genres.list(input),
+    return implement(contract.genre.list).handler(({ input, context }) =>
+      this.genres.list(input, this.language(context)),
     )
   }
 
   @AllowAnonymous()
   @Implement(contract.genre.get)
   get() {
-    return implement(contract.genre.get).handler(({ input }) =>
-      this.genres.getById(input.id),
+    return implement(contract.genre.get).handler(({ input, context }) =>
+      this.genres.getById(input.id, this.language(context)),
     )
   }
 
@@ -31,7 +38,7 @@ export class GenreController {
   create() {
     return implement(contract.genre.create).handler(({ input, context }) => {
       const userId = requireAdminUser(context)
-      return this.genres.create(input.name, userId)
+      return this.genres.create(input, userId)
     })
   }
 
@@ -40,7 +47,8 @@ export class GenreController {
   update() {
     return implement(contract.genre.update).handler(({ input, context }) => {
       const userId = requireAdminUser(context)
-      return this.genres.update(input.id, input.name, userId)
+      const { id, ...patch } = input
+      return this.genres.update(id, patch, userId)
     })
   }
 

@@ -4,6 +4,13 @@ import type { ChangeOp, EntityKind } from '@hayasedb/domain'
 export type Tx =
   Database | Parameters<Parameters<Database['transaction']>[0]>[0]
 
+export interface PlannedChange {
+  readonly entityKind: EntityKind
+  readonly entityId: string
+  readonly op: ChangeOp
+  readonly payload?: unknown
+}
+
 export interface EntityKindHandler<
   Doc extends Record<string, unknown> = Record<string, unknown>,
 > {
@@ -39,6 +46,7 @@ export interface EntityKindHandler<
     tx: Tx,
     entityId: string,
     siblingDeletes: ReadonlySet<string>,
+    plannedChanges?: ReadonlyArray<PlannedChange>,
   ): Promise<string | null>
 
   apply(

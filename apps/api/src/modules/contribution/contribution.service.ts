@@ -28,10 +28,17 @@ export function changeApplyRank(change: {
   op: string
   entityKind: EntityKind
 }): number {
-  if (change.entityKind === 'genre') {
-    return change.op === 'delete' ? 3 : 0
+  const createRank: Record<EntityKind, number> = {
+    genre: 0,
+    anime: 10,
   }
-  return change.op === 'create' ? 1 : 2
+  const deleteRank: Record<EntityKind, number> = {
+    anime: 90,
+    genre: 100,
+  }
+  if (change.op === 'create') return createRank[change.entityKind]
+  if (change.op === 'delete') return deleteRank[change.entityKind]
+  return 50
 }
 
 @Injectable()
@@ -196,6 +203,7 @@ export class ContributionService {
               tx,
               change.entityId,
               siblingDeletes,
+              orderedChanges,
             )
             if (blocked) throw new ORPCError('CONFLICT', { message: blocked })
           }

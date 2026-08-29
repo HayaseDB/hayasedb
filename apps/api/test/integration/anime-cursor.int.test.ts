@@ -18,7 +18,10 @@ describe('anime cursor pagination', () => {
     admin = createTestHttp(app.baseUrl, { internalToken: INTERNAL_TOKEN })
     await signUpAdmin(admin, app.mailer, app.db)
     for (const slug of ['cur-a', 'cur-b', 'cur-c', 'cur-d', 'cur-e']) {
-      await admin.client.anime.create({ slug, titleEnglish: slug })
+      await admin.client.anime.create({
+        slug,
+        translations: [{ locale: 'en', title: slug, original: true }],
+      })
     }
   })
 

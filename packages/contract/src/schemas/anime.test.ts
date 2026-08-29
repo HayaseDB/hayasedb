@@ -4,7 +4,6 @@ import {
   animeDocumentMediaListSchema,
   animeDocumentRelationListSchema,
   animeSortFieldSchema,
-  animeTitleFieldSchema,
   createAnimeInputSchema,
   fuzzyDateSchema,
   listAnimeInputSchema,
@@ -93,14 +92,6 @@ describe('releaseDateSchema', () => {
   })
 })
 
-describe('animeTitleFieldSchema', () => {
-  it('turns blank into null and trims', () => {
-    expect(animeTitleFieldSchema.parse('   ')).toBeNull()
-    expect(animeTitleFieldSchema.parse(' Bebop ')).toBe('Bebop')
-    expect(animeTitleFieldSchema.safeParse('x'.repeat(256)).success).toBe(false)
-  })
-})
-
 describe('animeDocumentRelationListSchema', () => {
   it('rejects the same target and kind twice but allows different kinds', () => {
     const dup = [
@@ -151,9 +142,12 @@ describe('animeDocumentMediaListSchema', () => {
 })
 
 describe('createAnimeInputSchema', () => {
+  const title = { locale: 'en', title: 'Cowboy Bebop', original: true }
+
   it('accepts a minimal document and lowercases genre ids', () => {
     const parsed = createAnimeInputSchema.parse({
       slug: 'bebop',
+      translations: [title],
       genreIds: [uuid(1).toUpperCase()],
     })
     expect(parsed.genreIds).toEqual([uuid(1)])
@@ -161,6 +155,28 @@ describe('createAnimeInputSchema', () => {
 
   it('requires a slug', () => {
     expect(createAnimeInputSchema.safeParse({}).success).toBe(false)
+  })
+
+  it('requires at least one localized title', () => {
+    const result = createAnimeInputSchema.safeParse({
+      slug: 'bebop',
+      translations: [],
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe(
+      'At least one localized title is required',
+    )
+  })
+
+  it('requires exactly one original title', () => {
+    const result = createAnimeInputSchema.safeParse({
+      slug: 'bebop',
+      translations: [{ locale: 'en', title: 'Cowboy Bebop' }],
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe(
+      'Exactly one anime title must be original',
+    )
   })
 })
 

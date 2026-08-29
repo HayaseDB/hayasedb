@@ -4,6 +4,8 @@ import * as z from 'zod'
 interface LocalizedListOptions {
   minimum?: number
   requiredMessage?: string
+  exactlyOneOriginal?: boolean
+  originalMessage?: string
 }
 
 export const localeSchema = z
@@ -39,7 +41,15 @@ export const localizedEpisodeTextSchema = localizedTitleSchema.extend({
 
 export function localizedListSchema<
   T extends z.ZodType<{ locale: string; original?: boolean }>,
->(entrySchema: T, { minimum = 0, requiredMessage }: LocalizedListOptions = {}) {
+>(
+  entrySchema: T,
+  {
+    minimum = 0,
+    requiredMessage,
+    exactlyOneOriginal = false,
+    originalMessage = 'Only one title may be original',
+  }: LocalizedListOptions = {},
+) {
   const base = z.array(entrySchema).max(100)
   return (minimum > 0 ? base.min(minimum, requiredMessage) : base)
     .superRefine((translations, ctx) => {
@@ -56,11 +66,8 @@ export function localizedListSchema<
         locales.add(translation.locale)
         if (translation.original === true) originals += 1
       }
-      if (originals > 1) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Only one title may be original',
-        })
+      if (exactlyOneOriginal ? originals !== 1 : originals > 1) {
+        ctx.addIssue({ code: 'custom', message: originalMessage })
       }
     })
     .transform((items) =>
