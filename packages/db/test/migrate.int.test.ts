@@ -60,6 +60,17 @@ describe('runMigrations', () => {
         SELECT count(*)::int AS count FROM drizzle.__drizzle_migrations
       `
       expect(journal?.count).toBeGreaterThan(0)
+
+      const deferred = await client<{ conname: string }[]>`
+        SELECT conname FROM pg_constraint
+        WHERE condeferrable AND condeferred
+        ORDER BY conname
+      `
+      expect(deferred.map((row) => row.conname)).toEqual([
+        'anime_episode_anime_position_uq',
+        'anime_episode_season_position_uq',
+        'anime_season_anime_position_uq',
+      ])
     } finally {
       await client.end()
     }

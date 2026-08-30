@@ -134,6 +134,13 @@
       "when": 1788243841514,
       "tag": "0018_localized_anime_and_genre",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788246964763,
+      "tag": "0019_anime_seasons_and_episodes",
+      "breakpoints": true
     }
   ]
 }

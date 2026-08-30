@@ -1,5 +1,6 @@
 export * from './anime'
 export * from './auth'
 export * from './contribution'
+export * from './episode'
 export * from './media'
 export * from './meta'
