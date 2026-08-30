@@ -10,6 +10,8 @@ import * as z from 'zod'
 import {
   cursorPaginationMetaSchema,
   idSchema,
+  orderEtagSchema,
+  orderInputSchema,
   timestampsSchema,
 } from './common'
 import {
@@ -97,13 +99,13 @@ export const listAnimeEpisodesInputSchema = listStructureInputSchema.extend({
 export const animeSeasonListSchema = z.object({
   items: z.array(animeSeasonSchema),
   meta: cursorPaginationMetaSchema,
-  orderEtag: z.string(),
+  orderEtag: orderEtagSchema,
 })
 
 export const animeEpisodeListSchema = z.object({
   items: z.array(animeEpisodeSchema),
   meta: cursorPaginationMetaSchema,
-  orderEtag: z.string(),
+  orderEtag: orderEtagSchema,
 })
 
 export const createAnimeSeasonInputSchema = animeSeasonDocumentSchema
@@ -128,9 +130,17 @@ export const updateAnimeEpisodeInputSchema = animeEpisodeDocumentPatchSchema
   .omit({ animeId: true, seasonId: true, position: true, translations: true })
   .extend({ id: idSchema })
 
-export const reorderInputSchema = z.object({
-  ids: z.array(idSchema).max(2000),
+export const reorderAnimeSeasonsInputSchema = orderInputSchema.extend({
+  animeId: idSchema,
 })
+
+export const reorderAnimeEpisodesForAnimeInputSchema = orderInputSchema.extend({
+  animeId: idSchema,
+})
+
+export const reorderAnimeEpisodesForSeasonInputSchema = orderInputSchema.extend(
+  { seasonId: idSchema },
+)
 
 export type AnimeSeasonDocument = z.output<typeof animeSeasonDocumentSchema>
 export type AnimeEpisodeDocument = z.output<typeof animeEpisodeDocumentSchema>
@@ -150,4 +160,13 @@ export type CreateAnimeEpisodeForSeasonInput = z.output<
 >
 export type UpdateAnimeEpisodeInput = z.output<
   typeof updateAnimeEpisodeInputSchema
+>
+export type ReorderAnimeSeasonsInput = z.output<
+  typeof reorderAnimeSeasonsInputSchema
+>
+export type ReorderAnimeEpisodesForAnimeInput = z.output<
+  typeof reorderAnimeEpisodesForAnimeInputSchema
+>
+export type ReorderAnimeEpisodesForSeasonInput = z.output<
+  typeof reorderAnimeEpisodesForSeasonInputSchema
 >

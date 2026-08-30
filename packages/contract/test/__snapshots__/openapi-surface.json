@@ -95,6 +95,151 @@
     ]
   },
   {
+    "route": "GET /anime/{animeId}/episodes",
+    "operationId": "episode.listForAnime",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:animeId",
+      "query:limit?",
+      "query:cursor?",
+      "query:seasonId?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /anime/{animeId}/episodes",
+    "operationId": "episode.createForAnime",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:animeId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PUT /anime/{animeId}/episodes/order",
+    "operationId": "episode.reorderForAnime",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:animeId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "412",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /anime/{animeId}/seasons",
+    "operationId": "season.list",
+    "tags": [
+      "Anime seasons"
+    ],
+    "parameters": [
+      "path:animeId",
+      "query:limit?",
+      "query:cursor?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /anime/{animeId}/seasons",
+    "operationId": "season.create",
+    "tags": [
+      "Anime seasons"
+    ],
+    "parameters": [
+      "path:animeId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PUT /anime/{animeId}/seasons/order",
+    "operationId": "season.reorder",
+    "tags": [
+      "Anime seasons"
+    ],
+    "parameters": [
+      "path:animeId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "412",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
     "route": "GET /anime/{id}",
     "operationId": "anime.get",
     "tags": [
@@ -1241,6 +1386,75 @@
     ]
   },
   {
+    "route": "GET /episodes/{id}",
+    "operationId": "episode.get",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PATCH /episodes/{id}",
+    "operationId": "episode.update",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /episodes/{id}",
+    "operationId": "episode.remove",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "204",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
     "route": "GET /genres",
     "operationId": "genre.list",
     "tags": [
@@ -1437,6 +1651,147 @@
       "403",
       "404",
       "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /seasons/{id}",
+    "operationId": "season.get",
+    "tags": [
+      "Anime seasons"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PATCH /seasons/{id}",
+    "operationId": "season.update",
+    "tags": [
+      "Anime seasons"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "DELETE /seasons/{id}",
+    "operationId": "season.remove",
+    "tags": [
+      "Anime seasons"
+    ],
+    "parameters": [
+      "path:id"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "204",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "GET /seasons/{seasonId}/episodes",
+    "operationId": "episode.listForSeason",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:seasonId",
+      "query:limit?",
+      "query:cursor?"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "POST /seasons/{seasonId}/episodes",
+    "operationId": "episode.createForSeason",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:seasonId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "201",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "422",
+      "429",
+      "500"
+    ]
+  },
+  {
+    "route": "PUT /seasons/{seasonId}/episodes/order",
+    "operationId": "episode.reorderForSeason",
+    "tags": [
+      "Anime episodes"
+    ],
+    "parameters": [
+      "path:seasonId"
+    ],
+    "requestBody": [
+      "application/json"
+    ],
+    "responses": [
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "409",
+      "412",
       "422",
       "429",
       "500"

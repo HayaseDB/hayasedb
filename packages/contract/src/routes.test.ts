@@ -19,9 +19,14 @@ describe('collectRoutes', () => {
     expect(apiKeyRoutes.every((r) => r.method === 'GET')).toBe(true)
     expect(apiKeyRoutes.map((r) => r.path).sort()).toEqual([
       '/anime',
+      '/anime/{animeId}/episodes',
+      '/anime/{animeId}/seasons',
       '/anime/{id}',
+      '/episodes/{id}',
       '/genres',
       '/genres/{id}',
+      '/seasons/{id}',
+      '/seasons/{seasonId}/episodes',
       '/stats',
       '/version',
     ])
