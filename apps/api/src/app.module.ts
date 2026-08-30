@@ -34,6 +34,7 @@ import { MAILER } from './mail/mail.constants'
 import { AccountModule } from './modules/account/account.module'
 import { AuthApiModule } from './modules/auth/auth.module'
 import { AnimeModule } from './modules/anime/anime.module'
+import { EpisodeModule } from './modules/episode/episode.module'
 import { GenreModule } from './modules/genre/genre.module'
 import { ModerationModule } from './modules/moderation/moderation.module'
 import { HealthModule } from './modules/health/health.module'
@@ -102,6 +103,7 @@ const orpcLogger = new Logger('ORPC')
     AccountModule,
     AuthApiModule,
     AnimeModule,
+    EpisodeModule,
     GenreModule,
     ModerationModule,
   ],

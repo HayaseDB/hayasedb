@@ -8,6 +8,10 @@ import { preferredLocalized } from '../localization'
 import { MediaService } from '../media/media.service'
 import { collectDocumentRefs, type KindedDocument } from './diff'
 
+function titleCase(value: string): string {
+  return value.charAt(0) + value.slice(1).toLowerCase()
+}
+
 type RefResolver = (
   db: Database,
   ids: string[],
@@ -114,6 +118,47 @@ export class DisplayService {
         (row) => row.title,
       )
       for (const row of rows) labels[row.id] ??= row.slug
+      return labels
+    },
+    animeSeason: async (db, ids, acceptLanguage) => {
+      const rows = await db
+        .select({
+          id: schema.animeSeason.id,
+          kind: schema.animeSeason.kind,
+          number: schema.animeSeason.number,
+          position: schema.animeSeason.position,
+          title: schema.animeSeasonTranslation.title,
+          locale: schema.animeSeasonTranslation.locale,
+          original: schema.animeSeasonTranslation.original,
+        })
+        .from(schema.animeSeason)
+        .leftJoin(
+          schema.animeSeasonTranslation,
+          eq(schema.animeSeasonTranslation.seasonId, schema.animeSeason.id),
+        )
+        .where(inArray(schema.animeSeason.id, ids))
+
+      const labels = pickLabels(
+        rows.flatMap((row) =>
+          row.locale === null || row.title === null
+            ? []
+            : [
+                {
+                  id: row.id,
+                  locale: row.locale,
+                  title: row.title,
+                  original: row.original ?? false,
+                },
+              ],
+        ),
+        acceptLanguage,
+        (row) => row.title,
+      )
+      for (const row of rows) {
+        labels[row.id] ??= `${titleCase(row.kind)} ${
+          row.number ?? row.position + 1
+        }`
+      }
       return labels
     },
   }

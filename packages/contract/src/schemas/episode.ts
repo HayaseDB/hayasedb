@@ -113,7 +113,7 @@ export const createAnimeSeasonInputSchema = animeSeasonDocumentSchema
   .extend({ translations: localizedTitleListSchema.optional() })
 
 export const updateAnimeSeasonInputSchema = animeSeasonDocumentPatchSchema
-  .omit({ position: true, translations: true })
+  .omit({ position: true })
   .extend({ id: idSchema })
 
 export const createAnimeEpisodeFieldsSchema = animeEpisodeDocumentBaseSchema
@@ -127,7 +127,7 @@ export const createAnimeEpisodeForSeasonInputSchema =
   createAnimeEpisodeFieldsSchema.extend({ seasonId: idSchema })
 
 export const updateAnimeEpisodeInputSchema = animeEpisodeDocumentPatchSchema
-  .omit({ animeId: true, seasonId: true, position: true, translations: true })
+  .omit({ animeId: true, seasonId: true, position: true })
   .extend({ id: idSchema })
 
 export const reorderAnimeSeasonsInputSchema = orderInputSchema.extend({

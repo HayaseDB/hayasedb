@@ -9,6 +9,7 @@ import {
   lockChangeset,
   lockPendingChangeset,
 } from './changeset-guards'
+import { findStructureConflicts } from './anime-structure'
 import { entityHandler, type Tx } from './registry'
 import { pickDocumentKeys } from './diff'
 import { RevisionService } from './revision.service'
@@ -23,6 +24,12 @@ export interface RevertChangeDraft {
   baseRev: number | null
   payload: Record<string, unknown>
   oldValues?: Record<string, unknown> | null
+}
+
+export class StructureConflictError extends Error {
+  constructor(readonly problems: string[]) {
+    super(problems.join('\n'))
+  }
 }
 
 export function isUniqueViolation(error: unknown): boolean {
@@ -272,11 +279,63 @@ export class ChangesetApplyService {
         .where(eq(schema.change.id, change.id))
     }
 
+    const structureProblems = await findStructureConflicts(
+      tx,
+      await this.affectedAnimeIds(tx, changes),
+    )
+    if (structureProblems.length > 0) {
+      throw new StructureConflictError(structureProblems)
+    }
+
     await tx
       .update(schema.changeset)
       .set({ status: 'approved', decidedAt: new Date(), decidedById })
       .where(eq(schema.changeset.id, cs.id))
     return { result: 'applied' }
+  }
+
+  private async affectedAnimeIds(
+    tx: Tx,
+    changes: ReadonlyArray<{ entityKind: EntityKind; entityId: string }>,
+  ): Promise<string[]> {
+    const seasonIds = changes
+      .filter((change) => change.entityKind === 'animeSeason')
+      .map((change) => change.entityId)
+    const episodeIds = changes
+      .filter((change) => change.entityKind === 'animeEpisode')
+      .map((change) => change.entityId)
+    if (seasonIds.length === 0 && episodeIds.length === 0) return []
+
+    const [seasons, episodes] = await Promise.all([
+      seasonIds.length > 0
+        ? tx
+            .select({ animeId: schema.animeSeason.animeId })
+            .from(schema.animeSeason)
+            .where(inArray(schema.animeSeason.id, seasonIds))
+        : [],
+      episodeIds.length > 0
+        ? tx
+            .select({
+              animeId: schema.animeEpisode.animeId,
+              seasonAnimeId: schema.animeSeason.animeId,
+            })
+            .from(schema.animeEpisode)
+            .leftJoin(
+              schema.animeSeason,
+              eq(schema.animeSeason.id, schema.animeEpisode.seasonId),
+            )
+            .where(inArray(schema.animeEpisode.id, episodeIds))
+        : [],
+    ])
+
+    return [
+      ...seasons.map((row) => row.animeId),
+      ...episodes.flatMap((row) =>
+        [row.animeId, row.seasonAnimeId].filter(
+          (id): id is string => id !== null,
+        ),
+      ),
+    ]
   }
 
   private async withUniqueViolationBackstop(
@@ -287,6 +346,9 @@ export class ChangesetApplyService {
     try {
       return await attempt()
     } catch (error) {
+      if (error instanceof StructureConflictError) {
+        return this.recordConflict(changesetId(), decidedById, error.problems)
+      }
       if (!isUniqueViolation(error)) throw error
 
       const id = changesetId()
@@ -313,6 +375,24 @@ export class ChangesetApplyService {
       })
       return { result: 'conflict', messages: [message] }
     }
+  }
+
+  private async recordConflict(
+    changesetId: string,
+    decidedById: string,
+    messages: string[],
+  ): Promise<ApplyResult> {
+    if (changesetId) {
+      await this.db.insert(schema.changesetMessage).values({
+        changesetId,
+        authorId: decidedById,
+        kind: 'system',
+        body: `Approval blocked by conflicts:\n${messages
+          .map((m) => `- ${m}`)
+          .join('\n')}`,
+      })
+    }
+    return { result: 'conflict', messages }
   }
 
   async revertChangeset(

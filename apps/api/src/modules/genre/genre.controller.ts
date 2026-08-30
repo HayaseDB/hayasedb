@@ -4,24 +4,18 @@ import { implement } from '@orpc/server'
 import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { requireAdminUser } from '../../auth/require-user'
-import type { ORPCContext } from '../../orpc/context'
+import { negotiatedLanguage } from '../localization'
 import { GenreService } from './genre.service'
 
 @Controller()
 export class GenreController {
   constructor(private readonly genres: GenreService) {}
 
-  private language(context: ORPCContext): string | undefined {
-    context.resHeaders?.append('Vary', 'Accept-Language')
-    const value = context.request.headers['accept-language']
-    return typeof value === 'string' ? value : undefined
-  }
-
   @AllowAnonymous()
   @Implement(contract.genre.list)
   list() {
     return implement(contract.genre.list).handler(({ input, context }) =>
-      this.genres.list(input, this.language(context)),
+      this.genres.list(input, negotiatedLanguage(context)),
     )
   }
 
@@ -29,7 +23,7 @@ export class GenreController {
   @Implement(contract.genre.get)
   get() {
     return implement(contract.genre.get).handler(({ input, context }) =>
-      this.genres.getById(input.id, this.language(context)),
+      this.genres.getById(input.id, negotiatedLanguage(context)),
     )
   }
 

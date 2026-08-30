@@ -4,7 +4,7 @@ import { implement } from '@orpc/server'
 import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { isAdminRequest, requireAdminUser } from '../../auth/require-user'
-import type { ORPCContext } from '../../orpc/context'
+import { negotiatedLanguage } from '../localization'
 import { AnimeService } from './anime.service'
 import { MediaService } from '../media/media.service'
 
@@ -15,17 +15,11 @@ export class AnimeController {
     private readonly media: MediaService,
   ) {}
 
-  private language(context: ORPCContext): string | undefined {
-    context.resHeaders?.append('Vary', 'Accept-Language')
-    const value = context.request.headers['accept-language']
-    return typeof value === 'string' ? value : undefined
-  }
-
   @AllowAnonymous()
   @Implement(contract.anime.list)
   list() {
     return implement(contract.anime.list).handler(({ input, context }) => {
-      const acceptLanguage = this.language(context)
+      const acceptLanguage = negotiatedLanguage(context)
       return this.anime.list(input, {
         isAdmin: isAdminRequest(context.request),
         acceptLanguage,
@@ -37,7 +31,7 @@ export class AnimeController {
   @Implement(contract.anime.get)
   get() {
     return implement(contract.anime.get).handler(({ input, context }) => {
-      const acceptLanguage = this.language(context)
+      const acceptLanguage = negotiatedLanguage(context)
       return this.anime.getById(input.id, {
         includeDeleted: isAdminRequest(context.request),
         acceptLanguage,

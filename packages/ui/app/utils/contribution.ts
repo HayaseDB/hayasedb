@@ -35,6 +35,8 @@ export const CHANGESET_STATUS_COLORS: Record<ChangesetStatus, BadgeColor> = {
 
 export const ENTITY_KIND_LABELS: Record<EntityKind, string> = {
   anime: 'Anime',
+  animeSeason: 'Season',
+  animeEpisode: 'Episode',
   genre: 'Genre',
 }
 
@@ -76,11 +78,47 @@ export const GENRE_FIELD_LABELS = {
   translations: 'Localized names',
 } satisfies Record<string, string>
 
+export const ANIME_SEASON_FIELD_LABELS = {
+  animeId: 'Anime',
+  kind: 'Kind',
+  number: 'Number',
+  position: 'Position',
+  translations: 'Localized titles',
+} satisfies Record<string, string>
+
+export const ANIME_EPISODE_FIELD_LABELS = {
+  animeId: 'Anime',
+  seasonId: 'Season',
+  number: 'Number',
+  position: 'Position',
+  type: 'Type',
+  status: 'Status',
+  airDate: 'Air date',
+  durationSeconds: 'Duration',
+  stillMediaId: 'Still image',
+  translations: 'Localized titles',
+} satisfies Record<string, string>
+
+const ANIME_SEASON_ENUM_LABELS: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = {
+  kind: ANIME_SEASON_KIND_LABELS,
+}
+
+const ANIME_EPISODE_ENUM_LABELS: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = {
+  type: ANIME_EPISODE_TYPE_LABELS,
+  status: ANIME_EPISODE_STATUS_LABELS,
+}
+
 const ENTITY_FIELD_LABELS: Record<
   EntityKind,
   Readonly<Record<string, string>>
 > = {
   anime: ANIME_FIELD_LABELS,
+  animeSeason: ANIME_SEASON_FIELD_LABELS,
+  animeEpisode: ANIME_EPISODE_FIELD_LABELS,
   genre: GENRE_FIELD_LABELS,
 }
 
@@ -89,6 +127,8 @@ const ENTITY_ENUM_LABELS: Record<
   Readonly<Record<string, Readonly<Record<string, string>>>>
 > = {
   anime: ANIME_ENUM_LABELS,
+  animeSeason: ANIME_SEASON_ENUM_LABELS,
+  animeEpisode: ANIME_EPISODE_ENUM_LABELS,
   genre: {},
 }
 

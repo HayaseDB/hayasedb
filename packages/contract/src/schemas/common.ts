@@ -25,10 +25,12 @@ export const cursorPaginationMetaSchema = paginationMetaSchema.extend({
   nextCursor: z.string().nullable(),
 })
 
+export const MAX_ORDERED_ITEMS = 500
+
 export const orderEtagSchema = z.string().min(1)
 
 export const orderInputSchema = z.object({
-  orderedIds: z.array(idSchema).max(500),
+  orderedIds: z.array(idSchema).max(MAX_ORDERED_ITEMS),
   expectedOrderEtag: orderEtagSchema,
 })
 

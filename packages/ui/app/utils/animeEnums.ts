@@ -9,6 +9,9 @@ import {
   type AnimeSortKey,
   type AnimeStatus,
   type AnimeMediaType,
+  type AnimeSeasonKind,
+  type AnimeEpisodeType,
+  type AnimeEpisodeStatus,
 } from '@hayasedb/domain'
 
 export const MEDIA_ACCEPT = MEDIA_MIME_TYPES.join(',')
@@ -128,3 +131,35 @@ export const animeSortOptions = ANIME_SORT_KEYS.map((value) => ({
   value,
   label: ANIME_SORT_LABELS[value],
 }))
+
+export const ANIME_SEASON_KIND_LABELS: Record<AnimeSeasonKind, string> = {
+  SEASON: 'Season',
+  COUR: 'Cour',
+  PART: 'Part',
+  ARC: 'Arc',
+  SPECIALS: 'Specials',
+}
+
+export const ANIME_EPISODE_TYPE_LABELS: Record<AnimeEpisodeType, string> = {
+  REGULAR: 'Episode',
+  SPECIAL: 'Special',
+  RECAP: 'Recap',
+  PROMO: 'Promo',
+}
+
+export const ANIME_EPISODE_STATUS_LABELS: Record<AnimeEpisodeStatus, string> = {
+  UPCOMING: 'Upcoming',
+  RELEASED: 'Released',
+  DELAYED: 'Delayed',
+  CANCELLED: 'Cancelled',
+}
+
+export const ANIME_EPISODE_STATUS_COLORS: Record<
+  AnimeEpisodeStatus,
+  'neutral' | 'success' | 'warning' | 'error'
+> = {
+  UPCOMING: 'neutral',
+  RELEASED: 'success',
+  DELAYED: 'warning',
+  CANCELLED: 'error',
+}

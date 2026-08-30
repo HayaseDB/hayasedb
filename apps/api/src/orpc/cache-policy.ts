@@ -7,6 +7,15 @@ import {
   computeETag,
 } from '../http/cache-headers'
 
+function mergeVary(existing: string | null): string {
+  const seen = new Map<string, string>()
+  for (const value of [VARY_VALUE, existing ?? ''].join(',').split(',')) {
+    const field = value.trim()
+    if (field) seen.set(field.toLowerCase(), field)
+  }
+  return [...seen.values()].join(', ')
+}
+
 export const applyCachePolicy: StandardHandlerInterceptor<ORPCContext> = async (
   options,
 ) => {
@@ -23,7 +32,7 @@ export const applyCachePolicy: StandardHandlerInterceptor<ORPCContext> = async (
   if (response.status !== 200) return response
 
   resHeaders.set('cache-control', buildCacheControl(policy))
-  resHeaders.set('vary', VARY_VALUE)
+  resHeaders.set('vary', mergeVary(resHeaders.get('vary')))
 
   const etag = computeETag(response.body)
   if (etag) resHeaders.set('etag', etag)

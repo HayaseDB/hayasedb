@@ -141,6 +141,13 @@
       "when": 1788246964763,
       "tag": "0019_anime_seasons_and_episodes",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788248200245,
+      "tag": "0020_structure_entity_kinds",
+      "breakpoints": true
     }
   ]
 }

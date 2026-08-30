@@ -1,4 +1,9 @@
-export const ENTITY_KINDS = ['anime', 'genre'] as const
+export const ENTITY_KINDS = [
+  'anime',
+  'animeSeason',
+  'animeEpisode',
+  'genre',
+] as const
 export const CHANGESET_STATUSES = [
   'draft',
   'pending',

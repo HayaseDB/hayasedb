@@ -1,6 +1,8 @@
 import { ORPCError } from '@orpc/client'
 import type {
   animeDocumentSchema,
+  animeEpisodeDocumentSchema,
+  animeSeasonDocumentSchema,
   createAnimeInputSchema,
 } from '@hayasedb/contract'
 import type * as z from 'zod'
@@ -46,6 +48,58 @@ export const animeCreate = (
     ],
     genreIds: [],
     media: [],
+    ...extra,
+  },
+})
+
+export const seasonCreate = (
+  entityId: string,
+  animeId: string,
+  position: number,
+  extra: Partial<z.input<typeof animeSeasonDocumentSchema>> = {},
+): ChangeInput => ({
+  op: 'create',
+  entityKind: 'animeSeason',
+  entityId,
+  payload: {
+    animeId,
+    kind: 'SEASON',
+    number: String(position + 1),
+    position,
+    translations: [
+      { locale: 'en', title: `Season ${position + 1}`, original: true },
+    ],
+    ...extra,
+  },
+})
+
+export const episodeCreate = (
+  entityId: string,
+  owner: { animeId: string } | { seasonId: string },
+  position: number,
+  extra: Partial<z.input<typeof animeEpisodeDocumentSchema>> = {},
+): ChangeInput => ({
+  op: 'create',
+  entityKind: 'animeEpisode',
+  entityId,
+  payload: {
+    animeId: 'animeId' in owner ? owner.animeId : null,
+    seasonId: 'seasonId' in owner ? owner.seasonId : null,
+    number: String(position + 1),
+    position,
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: null,
+    durationSeconds: null,
+    stillMediaId: null,
+    translations: [
+      {
+        locale: 'en',
+        title: `Episode ${position + 1}`,
+        overview: null,
+        original: true,
+      },
+    ],
     ...extra,
   },
 })

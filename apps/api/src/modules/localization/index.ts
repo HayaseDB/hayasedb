@@ -6,4 +6,5 @@ export {
 } from './locale-ranking'
 export type { LocaleRanking } from './locale-ranking'
 export { localeRankSql } from './locale-rank-sql'
+export { negotiatedLanguage } from './negotiate'
 export { preferredLocalized, requirePreferredLocalized } from './preferred'

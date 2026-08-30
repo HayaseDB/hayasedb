@@ -31,8 +31,12 @@ export function changeApplyRank(change: {
   const createRank: Record<EntityKind, number> = {
     genre: 0,
     anime: 10,
+    animeSeason: 20,
+    animeEpisode: 30,
   }
   const deleteRank: Record<EntityKind, number> = {
+    animeEpisode: 70,
+    animeSeason: 80,
     anime: 90,
     genre: 100,
   }
