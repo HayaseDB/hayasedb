@@ -15,7 +15,7 @@
   "dependencies": {
     "@eslint/js": "catalog:",
     "eslint-config-prettier": "catalog:",
-    "eslint-plugin-turbo": "^2.10.11",
+    "eslint-plugin-turbo": "^2.10.12",
     "typescript-eslint": "catalog:"
   },
   "peerDependencies": {
