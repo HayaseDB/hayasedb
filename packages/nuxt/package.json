@@ -14,9 +14,9 @@
   "dependencies": {
     "@hayasedb/contract": "workspace:*",
     "@hayasedb/domain": "workspace:*",
-    "@iconify-json/lucide": "^1.2.124",
+    "@iconify-json/lucide": "^1.2.126",
     "@iconify-json/simple-icons": "^1.2.91",
-    "@nuxt/ui": "4.10.0",
+    "@nuxt/ui": "4.11.0",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
