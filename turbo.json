@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.v2.json",
-  "ui": "stream",
+  "ui": "tui",
   "concurrency": "16",
   "globalDependencies": [
     ".nvmrc",
