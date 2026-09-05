@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 const layerDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
+  extends: ['@hayasedb/nuxt'],
   modules: ['@nuxt/ui', '@nuxt/eslint', 'motion-v/nuxt'],
   components: [{ path: join(layerDir, 'app/components'), pathPrefix: false }],
   alias: {
