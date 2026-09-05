@@ -1,0 +1,339 @@
+<script setup lang="ts">
+import type { AnimeStructureState, EpisodeDraft, SeasonDraft } from '#imports'
+
+const state = defineModel<AnimeStructureState>('state', { required: true })
+
+withDefaults(
+  defineProps<{
+    loading?: boolean
+    changeCount?: number
+    changeBudget?: number
+  }>(),
+  { loading: false, changeCount: 0, changeBudget: 0 },
+)
+
+const visibleSeasons = computed(() =>
+  state.value.seasons.filter((season) => !season.removed),
+)
+const visibleEpisodes = computed(() =>
+  state.value.episodes.filter((episode) => !episode.removed),
+)
+
+const hasSeasons = computed(() => visibleSeasons.value.length > 0)
+const hasEpisodes = computed(() => visibleEpisodes.value.length > 0)
+
+const canAddSeason = computed(() => !hasEpisodes.value)
+const canAddEpisode = computed(() => !hasSeasons.value)
+
+const expanded = ref<string[]>([])
+
+function addSeason() {
+  const draft = newSeasonDraft()
+  state.value.seasons.push(draft)
+  expanded.value = [...expanded.value, draft.id]
+}
+
+function addEpisode(season?: SeasonDraft) {
+  const draft = newEpisodeDraft()
+  if (season) season.episodes.push(draft)
+  else state.value.episodes.push(draft)
+}
+
+function removeSeason(season: SeasonDraft) {
+  if (season.isNew) {
+    state.value.seasons = state.value.seasons.filter((item) => item !== season)
+    return
+  }
+  season.removed = true
+}
+
+function removeEpisode(episode: EpisodeDraft, season?: SeasonDraft) {
+  const list = season ? season.episodes : state.value.episodes
+  if (episode.isNew) {
+    const index = list.indexOf(episode)
+    if (index >= 0) list.splice(index, 1)
+    return
+  }
+  episode.removed = true
+}
+
+function restoreSeason(season: SeasonDraft) {
+  season.removed = false
+}
+
+function restoreEpisode(episode: EpisodeDraft) {
+  episode.removed = false
+}
+
+function move<T>(list: T[], index: number, delta: number) {
+  const target = index + delta
+  if (target < 0 || target >= list.length) return
+  const [moved] = list.splice(index, 1)
+  list.splice(target, 0, moved!)
+}
+
+const removedSeasons = computed(() =>
+  state.value.seasons.filter((season) => season.removed && !season.isNew),
+)
+const removedEpisodes = computed(() => [
+  ...state.value.episodes.filter((item) => item.removed && !item.isNew),
+  ...state.value.seasons.flatMap((season) =>
+    season.episodes.filter((item) => item.removed && !item.isNew),
+  ),
+])
+
+const seasonLabel = (season: SeasonDraft) => {
+  const kind = ANIME_SEASON_KIND_LABELS[season.kind]
+  const title = season.translations.find((item) => item.original)?.title
+  return title?.trim() || (season.number ? `${kind} ${season.number}` : kind)
+}
+
+const episodeLabel = (episode: EpisodeDraft) => {
+  const marker =
+    episode.type === 'REGULAR'
+      ? (episode.number ?? '–')
+      : `${ANIME_EPISODE_TYPE_LABELS[episode.type]}${episode.number ? ` ${episode.number}` : ''}`
+  const title = episode.translations.find((item) => item.original)?.title
+  return `${marker} · ${title?.trim() || 'Untitled'}`
+}
+</script>
+
+<template>
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <div>
+        <p class="text-highlighted text-sm font-medium">Episodes & seasons</p>
+        <p class="text-muted text-xs">
+          An anime holds either seasons or standalone episodes, never both.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <UButton
+          v-if="canAddSeason"
+          type="button"
+          label="Add season"
+          icon="i-lucide-layers"
+          color="neutral"
+          variant="soft"
+          size="sm"
+          @click="addSeason()"
+        />
+        <UButton
+          v-if="canAddEpisode"
+          type="button"
+          label="Add episode"
+          icon="i-lucide-plus"
+          color="neutral"
+          variant="soft"
+          size="sm"
+          @click="addEpisode()"
+        />
+      </div>
+    </div>
+
+    <UAlert
+      v-if="changeBudget > 0 && changeCount > changeBudget"
+      icon="i-lucide-triangle-alert"
+      color="warning"
+      variant="subtle"
+      title="Too many changes for one submission"
+      :description="`This edit would submit ${changeCount} changes, over the limit of ${changeBudget}. Remove some before submitting.`"
+    />
+
+    <div v-if="loading" class="flex flex-col gap-2">
+      <USkeleton v-for="index in 3" :key="index" class="h-12 w-full" />
+    </div>
+
+    <UAlert
+      v-else-if="
+        !hasSeasons &&
+        !hasEpisodes &&
+        removedSeasons.length === 0 &&
+        removedEpisodes.length === 0
+      "
+      icon="i-lucide-list-video"
+      color="neutral"
+      variant="subtle"
+      title="No episodes yet"
+      description="Add seasons for a multi-cour show, or standalone episodes for a single run."
+    />
+
+    <UAccordion
+      v-if="hasSeasons"
+      v-model="expanded"
+      type="multiple"
+      :items="visibleSeasons.map((season) => ({ value: season.id, season }))"
+      :ui="{ trigger: 'gap-3' }"
+    >
+      <template #default="{ item }">
+        <div class="flex min-w-0 flex-1 items-center gap-2 text-left">
+          <span class="text-highlighted truncate text-sm font-medium">
+            {{ seasonLabel(item.season) }}
+          </span>
+          <UBadge
+            v-if="item.season.isNew"
+            label="New"
+            color="info"
+            variant="subtle"
+            size="sm"
+          />
+          <UBadge
+            :label="`${item.season.episodes.filter((e: EpisodeDraft) => !e.removed).length}`"
+            color="neutral"
+            variant="subtle"
+            size="sm"
+          />
+        </div>
+      </template>
+
+      <template #trailing="{ item }">
+        <div class="flex items-center gap-1" @click.stop>
+          <UButton
+            type="button"
+            icon="i-lucide-chevron-up"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            square
+            :disabled="visibleSeasons.indexOf(item.season) === 0"
+            aria-label="Move season up"
+            @click="move(state.seasons, state.seasons.indexOf(item.season), -1)"
+          />
+          <UButton
+            type="button"
+            icon="i-lucide-chevron-down"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            square
+            :disabled="
+              visibleSeasons.indexOf(item.season) === visibleSeasons.length - 1
+            "
+            aria-label="Move season down"
+            @click="move(state.seasons, state.seasons.indexOf(item.season), 1)"
+          />
+          <UButton
+            type="button"
+            icon="i-lucide-trash-2"
+            color="error"
+            variant="ghost"
+            size="xs"
+            square
+            aria-label="Remove season"
+            @click="removeSeason(item.season)"
+          />
+        </div>
+      </template>
+
+      <template #content="{ item }">
+        <div class="flex flex-col gap-3 pb-3">
+          <AnimeSeasonFields :season="item.season" />
+
+          <div class="flex flex-col gap-1">
+            <AnimeEpisodeFields
+              v-for="(episode, index) in item.season.episodes.filter(
+                (e: EpisodeDraft) => !e.removed,
+              )"
+              :key="episode.id"
+              :episode="episode"
+              :label="episodeLabel(episode)"
+              :is-first="index === 0"
+              :is-last="
+                index ===
+                item.season.episodes.filter((e: EpisodeDraft) => !e.removed)
+                  .length -
+                  1
+              "
+              @move-up="
+                move(
+                  item.season.episodes,
+                  item.season.episodes.indexOf(episode),
+                  -1,
+                )
+              "
+              @move-down="
+                move(
+                  item.season.episodes,
+                  item.season.episodes.indexOf(episode),
+                  1,
+                )
+              "
+              @remove="removeEpisode(episode, item.season)"
+            />
+
+            <UButton
+              type="button"
+              label="Add episode"
+              icon="i-lucide-plus"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              class="self-start"
+              @click="addEpisode(item.season)"
+            />
+          </div>
+        </div>
+      </template>
+    </UAccordion>
+
+    <div v-if="hasEpisodes" class="flex flex-col gap-1">
+      <AnimeEpisodeFields
+        v-for="(episode, index) in visibleEpisodes"
+        :key="episode.id"
+        :episode="episode"
+        :label="episodeLabel(episode)"
+        :is-first="index === 0"
+        :is-last="index === visibleEpisodes.length - 1"
+        bordered
+        @move-up="move(state.episodes, state.episodes.indexOf(episode), -1)"
+        @move-down="move(state.episodes, state.episodes.indexOf(episode), 1)"
+        @remove="removeEpisode(episode)"
+      />
+    </div>
+
+    <div
+      v-if="removedSeasons.length || removedEpisodes.length"
+      class="border-default flex flex-col gap-2 rounded-lg border border-dashed p-3"
+    >
+      <p class="text-muted text-xs font-medium">
+        Will be deleted when you submit
+      </p>
+      <div
+        v-for="season in removedSeasons"
+        :key="season.id"
+        class="flex items-center gap-2"
+      >
+        <span class="text-muted min-w-0 flex-1 truncate text-sm line-through">
+          {{ seasonLabel(season) }}
+        </span>
+        <UButton
+          type="button"
+          label="Undo"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          aria-label="Restore season"
+          @click="restoreSeason(season)"
+        />
+      </div>
+      <div
+        v-for="episode in removedEpisodes"
+        :key="episode.id"
+        class="flex items-center gap-2"
+      >
+        <span class="text-muted min-w-0 flex-1 truncate text-sm line-through">
+          {{ episodeLabel(episode) }}
+        </span>
+        <UButton
+          type="button"
+          label="Undo"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          aria-label="Restore episode"
+          @click="restoreEpisode(episode)"
+        />
+      </div>
+    </div>
+  </div>
+</template>

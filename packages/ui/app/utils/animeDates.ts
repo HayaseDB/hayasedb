@@ -13,3 +13,12 @@ export function formatAnimeDateRange(
   if (from && to) return from === to ? from : `${from} – ${to}`
   return from ?? to
 }
+
+export function formatEpisodeDuration(seconds: number | null): string | null {
+  if (!seconds || seconds <= 0) return null
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`
+}

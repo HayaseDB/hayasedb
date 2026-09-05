@@ -1,17 +1,20 @@
 import {
+  ANIME_EPISODE_STATUSES,
+  ANIME_EPISODE_TYPES,
   ANIME_FORMATS,
   ANIME_RELATION_VIEW_KINDS,
+  ANIME_SEASON_KINDS,
   ANIME_SORT_KEYS,
   ANIME_STATUSES,
   MEDIA_MIME_TYPES,
+  type AnimeEpisodeStatus,
+  type AnimeEpisodeType,
   type AnimeFormat,
+  type AnimeMediaType,
   type AnimeRelationViewKind,
+  type AnimeSeasonKind,
   type AnimeSortKey,
   type AnimeStatus,
-  type AnimeMediaType,
-  type AnimeSeasonKind,
-  type AnimeEpisodeType,
-  type AnimeEpisodeStatus,
 } from '@hayasedb/domain'
 
 export const MEDIA_ACCEPT = MEDIA_MIME_TYPES.join(',')
@@ -163,3 +166,20 @@ export const ANIME_EPISODE_STATUS_COLORS: Record<
   DELAYED: 'warning',
   CANCELLED: 'error',
 }
+
+export const animeSeasonKindOptions = ANIME_SEASON_KINDS.map((value) => ({
+  value,
+  label: ANIME_SEASON_KIND_LABELS[value],
+}))
+
+export const animeEpisodeTypeOptions = ANIME_EPISODE_TYPES.map((value) => ({
+  value,
+  label: ANIME_EPISODE_TYPE_LABELS[value],
+}))
+
+export const animeEpisodeStatusOptions = ANIME_EPISODE_STATUSES.map(
+  (value) => ({
+    value,
+    label: ANIME_EPISODE_STATUS_LABELS[value],
+  }),
+)
