@@ -5,7 +5,9 @@ export function useInternalApiHeaders(): Record<string, string> {
   const { internalToken } = useRuntimeConfig()
   const event = useRequestEvent()
 
-  const headers: Record<string, string> = { ...useRequestHeaders(['cookie']) }
+  const headers: Record<string, string> = {
+    ...useRequestHeaders(['accept-language', 'cookie']),
+  }
   const clientIp = event && getRequestIP(event, { xForwardedFor: true })
   if (clientIp) headers['x-forwarded-for'] = clientIp
   if (internalToken) headers[INTERNAL_TOKEN_HEADER] = internalToken

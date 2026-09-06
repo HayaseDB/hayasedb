@@ -1,7 +1,7 @@
 const EXACT_RANK_BASE = 0
 const LANGUAGE_RANK_BASE = 100
-const ORIGINAL_RANK = 200
-const ENGLISH_RANK = 201
+const ENGLISH_RANK = 200
+const ORIGINAL_RANK = 201
 const FALLBACK_RANK = 202
 
 export interface LocaleRanking {
@@ -64,8 +64,8 @@ export function rankOf(
   const languageIndex = ranking.languages.indexOf(languageOf(candidate.locale))
   if (languageIndex >= 0) return LANGUAGE_RANK_BASE + languageIndex
 
-  if (candidate.original) return ORIGINAL_RANK
   if (candidate.locale === 'en') return ENGLISH_RANK
+  if (candidate.original) return ORIGINAL_RANK
   return FALLBACK_RANK
 }
 

@@ -18,8 +18,8 @@ export function localeRankSql(
       (value, index) =>
         sql`when split_part(${locale}, '-', 1) = ${value} then ${LOCALE_RANK_BASES.language + index}`,
     ),
-    sql`when ${original} then ${LOCALE_RANK_BASES.original}`,
     sql`when ${locale} = 'en' then ${LOCALE_RANK_BASES.english}`,
+    sql`when ${original} then ${LOCALE_RANK_BASES.original}`,
   ]
 
   return sql<number>`case ${sql.join(cases, sql` `)} else ${LOCALE_RANK_BASES.fallback} end`
