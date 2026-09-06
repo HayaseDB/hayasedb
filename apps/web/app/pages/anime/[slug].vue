@@ -26,6 +26,14 @@ const detail = computed(() => anime.value!)
 
 const displayTitle = computed(() => detail.value.title.title)
 
+const {
+  seasons,
+  episodes,
+  seasonEpisodes,
+  hasStructure,
+  pending: structurePending,
+} = await useAnimeStructure(computed(() => detail.value.id))
+
 const banner = computed(() =>
   detail.value.media.find((m) => m.type === 'BANNER'),
 )
@@ -209,6 +217,15 @@ useSchemaOrg([
             <AnimeRelationList
               :relations="detail.relations"
               :to="(anime: { slug: string }) => `/anime/${anime.slug}`"
+            />
+          </div>
+
+          <div v-if="structurePending || hasStructure" class="mt-8">
+            <AnimeEpisodeList
+              :seasons="seasons"
+              :episodes="episodes"
+              :season-episodes="seasonEpisodes"
+              :loading="structurePending"
             />
           </div>
 

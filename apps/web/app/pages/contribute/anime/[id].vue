@@ -21,22 +21,28 @@ const from = computed(() =>
 )
 
 const { data: prefill } = await useAsyncData(
-  () => `contribute-edit-prefill-${from.value ?? 'none'}`,
+  () => `contribute-edit-prefill-${id.value}-${from.value ?? 'none'}`,
   async () => {
     if (!from.value) return null
     const changeset = await api.changeset.get({ id: from.value })
-    const animeChange = changeset.changes.find(
-      (change) => change.entityKind === 'anime',
-    )
-    if (
-      animeChange?.op !== 'update' ||
-      animeChange.entityId !== anime.value?.id ||
-      !isSupersedableStatus(changeset.status)
-    ) {
-      return null
+    if (!isSupersedableStatus(changeset.status)) return null
+
+    const animeChange = changesetAnimeChange(changeset.changes)
+    if (animeChange) {
+      const targetsThis =
+        animeChange.op === 'update' && animeChange.entityId === id.value
+      return targetsThis ? changeset : null
     }
-    return changeset
+
+    const directAnimeId = changesetAnimeId(changeset.changes)
+    if (directAnimeId) return directAnimeId === id.value ? changeset : null
+
+    const seasonId = changesetSeasonId(changeset.changes)
+    if (!seasonId) return null
+    const season = await api.season.get({ id: seasonId })
+    return season.animeId === id.value ? changeset : null
   },
+  { watch: [id, from] },
 )
 
 const title = computed(

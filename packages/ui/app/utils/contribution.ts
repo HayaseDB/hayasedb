@@ -225,6 +225,31 @@ function sameValue(
   return identity(a, meta, positional) === identity(b, meta, positional)
 }
 
+export function changesetAnimeChange(
+  changes: ChangeDetail[],
+): ChangeDetail | undefined {
+  return changes.find((change) => change.entityKind === 'anime')
+}
+
+export function changesetAnimeId(changes: ChangeDetail[]): string | null {
+  const animeChange = changesetAnimeChange(changes)
+  if (animeChange) return animeChange.entityId
+  for (const change of changes) {
+    const value = change.payload.animeId
+    if (typeof value === 'string') return value
+  }
+  return null
+}
+
+export function changesetSeasonId(changes: ChangeDetail[]): string | null {
+  for (const change of changes) {
+    if (change.entityKind === 'animeSeason') return change.entityId
+    const value = change.payload.seasonId
+    if (typeof value === 'string') return value
+  }
+  return null
+}
+
 export function buildDiffRows(change: ChangeDetail): ChangeDiffRow[] {
   const isDelete = change.op === 'delete'
   const source = isDelete ? (change.oldValues ?? {}) : change.payload

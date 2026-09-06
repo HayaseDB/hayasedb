@@ -4,14 +4,17 @@ import {
   type EpisodeCollection,
 } from '../utils/animeStructure'
 
-export function useAnimeStructure(animeId: Ref<string>) {
+export async function useAnimeStructure(animeId: Ref<string>) {
   const api = useApiClient()
 
-  const { data, status, error, refresh } = useAsyncData(
+  const structureData = useAsyncData(
     () => `anime-structure-${animeId.value}`,
     () => fetchAnimeStructure(api, animeId.value),
     { watch: [animeId], default: emptyAnimeStructure },
   )
+
+  const { data } = await structureData
+  const { status, error, refresh } = structureData
 
   const structure = computed(() => data.value ?? emptyAnimeStructure())
   const seasons = computed(() => structure.value.seasons.items)

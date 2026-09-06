@@ -4,53 +4,21 @@ import type { AnimeEpisode, AnimeSeason } from '@hayasedb/contract'
 const props = defineProps<{
   seasons: AnimeSeason[]
   episodes: AnimeEpisode[]
-  loadSeason: (seasonId: string) => Promise<AnimeEpisode[]>
+  seasonEpisodes: (seasonId: string) => AnimeEpisode[]
   loading?: boolean
 }>()
 
 const hasSeasons = computed(() => props.seasons.length > 0)
-
-const seasonEpisodes = ref<Record<string, AnimeEpisode[]>>({})
-const loadingSeasons = ref<Set<string>>(new Set())
-const failedSeasons = ref<Set<string>>(new Set())
-
-async function ensureSeason(seasonId: string) {
-  if (seasonEpisodes.value[seasonId] || loadingSeasons.value.has(seasonId))
-    return
-  loadingSeasons.value = new Set(loadingSeasons.value).add(seasonId)
-  const failed = new Set(failedSeasons.value)
-  failed.delete(seasonId)
-  failedSeasons.value = failed
-  try {
-    seasonEpisodes.value = {
-      ...seasonEpisodes.value,
-      [seasonId]: await props.loadSeason(seasonId),
-    }
-  } catch {
-    failedSeasons.value = new Set(failedSeasons.value).add(seasonId)
-  } finally {
-    const next = new Set(loadingSeasons.value)
-    next.delete(seasonId)
-    loadingSeasons.value = next
-  }
-}
 
 const open = ref<string[]>([])
 watch(
   () => props.seasons,
   (seasons) => {
     const first = seasons[0]
-    if (first && open.value.length === 0) {
-      open.value = [first.id]
-      void ensureSeason(first.id)
-    }
+    if (first && open.value.length === 0) open.value = [first.id]
   },
   { immediate: true },
 )
-
-watch(open, (ids) => {
-  for (const id of ids) void ensureSeason(id)
-})
 
 const seasonLabel = (season: AnimeSeason) => {
   const kind = ANIME_SEASON_KIND_LABELS[season.kind]
@@ -96,27 +64,9 @@ const seasonMeta = (season: AnimeSeason) => {
       </template>
 
       <template #content="{ item }">
-        <div
-          v-if="loadingSeasons.has(item.season.id)"
-          class="flex flex-col gap-2 pb-3"
-        >
-          <USkeleton v-for="index in 3" :key="index" class="h-12 w-full" />
-        </div>
-
-        <UAlert
-          v-else-if="failedSeasons.has(item.season.id)"
-          color="error"
-          variant="subtle"
-          title="Could not load episodes"
-          :actions="[
-            { label: 'Retry', onClick: () => ensureSeason(item.season.id) },
-          ]"
-          class="mb-3"
-        />
-
-        <ul v-else-if="seasonEpisodes[item.season.id]?.length" class="pb-2">
+        <ul v-if="seasonEpisodes(item.season.id).length" class="pb-2">
           <AnimeEpisodeRow
-            v-for="episode in seasonEpisodes[item.season.id]"
+            v-for="episode in seasonEpisodes(item.season.id)"
             :key="episode.id"
             :episode="episode"
           />

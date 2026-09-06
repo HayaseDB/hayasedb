@@ -48,16 +48,26 @@ function confirmWithdraw() {
   })
 }
 
+const animeChange = computed(() => changesetAnimeChange(detail.value.changes))
+const directAnimeId = computed(() => changesetAnimeId(detail.value.changes))
+const seasonId = computed(() => changesetSeasonId(detail.value.changes))
+
+const { data: seasonAnimeId } = await useAsyncData(
+  () => `contribution-season-anime-${id.value}`,
+  async () => {
+    if (directAnimeId.value || !seasonId.value) return null
+    const season = await api.season.get({ id: seasonId.value })
+    return season.animeId
+  },
+  { watch: [id] },
+)
+
 const resubmitTo = computed(() => {
-  const change = detail.value.changes[0]
-  if (!change) return null
-  if (change.op === 'create') {
+  if (animeChange.value?.op === 'create') {
     return `/contribute/new?from=${detail.value.id}`
   }
-  if (change.op === 'update') {
-    return `/contribute/anime/${change.entityId}?from=${detail.value.id}`
-  }
-  return null
+  const target = directAnimeId.value ?? seasonAnimeId.value
+  return target ? `/contribute/anime/${target}?from=${detail.value.id}` : null
 })
 
 const canResubmit = computed(
