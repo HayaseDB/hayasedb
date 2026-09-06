@@ -8,6 +8,7 @@ export interface AnimeFormSubmit {
   changedFields: AnimeFormField[]
   relations: AnimeRelationInput
   commitMedia: (animeId: string) => Promise<void>
+  commitStructure?: (animeId: string) => Promise<void>
 }
 
 export function useAnimeActions() {
@@ -59,7 +60,13 @@ export function useAnimeActions() {
 
   async function update(
     anime: { id: string },
-    { data, changedFields, relations, commitMedia }: AnimeFormSubmit,
+    {
+      data,
+      changedFields,
+      relations,
+      commitMedia,
+      commitStructure,
+    }: AnimeFormSubmit,
   ): Promise<void> {
     const changed = new Set<string>(changedFields)
     const patch = Object.fromEntries(
@@ -72,6 +79,7 @@ export function useAnimeActions() {
       await applyRelations(anime.id, relations)
     }
     await commitMedia(anime.id)
+    await commitStructure?.(anime.id)
     toast.add({ title: 'Saved', color: 'success' })
   }
 
@@ -79,12 +87,14 @@ export function useAnimeActions() {
     data,
     relations,
     commitMedia,
+    commitStructure,
   }: AnimeFormSubmit): Promise<void> {
     const created = await api.anime.create(data)
     if (relations.edges.length > 0) {
       await applyRelations(created.id, { edges: relations.edges, baseline: [] })
     }
     await commitMedia(created.id)
+    await commitStructure?.(created.id)
     toast.add({ title: 'Anime created', color: 'success' })
     await router.push(`/anime/${created.id}`)
   }

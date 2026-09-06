@@ -72,9 +72,11 @@ export const changesetSummarySchema = z
   .min(3, 'Describe your change')
   .max(500, 'Summary is too long')
 
+export const MAX_CHANGES_PER_CHANGESET = 20
+
 export const submitChangesetInputSchema = z.object({
   summary: changesetSummarySchema,
-  changes: z.array(changeInputSchema).min(1).max(20),
+  changes: z.array(changeInputSchema).min(1).max(MAX_CHANGES_PER_CHANGESET),
   supersedesId: idSchema.optional(),
 })
 

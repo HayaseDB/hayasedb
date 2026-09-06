@@ -9,11 +9,16 @@ import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
 import type {
   AnimeFormState,
   AnimeMediaController,
+  AnimeStructureState,
   AnimeRelationEdgeItem,
   AnimeRelationSearchResult,
 } from '#imports'
 
 const state = defineModel<AnimeFormState>('state', { required: true })
+
+const structure = defineModel<AnimeStructureState | undefined>('structure', {
+  default: undefined,
+})
 
 const props = withDefaults(
   defineProps<{
@@ -30,6 +35,9 @@ const props = withDefaults(
     onSubmit: (data: CreateAnimeInput) => unknown | Promise<unknown>
     onCreateGenre?: (name: string) => void
     onSearchAnime: (query: string) => Promise<AnimeRelationSearchResult[]>
+    structureLoading?: boolean
+    structureChangeCount?: number
+    structureChangeBudget?: number
   }>(),
   {
     proposedGenres: () => [],
@@ -38,6 +46,9 @@ const props = withDefaults(
     selfId: null,
     relationBaseline: undefined,
     onCreateGenre: undefined,
+    structureLoading: false,
+    structureChangeCount: 0,
+    structureChangeBudget: 0,
   },
 )
 
@@ -138,6 +149,15 @@ const tabs = computed(() => [
     slot: 'relations' as const,
   },
   { label: 'Images', icon: 'i-lucide-images', slot: 'images' as const },
+  ...(structure.value
+    ? [
+        {
+          label: 'Episodes',
+          icon: 'i-lucide-list-video',
+          slot: 'episodes' as const,
+        },
+      ]
+    : []),
 ])
 const activeTab = ref('0')
 
@@ -491,6 +511,17 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
             </div>
           </UPageCard>
         </div>
+      </template>
+
+      <template v-if="structure" #episodes>
+        <UPageCard title="Episodes & seasons" variant="subtle">
+          <AnimeStructureEditor
+            v-model:state="structure"
+            :loading="structureLoading"
+            :change-count="structureChangeCount"
+            :change-budget="structureChangeBudget"
+          />
+        </UPageCard>
       </template>
     </UTabs>
 

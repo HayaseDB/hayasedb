@@ -21,13 +21,21 @@ const {
 } = useDirtyState(state, () => buildAnimeFormState(props.anime))
 
 const media = useStagedMedia(() => props.anime, api.anime)
-const isDirty = computed(() => isFieldsDirty.value || media.isDirty.value)
+
+const structure = useAnimeStructureDraft(
+  computed(() => props.anime?.id ?? null),
+)
+
+const isDirty = computed(
+  () => isFieldsDirty.value || media.isDirty.value || structure.isDirty.value,
+)
 
 watch(
   () => props.anime,
   () => {
     reset()
     media.sync()
+    void structure.reload()
   },
 )
 
@@ -49,7 +57,9 @@ async function submit(data: CreateAnimeInput) {
       baseline: relationBaseline.value,
     },
     commitMedia: (animeId) => media.commit(animeId),
+    commitStructure: (animeId) => structure.applyDirect(animeId),
   })
+  if (ok) structure.commit()
   if (ok && props.anime) await props.onSaved?.()
   return ok
 }
@@ -58,6 +68,7 @@ async function submit(data: CreateAnimeInput) {
 <template>
   <AnimeForm
     v-model:state="state"
+    v-model:structure="structure.state.value"
     :media="media"
     :genres="genres"
     :is-edit="anime !== null"
@@ -68,5 +79,6 @@ async function submit(data: CreateAnimeInput) {
     :on-submit="submit"
     :on-search-anime="searchAnime"
     :relation-baseline="relationBaseline"
+    :structure-loading="structure.loading.value"
   />
 </template>

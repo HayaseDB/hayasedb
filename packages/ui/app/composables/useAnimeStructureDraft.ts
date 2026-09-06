@@ -1,10 +1,14 @@
 import { stableStringify } from '@hayasedb/domain'
-import type {
-  AnimeStructure,
-  AnimeStructureState,
-  EpisodeDraft,
-  SeasonDraft,
-} from '#imports'
+import type { AnimeStructure } from '#imports'
+import {
+  applyStructurePrefill,
+  buildStructureState,
+  emptyStructureState,
+  planStructureChanges,
+  type AnimeStructureState,
+  type EpisodeDraft,
+  type SeasonDraft,
+} from '../utils/animeStructureForm'
 
 const titlesOf = <T extends { title: string }>(items: T[]) =>
   items.filter((item) => item.title.trim() !== '')

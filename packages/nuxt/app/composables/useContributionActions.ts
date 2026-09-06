@@ -1,8 +1,9 @@
-import type {
-  AnimeDocumentMedia,
-  AnimeDocumentRelation,
-  ChangeInput,
-  CreateAnimeInput,
+import {
+  MAX_CHANGES_PER_CHANGESET,
+  type AnimeDocumentMedia,
+  type AnimeDocumentRelation,
+  type ChangeInput,
+  type CreateAnimeInput,
 } from '@hayasedb/contract'
 import { genreSlug } from '@hayasedb/domain'
 import type { AnimeFormField, AnimeRelationInput } from '#imports'
@@ -23,6 +24,7 @@ export interface ContributionSubmit {
   ) => Promise<AnimeDocumentMedia[]>
   newGenres?: ProposedGenre[]
   supersedesId?: string
+  planStructure?: (animeId: string) => ChangeInput[]
 }
 
 export function useContributionActions() {
@@ -64,7 +66,9 @@ export function useContributionActions() {
         ? await relationPlan.plan(selfId, input.relations)
         : null
 
-      let animeChange: ChangeInput
+      const structureChanges = input.planStructure?.(selfId) ?? []
+
+      let animeChange: ChangeInput | null = null
       if (anime) {
         const patch = Object.fromEntries(
           Object.entries(input.data).filter(([key]) => changed.has(key)),
@@ -74,17 +78,22 @@ export function useContributionActions() {
         }
         if (input.mediaDirty) patch.media = media
         if (relations?.ownChanged) patch.relations = relations.own
-        if (Object.keys(patch).length === 0 && !relations?.foreign.length) {
+        const animeUntouched =
+          Object.keys(patch).length === 0 && !relations?.foreign.length
+        if (animeUntouched && structureChanges.length === 0) {
           toast.add({ title: 'No changes to submit', color: 'warning' })
           return false
         }
-        animeChange = {
-          op: 'update',
-          entityKind: 'anime',
-          entityId: anime.id,
-          baseRev: anime.headRev,
-          payload: patch,
-        }
+        animeChange =
+          Object.keys(patch).length === 0
+            ? null
+            : {
+                op: 'update',
+                entityKind: 'anime',
+                entityId: anime.id,
+                baseRev: anime.headRev,
+                payload: patch,
+              }
       } else {
         animeChange = {
           op: 'create',
@@ -119,9 +128,25 @@ export function useContributionActions() {
         },
       }))
 
+      const changes: ChangeInput[] = [
+        ...genreChanges,
+        ...(animeChange ? [animeChange] : []),
+        ...relationChanges,
+        ...structureChanges,
+      ]
+
+      if (changes.length > MAX_CHANGES_PER_CHANGESET) {
+        toast.add({
+          title: 'Too many changes for one contribution',
+          description: `A contribution can carry ${MAX_CHANGES_PER_CHANGESET} changes; this one has ${changes.length}. Please split it up.`,
+          color: 'warning',
+        })
+        return false
+      }
+
       const changeset = await api.changeset.submit({
         summary: input.summary.trim(),
-        changes: [...genreChanges, animeChange, ...relationChanges],
+        changes,
         supersedesId: input.supersedesId,
       })
       toast.add({

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   changesetSummarySchema,
+  MAX_CHANGES_PER_CHANGESET,
   type AnimeDocumentMedia,
   type CreateAnimeInput,
   type Genre,
@@ -113,13 +114,29 @@ const mediaPrefill = computed(() => {
 })
 
 const media = useContributionMedia(() => props.anime, mediaPrefill)
-const isDirty = computed(() => isFieldsDirty.value || media.isDirty.value)
+const prefillStructureChanges = computed(() =>
+  props.prefill?.changes.filter(
+    (change) =>
+      change.entityKind === 'animeSeason' ||
+      change.entityKind === 'animeEpisode',
+  ),
+)
+
+const structure = useAnimeStructureDraft(
+  computed(() => props.anime?.id ?? null),
+  prefillStructureChanges,
+)
+
+const isDirty = computed(
+  () => isFieldsDirty.value || media.isDirty.value || structure.isDirty.value,
+)
 
 const summary = ref(props.prefill?.summary ?? '')
 
 watch([() => props.anime, () => props.prefill], () => {
   reset()
   media.sync()
+  void structure.reload()
   proposedGenres.value = prefillProposedGenres()
   summary.value = props.prefill?.summary ?? ''
 })
@@ -139,6 +156,7 @@ async function submit(data: CreateAnimeInput) {
       buildDocumentMedia: (upload) => media.buildDocumentMedia(upload),
       newGenres: proposedGenres.value,
       supersedesId: props.prefill?.id,
+      planStructure: (animeId) => structure.planFor(animeId),
     },
   )
   if (changesetId) await router.push(`/contributions/${changesetId}`)
@@ -149,6 +167,7 @@ async function submit(data: CreateAnimeInput) {
 <template>
   <AnimeForm
     v-model:state="state"
+    v-model:structure="structure.state.value"
     :media="media"
     :genres="genres"
     :proposed-genres="proposedGenres"
@@ -162,6 +181,9 @@ async function submit(data: CreateAnimeInput) {
     :on-submit="submit"
     :on-search-anime="searchAnime"
     :relation-baseline="relationBaseline"
+    :structure-loading="structure.loading.value"
+    :structure-change-count="structure.changes.value.length"
+    :structure-change-budget="MAX_CHANGES_PER_CHANGESET"
   >
     <template #footer-leading>
       <UInput
