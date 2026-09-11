@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { AnimeEpisode } from '@hayasedb/contract'
+import type { AnimeEpisodeItem } from '#imports'
 
-const props = defineProps<{ episode: AnimeEpisode }>()
+const props = defineProps<{ episode: AnimeEpisodeItem }>()
 
 const duration = computed(() =>
   formatEpisodeDuration(props.episode.durationSeconds),

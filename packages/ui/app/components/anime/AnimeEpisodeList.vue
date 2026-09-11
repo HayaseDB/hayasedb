@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { AnimeEpisode, AnimeSeason } from '@hayasedb/contract'
+import type { AnimeEpisodeItem, AnimeSeasonItem } from '#imports'
 
 const props = defineProps<{
-  seasons: AnimeSeason[]
-  episodes: AnimeEpisode[]
-  seasonEpisodes: (seasonId: string) => AnimeEpisode[]
+  seasons: AnimeSeasonItem[]
+  episodes: AnimeEpisodeItem[]
+  seasonEpisodes: (seasonId: string) => AnimeEpisodeItem[]
   loading?: boolean
 }>()
 
@@ -20,14 +20,14 @@ watch(
   { immediate: true },
 )
 
-const seasonLabel = (season: AnimeSeason) => {
+const seasonLabel = (season: AnimeSeasonItem) => {
   const kind = ANIME_SEASON_KIND_LABELS[season.kind]
   const named = season.title?.title
   if (named) return named
   return season.number ? `${kind} ${season.number}` : kind
 }
 
-const seasonMeta = (season: AnimeSeason) => {
+const seasonMeta = (season: AnimeSeasonItem) => {
   const parts: string[] = [
     `${season.episodeCount} ${season.episodeCount === 1 ? 'episode' : 'episodes'}`,
   ]

@@ -1,10 +1,10 @@
 import type { ApiClient } from './orpc'
 
-type AnimeSeason = Awaited<
+export type AnimeSeasonItem = Awaited<
   ReturnType<ApiClient['season']['list']>
 >['items'][number]
 
-type AnimeEpisode = Awaited<
+export type AnimeEpisodeItem = Awaited<
   ReturnType<ApiClient['episode']['listForSeason']>
 >['items'][number]
 
@@ -17,12 +17,12 @@ interface OrderedCollection<T> {
 }
 
 export interface SeasonCollection {
-  items: AnimeSeason[]
+  items: AnimeSeasonItem[]
   orderEtag: string
 }
 
 export interface EpisodeCollection {
-  items: AnimeEpisode[]
+  items: AnimeEpisodeItem[]
   orderEtag: string
 }
 
