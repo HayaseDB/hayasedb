@@ -7,13 +7,14 @@ import {
   contributionsStep,
   genresStep,
   relationsStep,
+  structureStep,
   usersStep,
 } from './steps'
 
 export const demoSeedSet: SeedSet = {
   name: 'demo',
   description:
-    'Curated real-world snapshot with users, genres, anime, relations and community activity',
+    'Curated real-world snapshot with localized users, genres, anime, seasons, episodes, relations and community activity',
   admin: SEED_ADMIN,
   assetsUrl: new URL('./assets/', import.meta.url),
   steps: [
@@ -23,6 +24,7 @@ export const demoSeedSet: SeedSet = {
     genresStep,
     animeStep,
     relationsStep,
+    structureStep,
     contributionsStep,
   ],
 }

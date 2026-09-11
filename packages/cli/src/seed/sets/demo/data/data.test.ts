@@ -2,14 +2,20 @@ import { readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
+  ANIME_EPISODE_STATUSES,
+  ANIME_EPISODE_TYPES,
   ANIME_FORMATS,
   ANIME_RELATION_VIEW_KINDS,
+  ANIME_SEASON_KINDS,
   ANIME_STATUSES,
   canonicalizeRelation,
+  LOCALIZATION_LOCALES,
   type FuzzyDate,
 } from '@hayasedb/domain'
+import type { SeedEpisode } from '../../../types'
 import { SEED_ANIME } from './anime'
-import { SEED_GENRES } from './genres'
+import { SEED_GENRE_NAMES, SEED_GENRES } from './genres'
+import { SEED_STRUCTURES } from './structure'
 import { SEED_ADMIN, SEED_USERS } from './users'
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -124,12 +130,28 @@ describe('seed anime fixtures', () => {
     }
   })
 
-  it('are complete: titles, description, cover, banner and genres everywhere', () => {
+  it('are complete: translations, cover, banner and genres everywhere', () => {
     for (const entry of SEED_ANIME) {
-      expect(entry.titleRomaji, entry.slug).toBeTruthy()
-      expect(entry.titleEnglish, entry.slug).toBeTruthy()
-      expect(entry.titleNative, entry.slug).toBeTruthy()
-      expect(entry.description, entry.slug).toBeTruthy()
+      const locales = entry.translations.map(
+        (translation) => translation.locale,
+      )
+      expect(new Set(locales).size, entry.slug).toBe(locales.length)
+      expect(locales, entry.slug).toContain('ja-Jpan')
+      expect(locales, entry.slug).toContain('ja-Latn')
+      expect(locales, entry.slug).toContain('en')
+      expect(
+        entry.translations.filter((translation) => translation.original).length,
+        entry.slug,
+      ).toBe(1)
+      for (const translation of entry.translations) {
+        expect(LOCALIZATION_LOCALES, entry.slug).toContain(translation.locale)
+        expect(translation.title.trim(), entry.slug).not.toBe('')
+      }
+      expect(
+        entry.translations.find((translation) => translation.locale === 'en')
+          ?.description,
+        entry.slug,
+      ).toBeTruthy()
       expect(entry.media?.cover, entry.slug).toBeTruthy()
       expect(entry.media?.banner, entry.slug).toBeTruthy()
       expect(entry.genres.length, entry.slug).toBeGreaterThan(0)
@@ -174,7 +196,7 @@ describe('seed anime fixtures', () => {
   it('only reference known genres', () => {
     for (const entry of SEED_ANIME) {
       for (const genre of entry.genres) {
-        expect(SEED_GENRES).toContain(genre)
+        expect(SEED_GENRE_NAMES).toContain(genre)
       }
     }
   })
@@ -190,6 +212,147 @@ describe('seed anime fixtures', () => {
     const referenced = new Set(referencedAssets)
     for (const file of assetFiles) {
       expect(referenced).toContain(file)
+    }
+  })
+})
+
+describe('seed genre fixtures', () => {
+  it('have unique names and localized translations', () => {
+    const names = SEED_GENRES.map((genre) => genre.name)
+    expect(new Set(names).size).toBe(names.length)
+    for (const genre of SEED_GENRES) {
+      const locales = genre.translations.map(
+        (translation) => translation.locale,
+      )
+      expect(new Set(locales).size, genre.name).toBe(locales.length)
+      expect(locales, genre.name).toContain('en')
+      expect(locales.length, genre.name).toBeGreaterThan(1)
+      for (const translation of genre.translations) {
+        expect(LOCALIZATION_LOCALES, genre.name).toContain(translation.locale)
+        expect(translation.name.trim(), genre.name).not.toBe('')
+      }
+    }
+  })
+})
+
+describe('seed structure fixtures', () => {
+  const allEpisodes = (): SeedEpisode[] =>
+    SEED_STRUCTURES.flatMap((structure) =>
+      'seasons' in structure
+        ? structure.seasons.flatMap((season) => season.episodes)
+        : structure.episodes,
+    )
+
+  it('only reference anime in the data set', () => {
+    const slugs = new Set(SEED_ANIME.map((entry) => entry.slug))
+    const referenced = SEED_STRUCTURES.map((structure) => structure.animeSlug)
+    expect(new Set(referenced).size).toBe(referenced.length)
+    for (const slug of referenced) expect(slugs).toContain(slug)
+  })
+
+  it('never mix seasons and direct episodes on one anime', () => {
+    for (const structure of SEED_STRUCTURES) {
+      const hasSeasons = 'seasons' in structure
+      expect(
+        hasSeasons ? structure.seasons.length : structure.episodes.length,
+      ).toBeGreaterThan(0)
+    }
+  })
+
+  it('use valid season kinds with unique locales', () => {
+    for (const structure of SEED_STRUCTURES) {
+      if (!('seasons' in structure)) continue
+      for (const season of structure.seasons) {
+        expect(ANIME_SEASON_KINDS, structure.animeSlug).toContain(season.kind)
+        const locales = season.translations.map(
+          (translation) => translation.locale,
+        )
+        expect(new Set(locales).size, structure.animeSlug).toBe(locales.length)
+        expect(
+          season.translations.filter((translation) => translation.original)
+            .length,
+          structure.animeSlug,
+        ).toBe(1)
+        expect(season.episodes.length, structure.animeSlug).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('use valid episode types, statuses and translations', () => {
+    for (const episode of allEpisodes()) {
+      expect(ANIME_EPISODE_TYPES).toContain(episode.type)
+      expect(ANIME_EPISODE_STATUSES).toContain(episode.status)
+      const locales = episode.translations.map(
+        (translation) => translation.locale,
+      )
+      expect(new Set(locales).size).toBe(locales.length)
+      expect(locales).toContain('en')
+      expect(
+        episode.translations.filter((translation) => translation.original)
+          .length,
+      ).toBe(1)
+      for (const translation of episode.translations) {
+        expect(LOCALIZATION_LOCALES).toContain(translation.locale)
+        expect(translation.title.trim()).not.toBe('')
+      }
+      if (episode.durationSeconds !== null) {
+        expect(episode.durationSeconds).toBeGreaterThan(0)
+      }
+      if (episode.status === 'RELEASED') expect(episode.airDate).not.toBeNull()
+    }
+  })
+
+  it('cover every season kind, episode type and episode status', () => {
+    const kinds = new Set(
+      SEED_STRUCTURES.flatMap((structure) =>
+        'seasons' in structure
+          ? structure.seasons.map((season) => season.kind)
+          : [],
+      ),
+    )
+    for (const kind of ANIME_SEASON_KINDS) expect(kinds).toContain(kind)
+
+    const episodes = allEpisodes()
+    const types = new Set(episodes.map((episode) => episode.type))
+    for (const type of ANIME_EPISODE_TYPES) expect(types).toContain(type)
+
+    const statuses = new Set(episodes.map((episode) => episode.status))
+    for (const status of ANIME_EPISODE_STATUSES) {
+      expect(statuses).toContain(status)
+    }
+  })
+
+  it('cover both ownership modes', () => {
+    expect(SEED_STRUCTURES.some((structure) => 'seasons' in structure)).toBe(
+      true,
+    )
+    expect(SEED_STRUCTURES.some((structure) => 'episodes' in structure)).toBe(
+      true,
+    )
+  })
+
+  it('use valid iso air dates in chronological order per collection', () => {
+    const isoDate = /^\d{4}-\d{2}-\d{2}$/
+    const ordered = (episodes: SeedEpisode[]) => {
+      const dates = episodes
+        .map((episode) => episode.airDate)
+        .filter((date): date is string => date !== null)
+      for (const date of dates) expect(date).toMatch(isoDate)
+      const regular = episodes
+        .filter(
+          (episode) => episode.type === 'REGULAR' && episode.airDate !== null,
+        )
+        .map((episode) => episode.airDate!)
+      for (let index = 1; index < regular.length; index += 1) {
+        expect(regular[index]! >= regular[index - 1]!).toBe(true)
+      }
+    }
+    for (const structure of SEED_STRUCTURES) {
+      if ('seasons' in structure) {
+        for (const season of structure.seasons) ordered(season.episodes)
+      } else {
+        ordered(structure.episodes)
+      }
     }
   })
 })
