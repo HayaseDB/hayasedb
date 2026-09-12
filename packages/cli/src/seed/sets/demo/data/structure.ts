@@ -779,6 +779,1125 @@ const yourNameEpisodes: SeedEpisode[] = [
   },
 ]
 
+const demonSlayerEpisodes = released([
+  [
+    '1',
+    '2019-04-06',
+    '残酷',
+    'Cruelty',
+    'Tanjiro comes home to a slaughtered family and a sister who is no longer human.',
+  ],
+  [
+    '2',
+    '2019-04-13',
+    '育手・鱗滝左近次',
+    'Trainer Sakonji Urokodaki',
+    'A masked cultivator sends Tanjiro up Mount Sagiri to be judged.',
+  ],
+  [
+    '3',
+    '2019-04-20',
+    '錆兎と真菰',
+    'Sabito and Makomo',
+    'Two children in fox masks drill Tanjiro until he can cut the boulder.',
+  ],
+  [
+    '4',
+    '2019-04-27',
+    '最終選別',
+    'Final Selection',
+    'Seven nights on a mountain of demons decide who becomes a slayer.',
+  ],
+])
+
+const jujutsuKaisenEpisodes = released([
+  [
+    '1',
+    '2020-10-03',
+    '両面宿儺',
+    'Ryomen Sukuna',
+    'Yuji swallows a cursed finger to save his friends and becomes a vessel.',
+  ],
+  [
+    '2',
+    '2020-10-10',
+    '自分のために',
+    'For Myself',
+    'Gojo offers Yuji a stay of execution if he can master his own body.',
+  ],
+  [
+    '3',
+    '2020-10-17',
+    '鉄骨娘',
+    'Girl of Steel',
+    'Nobara arrives in Tokyo and the first-years take their first mission together.',
+  ],
+  [
+    '4',
+    '2020-10-24',
+    '呪胎戴天',
+    'Curse Womb Must Die',
+    'A special-grade curse in a derelict building outclasses the students.',
+  ],
+])
+
+const heroAcademiaEpisodes = released([
+  [
+    '1',
+    '2016-04-03',
+    '緑谷出久：オリジン',
+    'Izuku Midoriya: Origin',
+    'In a world of quirks, a boy born without one still runs toward the danger.',
+  ],
+  [
+    '2',
+    '2016-04-10',
+    'ヒーローの条件',
+    'What It Takes to Be a Hero',
+    'All Might tells Izuku the truth about One For All and sets him a trial.',
+  ],
+  [
+    '3',
+    '2016-04-17',
+    'うなれ筋肉',
+    'Roaring Muscles',
+    'Ten months of hauling scrap off a beach rebuild a body that can hold the quirk.',
+  ],
+  [
+    '4',
+    '2016-04-24',
+    'スタートライン',
+    'Start Line',
+    'The U.A. entrance exam pits Izuku against robots and his own broken bones.',
+  ],
+])
+
+const hunterHunterEpisodes = released([
+  [
+    '1',
+    '2011-10-02',
+    'タビダチ×ト×ナカマタチ',
+    'Departure × and × Friends',
+    'Gon leaves Whale Island to find the father who left him behind.',
+  ],
+  [
+    '2',
+    '2011-10-09',
+    'シケン×ノ×シケン',
+    'Test × of × Tests',
+    'The applicants are led underground and the exam begins before anyone notices.',
+  ],
+  [
+    '3',
+    '2011-10-16',
+    'ライバル×ガ×サバイバル',
+    'Rivals × for × Survival',
+    'A marathon through the tunnels thins the field and forms the first alliances.',
+  ],
+  [
+    '4',
+    '2011-10-23',
+    'キボウ×ト×ヤボウ',
+    'Hope × and × Ambition',
+    'The Numere Wetlands punish anyone who trusts the wrong face.',
+  ],
+])
+
+const onePunchManEpisodes = released([
+  [
+    '1',
+    '2015-10-05',
+    '最強の男',
+    'The Strongest Man',
+    'Saitama has trained himself into a hero who ends every fight with one punch, and is bored.',
+  ],
+  [
+    '2',
+    '2015-10-12',
+    '孤高のサイボーグ',
+    'The Lone Cyborg',
+    'Genos asks to become a disciple and learns the secret is disappointingly plain.',
+  ],
+  [
+    '3',
+    '2015-10-19',
+    '執念の科学者',
+    'The Obsessive Scientist',
+    'A scientist unleashes an evolving monster on City A.',
+  ],
+  [
+    '4',
+    '2015-10-26',
+    '今時の忍者',
+    'The Modern Ninja',
+    'Speed-o Sound Sonic decides Saitama is the rival he has been looking for.',
+  ],
+])
+
+const tokyoGhoulEpisodes = released([
+  [
+    '1',
+    '2014-07-04',
+    '悲劇',
+    'Tragedy',
+    'A date ends with Kaneki on an operating table and a ghoul organ inside him.',
+  ],
+  [
+    '2',
+    '2014-07-11',
+    '孵化',
+    'Incubation',
+    'Anteiku takes Kaneki in and teaches him what he can no longer eat.',
+  ],
+  [
+    '3',
+    '2014-07-18',
+    '白鳩',
+    'Dove',
+    'Investigators of the CCG arrive in the ward hunting the binge eater.',
+  ],
+  [
+    '4',
+    '2014-07-25',
+    '晩餐',
+    'Supper',
+    'Kaneki meets a ghoul who keeps a very different kind of table.',
+  ],
+])
+
+const aotSeason2Episodes = released([
+  [
+    '26',
+    '2017-04-01',
+    '獣の巨人',
+    'Beast Titan',
+    'Titans appear inside Wall Rose and a speaking titan walks among them.',
+  ],
+  [
+    '27',
+    '2017-04-08',
+    'ただいま',
+    'I’m Home',
+    'The scouts split to warn the villages as Sasha returns to her own.',
+  ],
+  [
+    '28',
+    '2017-04-15',
+    '南西へ',
+    'Southwestward',
+    'The search for the breach turns up no hole in the wall at all.',
+  ],
+  [
+    '29',
+    '2017-04-22',
+    '兵士',
+    'Soldier',
+    'Cornered on a tower, the recruits are forced to hold until dawn.',
+  ],
+])
+
+const fullmetalEpisodes = released([
+  [
+    '1',
+    '2009-04-05',
+    '鋼の錬金術師',
+    'Fullmetal Alchemist',
+    'The Elric brothers chase a false prophet through Reole and show what alchemy costs.',
+  ],
+  [
+    '2',
+    '2009-04-12',
+    'はじまりの日',
+    'The First Day',
+    'A flashback to the night the brothers tried to bring their mother back.',
+  ],
+  [
+    '3',
+    '2009-04-19',
+    '邪教の街',
+    'City of Heresy',
+    'Cornello’s miracles are exposed as a philosopher’s stone sleight of hand.',
+  ],
+  [
+    '4',
+    '2009-04-26',
+    '錬金術師の苦悩',
+    'An Alchemist’s Anguish',
+    'Shou Tucker’s chimera reveals how far a state alchemist will go.',
+  ],
+])
+
+const narutoEpisodes = released([
+  [
+    '1',
+    '2002-10-03',
+    '参上！うずまきナルト',
+    'Enter: Naruto Uzumaki!',
+    'A failing student steals a forbidden scroll and learns why the village fears him.',
+  ],
+  [
+    '2',
+    '2002-10-10',
+    '木ノ葉丸だ　コレ！',
+    'My Name Is Konohamaru!',
+    'The Hokage’s grandson decides Naruto is the rival he needs.',
+  ],
+  [
+    '3',
+    '2002-10-17',
+    '宿敵!?　サスケとサクラ',
+    'Sasuke and Sakura: Friends or Foes?',
+    'Team assignments put Naruto beside the two people he least wants.',
+  ],
+  [
+    '4',
+    '2002-10-24',
+    '試練！サバイバル演習',
+    'Pass or Fail: Survival Test',
+    'Kakashi’s bell test is about teamwork, and none of them see it.',
+  ],
+])
+
+const swordArtOnlineEpisodes = released([
+  [
+    '1',
+    '2012-07-08',
+    '剣の世界',
+    'The World of Swords',
+    'Ten thousand players log in to Aincrad and find the logout button gone.',
+  ],
+  [
+    '2',
+    '2012-07-15',
+    'ビーター',
+    'Beater',
+    'The first boss falls, and Kirito takes on a name to keep the others safe.',
+  ],
+  [
+    '3',
+    '2012-07-22',
+    '赤鼻のトナカイ',
+    'The Red-Nosed Reindeer',
+    'A guild wipes on a floor it was not ready for and Kirito keeps a promise too late.',
+  ],
+  [
+    '4',
+    '2012-07-29',
+    '黒の剣士',
+    'The Black Swordsman',
+    'A murder inside a safe zone should not be possible.',
+  ],
+])
+
+const heroAcademiaSeason2Episodes = released([
+  [
+    '14',
+    '2017-04-01',
+    'そういうことね　お茶子さん',
+    'That’s the Idea, Ochaco',
+    'U.A. returns to class and the sports festival is announced.',
+  ],
+  [
+    '15',
+    '2017-04-08',
+    'うなれ体育祭',
+    'Roaring Sports Festival',
+    'The whole country watches as the first obstacle race begins.',
+  ],
+  [
+    '16',
+    '2017-04-15',
+    'みんな個性的でいいね',
+    'In Their Own Quirky Ways',
+    'Robots, mines and a narrow bridge sort the field fast.',
+  ],
+  [
+    '17',
+    '2017-04-22',
+    '策策策',
+    'Strategy, Strategy, Strategy',
+    'The cavalry battle forces alliances nobody wanted.',
+  ],
+])
+
+const promisedNeverlandEpisodes = released([
+  [
+    '1',
+    '2019-01-11',
+    '121045',
+    '121045',
+    'Emma and Norman follow a forgotten toy to the gate and learn what the orphanage is for.',
+  ],
+  [
+    '2',
+    '2019-01-18',
+    '131045',
+    '131045',
+    'The children start counting the days they have left without telling the others.',
+  ],
+  [
+    '3',
+    '2019-01-25',
+    '181045',
+    '181045',
+    'Mama tightens the rules and a tracker is found on every neck.',
+  ],
+  [
+    '4',
+    '2019-02-01',
+    '291045',
+    '291045',
+    'Sister Krone arrives and the game becomes two adults against three children.',
+  ],
+])
+
+const assassinationClassroomEpisodes = released([
+  [
+    '1',
+    '2015-01-09',
+    '暗殺の時間',
+    'Assassination Time',
+    'Class 3-E is given a target worth ten billion yen and a teacher who cannot be killed.',
+  ],
+  [
+    '2',
+    '2015-01-16',
+    '野球の時間',
+    'Baseball Time',
+    'Koro-sensei coaches the baseball team while dodging the students’ knives.',
+  ],
+  [
+    '3',
+    '2015-01-30',
+    'カルマの時間',
+    'Karma Time',
+    'Karma returns from suspension and tries a more direct approach.',
+  ],
+  [
+    '4',
+    '2015-02-06',
+    '大人の時間',
+    'Grown-Up Time',
+    'A professional assassin joins the staff as the new English teacher.',
+  ],
+])
+
+const mobPsychoEpisodes = released([
+  [
+    '1',
+    '2016-07-12',
+    '自称霊能力者・霊幻新隆～とモブ～',
+    'Self-Proclaimed Psychic: Arataka Reigen ~And Mob~',
+    'A boy with overwhelming psychic power works for a con man who has none.',
+  ],
+  [
+    '2',
+    '2016-07-19',
+    '青い春の疑問～脳感電波部登場～',
+    'Doubts About Youth ~The Telepathy Club Appears~',
+    'Mob joins a club that wants his power more than his company.',
+  ],
+  [
+    '3',
+    '2016-07-26',
+    '集いへの誘い～簡単に言うとモテたい～',
+    'An Invitation to a Meeting ~Simply Put, I Just Want to be Popular~',
+    'An evil spirit cult recruits the one student who could end it instantly.',
+  ],
+  [
+    '4',
+    '2016-08-02',
+    '馬鹿オンリーイベント～同類～',
+    'Idiots Only Event ~Kin~',
+    'Mob’s brother Ritsu watches the gap between them widen.',
+  ],
+])
+
+const reZeroEpisodes: SeedEpisode[] = [
+  {
+    number: '1',
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2016-04-04',
+    durationSeconds: 3_120,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: '始まりの終わりと終わりの始まり',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'The End of the Beginning and the Beginning of the End',
+        overview:
+          'Subaru is pulled into another world and dies for the first time.',
+      },
+    ],
+  },
+  {
+    number: '2',
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2016-04-11',
+    durationSeconds: 1_440,
+    translations: [
+      { locale: 'ja-Jpan', title: '再会の魔女', original: true },
+      {
+        locale: 'en',
+        title: 'Reunion with the Witch',
+        overview:
+          'Return by Death sends him back with nothing but the memory of dying.',
+      },
+    ],
+  },
+  {
+    number: '3',
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2016-04-18',
+    durationSeconds: 1_440,
+    translations: [
+      { locale: 'ja-Jpan', title: 'ゼロから始まる異世界生活', original: true },
+      {
+        locale: 'en',
+        title: 'Starting Life from Zero in Another World',
+        overview:
+          'Subaru realises the loop is his only weapon and it costs him everything each time.',
+      },
+    ],
+  },
+  {
+    number: '4',
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2016-04-25',
+    durationSeconds: 1_440,
+    translations: [
+      { locale: 'ja-Jpan', title: 'ロズワール邸の団欒', original: true },
+      {
+        locale: 'en',
+        title: 'The Happy Roswaal Mansion Family',
+        overview:
+          'A quiet week at the mansion hides the next thing that will kill him.',
+      },
+    ],
+  },
+]
+
+const aotSeason3Part1 = released([
+  [
+    '38',
+    '2018-07-23',
+    '狼煙',
+    'Smoke Signal',
+    'The Survey Corps moves against the interior police to protect Eren and Historia.',
+  ],
+  [
+    '39',
+    '2018-07-30',
+    '痛み',
+    'Pain',
+    'Levi’s squad is hunted through the city by an enemy who knows their moves.',
+  ],
+  [
+    '40',
+    '2018-08-06',
+    '昔話',
+    'Old Story',
+    'Erwin’s father asked one question about the walls and did not survive it.',
+  ],
+  [
+    '41',
+    '2018-08-13',
+    '信頼',
+    'Trust',
+    'The coup begins and the Corps gambles everything on a single confession.',
+  ],
+])
+
+const aotSeason3Part2 = released([
+  [
+    '50',
+    '2019-04-29',
+    'はじまりの街',
+    'The Town Where Everything Began',
+    'The scouts return to Shiganshina and find the walls waiting for them.',
+  ],
+  [
+    '51',
+    '2019-05-06',
+    '雷槍',
+    'Thunder Spears',
+    'The armoured titan meets a weapon built specifically to open it.',
+  ],
+  [
+    '52',
+    '2019-05-13',
+    '光臨',
+    'Descent',
+    'The beast titan takes the high ground and the corps runs out of options.',
+  ],
+  [
+    '53',
+    '2019-05-20',
+    '完全試合',
+    'Perfect Game',
+    'Erwin asks his soldiers to buy Levi a few seconds with their lives.',
+  ],
+])
+
+const aotSeason3Seasons: SeedSeason[] = [
+  {
+    kind: 'PART',
+    number: '1',
+    translations: [
+      { locale: 'ja-Jpan', title: 'Season 3 第1部', original: true },
+      { locale: 'en', title: 'Season 3 Part 1' },
+    ],
+    episodes: aotSeason3Part1,
+  },
+  {
+    kind: 'PART',
+    number: '2',
+    translations: [
+      { locale: 'ja-Jpan', title: 'Season 3 第2部', original: true },
+      { locale: 'en', title: 'Season 3 Part 2' },
+    ],
+    episodes: aotSeason3Part2,
+  },
+]
+
+const aotSeason3Part2Episodes = released([
+  [
+    '50',
+    '2019-04-29',
+    'はじまりの街',
+    'The Town Where Everything Began',
+    'The scouts return to Shiganshina and find the walls waiting for them.',
+  ],
+  [
+    '51',
+    '2019-05-06',
+    '雷槍',
+    'Thunder Spears',
+    'The armoured titan meets a weapon built specifically to open it.',
+  ],
+  [
+    '52',
+    '2019-05-13',
+    '光臨',
+    'Descent',
+    'The beast titan takes the high ground and the corps runs out of options.',
+  ],
+  [
+    '53',
+    '2019-05-20',
+    '完全試合',
+    'Perfect Game',
+    'Erwin asks his soldiers to buy Levi a few seconds with their lives.',
+  ],
+])
+
+const narutoShippudenEpisodes = released([
+  [
+    '1',
+    '2007-02-15',
+    '帰郷',
+    'Homecoming',
+    'Naruto returns to the village after two and a half years away.',
+  ],
+  [
+    '2',
+    '2007-02-15',
+    '暁、始動',
+    'The Akatsuki Makes Its Move',
+    'The organisation begins collecting the tailed beasts.',
+  ],
+  [
+    '3',
+    '2007-02-22',
+    '修業の成果',
+    'The Results of Training',
+    'Kakashi tests how far his students have actually come.',
+  ],
+  [
+    '4',
+    '2007-03-01',
+    '砂の人柱力',
+    'The Jinchuriki of the Sand',
+    'Gaara defends Suna alone against a member of the Akatsuki.',
+  ],
+])
+
+const heroAcademiaSeason3Episodes = released([
+  [
+    '39',
+    '2018-04-07',
+    'ゲーム・スタート',
+    'Game Start',
+    'Class 1-A heads to a training camp and the villains already know where it is.',
+  ],
+  [
+    '40',
+    '2018-04-14',
+    'ワイルド・ワイルド・プッシーキャッツ',
+    'Wild, Wild Pussycats',
+    'The Pussycats put the students through a forest that fights back.',
+  ],
+  [
+    '41',
+    '2018-04-21',
+    '洸汰くん',
+    'Kota',
+    'A boy who hates heroes has good reasons nobody asked about.',
+  ],
+  [
+    '42',
+    '2018-04-28',
+    '僕のヒーロー',
+    'My Hero',
+    'Izuku breaks his own rules to reach Kota in time.',
+  ],
+])
+
+const jujutsuKaisenSeason2Episodes = released([
+  [
+    '25',
+    '2023-07-06',
+    '懐玉',
+    'Hidden Inventory',
+    'Gojo and Geto are assigned to escort a girl who is also a vessel.',
+  ],
+  [
+    '26',
+    '2023-07-13',
+    '懐玉-弐-',
+    'Hidden Inventory 2',
+    'The escort mission draws both a curse user and a cult.',
+  ],
+  [
+    '27',
+    '2023-07-20',
+    '懐玉-参-',
+    'Hidden Inventory 3',
+    'Gojo dies, and then decides not to.',
+  ],
+  [
+    '28',
+    '2023-07-27',
+    '懐玉-肆-',
+    'Hidden Inventory 4',
+    'The strongest sorcerer returns and the mission ends anyway.',
+  ],
+])
+
+const saikiEpisodes = released(
+  [
+    [
+      '1',
+      '2016-07-04',
+      '超能力者のΨ難（前編）',
+      'The Disastrous Life of a Psychic (Part 1)',
+      'Saiki explains why omnipotence is mostly an inconvenience.',
+    ],
+    [
+      '2',
+      '2016-07-05',
+      '超能力者のΨ難（後編）',
+      'The Disastrous Life of a Psychic (Part 2)',
+      'Keeping a low profile is harder when everyone is loud.',
+    ],
+    [
+      '3',
+      '2016-07-06',
+      '最低Ψ悪!? 燃堂力',
+      'The Worst of the Worst?! Riki Nendou',
+      'Nendou attaches himself to Saiki and cannot be read.',
+    ],
+    [
+      '4',
+      '2016-07-07',
+      '漆黒の翼こと海藤瞬',
+      'Shun Kaidou, AKA The Jet-Black Wings',
+      'A classmate with delusions of a secret war joins the group.',
+    ],
+  ],
+  300,
+)
+
+const juniorHighEpisodes = released(
+  [
+    [
+      '1',
+      '2015-10-04',
+      '入学！巨人中学校',
+      'Starting School! Titan Junior High School',
+      'Eren enrols at a school where titans eat the lunches.',
+    ],
+    [
+      '2',
+      '2015-10-11',
+      '追跡！巨人中学校',
+      'Chasing! Titan Junior High School',
+      'The club recruitment drive turns into a pursuit.',
+    ],
+    [
+      '3',
+      '2015-10-18',
+      '闘球！巨人中学校',
+      'Dodgeball! Titan Junior High School',
+      'A dodgeball match decides more than it should.',
+    ],
+    [
+      '4',
+      '2015-10-25',
+      '清掃！巨人中学校',
+      'Cleanup! Titan Junior High School',
+      'Levi discovers the storage shed and loses his composure.',
+    ],
+  ],
+  1_080,
+)
+
+const onePieceEpisodes = released([
+  [
+    '1',
+    '1999-10-20',
+    '俺はルフィ！海賊王になる男だ！',
+    'I’m Luffy! The Man Who’s Gonna Be King of the Pirates!',
+    'A boy in a straw hat sets out alone in a barrel.',
+  ],
+  [
+    '2',
+    '1999-11-17',
+    '大剣豪現る！海賊狩りロロノア・ゾロ',
+    'Enter the Great Swordsman! Pirate Hunter Roronoa Zoro',
+    'Luffy frees a bounty hunter tied to a post and asks him to join.',
+  ],
+  [
+    '3',
+    '1999-11-24',
+    'モーガンVSルフィ！謎の美少女は誰？',
+    'Morgan vs. Luffy! Who’s This Mysterious Beautiful Young Girl?',
+    'The marine base falls and a thief watches from the roof.',
+  ],
+  [
+    '4',
+    '1999-12-08',
+    'ルフィの過去！赤髪のシャンクス登場',
+    'Luffy’s Past! The Red-Haired Shanks Appears!',
+    'The debt behind the straw hat is finally shown.',
+  ],
+])
+
+const silentVoiceEpisodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2016-09-17',
+    durationSeconds: 7_800,
+    translations: [
+      { locale: 'ja-Jpan', title: '聲の形', original: true },
+      {
+        locale: 'en',
+        title: 'A Silent Voice',
+        overview:
+          'A boy who bullied a deaf classmate tries, years later, to make it right.',
+      },
+      { locale: 'de', title: 'A Silent Voice: Die Stille meiner Worte' },
+    ],
+  },
+]
+
+const mugenTrainEpisodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2020-10-16',
+    durationSeconds: 7_020,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: '劇場版「鬼滅の刃」無限列車編',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'Demon Slayer: Kimetsu no Yaiba – The Movie: Mugen Train',
+        overview:
+          'Tanjiro boards a train where forty passengers have vanished and a Hashira is waiting.',
+      },
+      { locale: 'fr', title: 'Demon Slayer: Le train de l’infini' },
+    ],
+  },
+]
+
+const aotFilm1Episodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2014-11-22',
+    durationSeconds: 7_080,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: '劇場版「進撃の巨人」前編〜紅蓮の弓矢〜',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'Attack on Titan Part I: Crimson Bow and Arrow',
+        overview:
+          'A compilation of the fall of Shiganshina and the battle for Trost.',
+      },
+    ],
+  },
+]
+
+const aotFilm2Episodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2015-06-27',
+    durationSeconds: 7_200,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: '劇場版「進撃の巨人」後編〜自由の翼〜',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'Attack on Titan Part II: Wings of Freedom',
+        overview:
+          'A compilation covering the female titan and the 57th expedition.',
+      },
+    ],
+  },
+]
+
+const aotChronicleEpisodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'REGULAR',
+    status: 'RELEASED',
+    airDate: '2020-07-17',
+    durationSeconds: 7_200,
+    translations: [
+      { locale: 'ja-Jpan', title: '進撃の巨人 〜クロニクル〜', original: true },
+      {
+        locale: 'en',
+        title: 'Attack on Titan ~Chronicle~',
+        overview:
+          'A recap film covering the first three seasons ahead of the final one.',
+      },
+    ],
+  },
+]
+
+const aotFinalChaptersEpisodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2023-03-04',
+    durationSeconds: 3_660,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: '進撃の巨人 The Final Season完結編 前編',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'The Final Chapters Special 1',
+        overview: 'The rumbling begins and the alliance forms against Eren.',
+      },
+    ],
+  },
+]
+
+const episodeOfNamiEpisodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2012-08-25',
+    durationSeconds: 6_300,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: 'ONE PIECE エピソードオブナミ 〜航海士の涙と仲間の絆〜',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'Episode of Nami: Tears of a Navigator and the Bonds of Friends',
+        overview: 'A retelling of Arlong Park from the navigator’s side.',
+      },
+    ],
+  },
+]
+
+const aotOvaEpisodes: SeedEpisode[] = [
+  {
+    number: '1',
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2013-12-09',
+    durationSeconds: 1_500,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: 'イルゼの手帳 調査兵団報告書',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: "Ilse's Notebook: Notes from a Scout Regiment Member",
+        overview:
+          'Hange investigates the journal of a scout who met a talking titan.',
+      },
+    ],
+  },
+  {
+    number: '2',
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2014-04-09',
+    durationSeconds: 1_500,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: '突然の来訪者 拘束された青春の呪縛',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'The Sudden Visitor: The Torturous Curse of Youth',
+        overview: 'A training-corps story about the cost of standing out.',
+      },
+    ],
+  },
+  {
+    number: '3',
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2014-08-08',
+    durationSeconds: 1_500,
+    translations: [
+      { locale: 'ja-Jpan', title: '困難', original: true },
+      {
+        locale: 'en',
+        title: 'Distress',
+        overview: 'The 104th cadets face a survival exercise that goes wrong.',
+      },
+    ],
+  },
+]
+
+const lostGirlsEpisodes: SeedEpisode[] = [
+  {
+    number: '1',
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2017-12-08',
+    durationSeconds: 1_500,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: 'ウォール・シーナ、グッバイ 前編',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'Wall Sina, Goodbye: Part One',
+        overview: 'Annie takes a missing-person case in the interior.',
+      },
+    ],
+  },
+  {
+    number: '2',
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2018-04-09',
+    durationSeconds: 1_500,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: 'ウォール・シーナ、グッバイ 後編',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'Wall Sina, Goodbye: Part Two',
+        overview: 'The case closes on a truth Annie would rather not carry.',
+      },
+    ],
+  },
+  {
+    number: '3',
+    type: 'SPECIAL',
+    status: 'RELEASED',
+    airDate: '2018-08-09',
+    durationSeconds: 1_500,
+    translations: [
+      {
+        locale: 'ja-Jpan',
+        title: 'イルゼの手帳 失われた少女たち',
+        original: true,
+      },
+      {
+        locale: 'en',
+        title: 'Lost in the Cruel World',
+        overview: 'Mikasa dreams of the life she might have had.',
+      },
+    ],
+  },
+]
+
+const dandadanEpisodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'REGULAR',
+    status: 'UPCOMING',
+    airDate: null,
+    durationSeconds: null,
+    translations: [
+      { locale: 'ja-Jpan', title: '未定', original: true },
+      {
+        locale: 'en',
+        title: 'To be announced',
+        overview:
+          'Science Saru returns for a third season announced at Jump Festa 2026.',
+      },
+    ],
+  },
+]
+
+const eminenceEpisodes: SeedEpisode[] = [
+  {
+    number: null,
+    type: 'REGULAR',
+    status: 'UPCOMING',
+    airDate: null,
+    durationSeconds: null,
+    translations: [
+      { locale: 'ja-Jpan', title: '未定', original: true },
+      {
+        locale: 'en',
+        title: 'To be announced',
+        overview:
+          'A sequel film to the second season, revealed at AnimeJapan 2026.',
+      },
+    ],
+  },
+]
+
 export const SEED_STRUCTURES: SeedStructure[] = [
   { animeSlug: 'shingeki-no-kyojin', seasons: attackOnTitanSeasons },
   { animeSlug: 'death-note', seasons: deathNoteSeasons },
@@ -795,4 +1914,75 @@ export const SEED_STRUCTURES: SeedStructure[] = [
   },
   { animeSlug: 'shelter', episodes: shelterEpisodes },
   { animeSlug: 'kimi-no-na-wa', episodes: yourNameEpisodes },
+  { animeSlug: 'kimetsu-no-yaiba', episodes: demonSlayerEpisodes },
+  { animeSlug: 'jujutsu-kaisen', episodes: jujutsuKaisenEpisodes },
+  { animeSlug: 'boku-no-hero-academia', episodes: heroAcademiaEpisodes },
+  { animeSlug: 'hunterhunter-2011', episodes: hunterHunterEpisodes },
+  { animeSlug: 'one-punch-man', episodes: onePunchManEpisodes },
+  { animeSlug: 'tokyo-ghoul', episodes: tokyoGhoulEpisodes },
+  { animeSlug: 'shingeki-no-kyojin-season-2', episodes: aotSeason2Episodes },
+  {
+    animeSlug: 'hagane-no-renkinjutsushi-fullmetal-alchemist',
+    episodes: fullmetalEpisodes,
+  },
+  { animeSlug: 'naruto', episodes: narutoEpisodes },
+  { animeSlug: 'sword-art-online', episodes: swordArtOnlineEpisodes },
+  {
+    animeSlug: 'boku-no-hero-academia-2',
+    episodes: heroAcademiaSeason2Episodes,
+  },
+  { animeSlug: 'yakusoku-no-neverland', episodes: promisedNeverlandEpisodes },
+  { animeSlug: 'ansatsu-kyoushitsu', episodes: assassinationClassroomEpisodes },
+  { animeSlug: 'mob-psycho-100', episodes: mobPsychoEpisodes },
+  {
+    animeSlug: 'rezero-kara-hajimeru-isekai-seikatsu',
+    episodes: reZeroEpisodes,
+  },
+  { animeSlug: 'shingeki-no-kyojin-season-3', seasons: aotSeason3Seasons },
+  {
+    animeSlug: 'shingeki-no-kyojin-season-3-part-2',
+    episodes: aotSeason3Part2Episodes,
+  },
+  { animeSlug: 'naruto-shippuuden', episodes: narutoShippudenEpisodes },
+  {
+    animeSlug: 'boku-no-hero-academia-3',
+    episodes: heroAcademiaSeason3Episodes,
+  },
+  {
+    animeSlug: 'jujutsu-kaisen-2nd-season',
+    episodes: jujutsuKaisenSeason2Episodes,
+  },
+  { animeSlug: 'saiki-kusuo-no-nan', episodes: saikiEpisodes },
+  { animeSlug: 'shingeki-kyojin-chuugakkou', episodes: juniorHighEpisodes },
+  { animeSlug: 'one-piece', episodes: onePieceEpisodes },
+  { animeSlug: 'koe-no-katachi', episodes: silentVoiceEpisodes },
+  {
+    animeSlug: 'kimetsu-no-yaiba-mugen-ressha-hen',
+    episodes: mugenTrainEpisodes,
+  },
+  {
+    animeSlug: 'shingeki-no-kyojin-zenpen-guren-no-yumiya',
+    episodes: aotFilm1Episodes,
+  },
+  {
+    animeSlug: 'shingeki-no-kyojin-kouhen-jiyuu-no-tsubasa',
+    episodes: aotFilm2Episodes,
+  },
+  { animeSlug: 'shingeki-no-kyojin-chronicle', episodes: aotChronicleEpisodes },
+  {
+    animeSlug: 'shingeki-no-kyojin-the-final-season-kanketsu-hen-zenpen',
+    episodes: aotFinalChaptersEpisodes,
+  },
+  {
+    animeSlug:
+      'one-piece-episode-of-nami-koukaishi-no-namida-to-nakama-no-kizuna',
+    episodes: episodeOfNamiEpisodes,
+  },
+  { animeSlug: 'shingeki-no-kyojin-ova', episodes: aotOvaEpisodes },
+  { animeSlug: 'shingeki-no-kyojin-lost-girls', episodes: lostGirlsEpisodes },
+  { animeSlug: 'dandadan-3rd-season', episodes: dandadanEpisodes },
+  {
+    animeSlug: 'kage-no-jitsuryokusha-ni-naritakute-zankyou-hen',
+    episodes: eminenceEpisodes,
+  },
 ]

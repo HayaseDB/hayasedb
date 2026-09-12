@@ -235,6 +235,8 @@ describe('seed genre fixtures', () => {
   })
 })
 
+const WITHOUT_PUBLISHED_EPISODES = new Set(['choppers'])
+
 describe('seed structure fixtures', () => {
   const allEpisodes = (): SeedEpisode[] =>
     SEED_STRUCTURES.flatMap((structure) =>
@@ -248,6 +250,19 @@ describe('seed structure fixtures', () => {
     const referenced = SEED_STRUCTURES.map((structure) => structure.animeSlug)
     expect(new Set(referenced).size).toBe(referenced.length)
     for (const slug of referenced) expect(slugs).toContain(slug)
+  })
+
+  it('give every released anime a season or episode structure', () => {
+    const covered = new Set(
+      SEED_STRUCTURES.map((structure) => structure.animeSlug),
+    )
+    const missing = SEED_ANIME.filter(
+      (entry) =>
+        entry.status !== 'CANCELLED' &&
+        !WITHOUT_PUBLISHED_EPISODES.has(entry.slug) &&
+        !covered.has(entry.slug),
+    ).map((entry) => entry.slug)
+    expect(missing).toEqual([])
   })
 
   it('never mix seasons and direct episodes on one anime', () => {
