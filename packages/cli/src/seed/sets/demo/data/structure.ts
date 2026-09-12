@@ -45,14 +45,14 @@ const attackOnTitanCour1 = released([
   [
     '3',
     '2013-04-21',
-    '解散式の夜 ―人類の再起①―',
+    '絶望の中で鈍く光る ―人類の再起①―',
     "A Dim Light Amid Despair: Humanity's Comeback, Part 1",
     'Cadet training begins and Eren struggles with the vertical manoeuvring equipment.',
   ],
   [
     '4',
     '2013-04-28',
-    '初陣 ―トロスト区攻防戦①―',
+    '解散式の夜 ―人類の再起②―',
     "The Night of the Closing Ceremony: Humanity's Comeback, Part 2",
     'Graduation celebrations end abruptly as the Colossal Titan returns to Trost.',
   ],
@@ -146,42 +146,42 @@ const attackOnTitanCour2 = released([
   [
     '17',
     '2013-08-04',
-    '女型の巨人 ―壁外調査①―',
+    '女型の巨人 ―第57回壁外調査①―',
     'Female Titan: The 57th Exterior Scouting Mission, Part 1',
     'An intelligent titan tears through the formation hunting for Eren.',
   ],
   [
     '18',
     '2013-08-11',
-    '巨大樹の森 ―壁外調査②―',
+    '巨大樹の森 ―第57回壁外調査②―',
     'Forest of Giant Trees: The 57th Exterior Scouting Mission, Part 2',
     'Erwin leads the corps into the forest without explaining his plan.',
   ],
   [
     '19',
     '2013-08-18',
-    '噛みつく ―壁外調査③―',
+    '噛み付く ―第57回壁外調査③―',
     'Bite: The 57th Exterior Scouting Mission, Part 3',
     'Eren must choose between trusting his squad and fighting alone.',
   ],
   [
     '20',
     '2013-08-25',
-    'エルヴィン・スミス ―壁外調査④―',
+    'エルヴィン・スミス ―第57回壁外調査④―',
     'Erwin Smith: The 57th Exterior Scouting Mission, Part 4',
     'The trap closes on the Female Titan at a devastating cost.',
   ],
   [
     '21',
     '2013-09-01',
-    '鉄槌 ―壁外調査⑤―',
+    '鉄槌 ―第57回壁外調査⑤―',
     'Crushing Blow: The 57th Exterior Scouting Mission, Part 5',
     'The Female Titan breaks free and Levi arrives to intervene.',
   ],
   [
     '22',
     '2013-09-08',
-    '敗者たち ―壁外調査⑥―',
+    '敗者達 ―第57回壁外調査⑥―',
     'The Defeated: The 57th Exterior Scouting Mission, Part 6',
     'The expedition returns with heavy losses and no answers.',
   ],
@@ -226,16 +226,20 @@ const attackOnTitanSpecials: SeedEpisode[] = [
     ],
   },
   {
-    number: '25.5',
-    type: 'RECAP',
+    number: '3.5',
+    type: 'SPECIAL',
     status: 'RELEASED',
-    airDate: '2014-01-10',
-    durationSeconds: 1_440,
+    airDate: '2013-12-09',
+    durationSeconds: 1_620,
     translations: [
-      { locale: 'ja-Jpan', title: 'イルゼの手帳', original: true },
+      {
+        locale: 'ja-Jpan',
+        title: 'イルゼの手帳 調査兵団報告書',
+        original: true,
+      },
       {
         locale: 'en',
-        title: "Ilse's Notebook",
+        title: "Ilse's Notebook: Notes from a Scout Regiment Member",
         overview:
           'Hange investigates the journal of a scout who met a talking titan.',
       },
@@ -339,71 +343,71 @@ const cyberpunkEpisodes = released(
     [
       '1',
       '2022-09-13',
-      'ラットボーイ',
+      '期待を背に',
       'Let You Down',
       'David loses everything in a single night and takes the military-grade implant that killed its last owner.',
     ],
     [
       '2',
       '2022-09-13',
-      'ラッキーホール',
+      '少年は何を思う',
       'Like a Boy',
       'Lucy pulls David into his first real job and the pair start to trust each other.',
     ],
     [
       '3',
       '2022-09-13',
-      'スモークとミラーズ',
+      '裏稼業',
       'Smooth Criminal',
       'Maine adds David to the crew and the edgerunners take on a corporate courier.',
     ],
     [
       '4',
       '2022-09-13',
-      'ネオンの街で',
-      'Nocturne Op. 55 No. 1',
-      'A quiet night out shows David the life he could have outside the street.',
+      'ツキが回って',
+      'Lucky You',
+      'A run finally goes the crew’s way and David tastes the life the chrome can buy.',
     ],
     [
       '5',
       '2022-09-13',
-      'オールモスト・ゼア',
+      '刺さる目線',
       'All Eyez on Me',
       'The crew takes a job that pushes their chrome tolerance past the safe line.',
     ],
     [
       '6',
       '2022-09-13',
-      'ジラーレ',
+      '炎に包まれて',
       'Girl on Fire',
       'Lucy tells David what she wants from the moon and what it will cost.',
     ],
     [
       '7',
       '2022-09-13',
-      'ウィンター',
+      'もっと強く',
       'Stronger',
       'A rescue turns into a firefight that no amount of chrome can win cleanly.',
     ],
     [
       '8',
       '2022-09-13',
-      'ドント・フィア・ザ・リーパー',
-      'Rebel Rebel',
+      'いかないで',
+      'Stay',
       'Arasaka closes in and David makes a choice he cannot take back.',
     ],
     [
       '9',
       '2022-09-13',
-      'あの子は月へ',
-      'My Moon My Man',
-      'The last run ends the only way Night City ever lets it end.',
+      '人間らしさ',
+      'Humanity',
+      'David pushes past the last line his body can hold for the people he has left.',
     ],
     [
       '10',
       '2022-09-13',
-      'エッジランナーズ',
-      'Edgerunners',
+      '私の月、私の恋',
+      'My Moon My Man',
       'Lucy keeps a promise above a city that never looks up.',
     ],
   ],
@@ -451,7 +455,7 @@ const deathNoteSeasons: SeedSeason[] = [
       [
         '5',
         '2006-11-01',
-        '策略',
+        '駆引',
         'Tactics',
         'Light engineers an alibi that costs an agent their life.',
       ],
@@ -468,22 +472,22 @@ const deathNoteSeasons: SeedSeason[] = [
     episodes: released([
       [
         '26',
-        '2007-04-04',
+        '2007-04-11',
         '再生',
         'Renewal',
         'Years pass and a new generation of successors takes up the Kira case.',
       ],
       [
         '27',
-        '2007-04-11',
-        'あぶり出し',
+        '2007-04-18',
+        '誘拐',
         'Abduction',
         'Mello moves against the task force and the notebook changes hands.',
       ],
       [
         '28',
-        '2007-04-18',
-        '仮面',
+        '2007-04-25',
+        '焦燥',
         'Impatience',
         'Near begins to read the pattern behind the new Kira killings.',
       ],
@@ -505,7 +509,7 @@ const chainsawManSeasons: SeedSeason[] = [
         '1',
         '2022-10-12',
         '犬とチェンソー',
-        'Dog and Chainsaw',
+        'Dog & Chainsaw',
         'Denji sells everything he has to pay a debt and dies for it, until Pochita makes a deal.',
       ],
       [
@@ -518,7 +522,7 @@ const chainsawManSeasons: SeedSeason[] = [
       [
         '3',
         '2022-10-26',
-        '帰れ',
+        'ニャーコの行方',
         'Meowy’s Whereabouts',
         'A routine extermination traps the team inside a devil that feeds on fear.',
       ],
@@ -532,16 +536,32 @@ const chainsawManSeasons: SeedSeason[] = [
     ]),
   },
   {
-    kind: 'PART',
+    kind: 'ARC',
     number: '2',
     translations: [
-      { locale: 'ja-Jpan', title: '第2部', original: true },
-      { locale: 'en', title: 'Part 2' },
-      { locale: 'es', title: 'Parte 2' },
+      { locale: 'ja-Jpan', title: '公安編', original: true },
+      { locale: 'en', title: 'Assassins Arc' },
+      { locale: 'es', title: 'Arco de los Asesinos' },
     ],
     episodes: [
       {
-        number: '13',
+        number: '1',
+        type: 'REGULAR',
+        status: 'UPCOMING',
+        airDate: null,
+        durationSeconds: null,
+        translations: [
+          { locale: 'ja-Jpan', title: '未定', original: true },
+          {
+            locale: 'en',
+            title: 'To be announced',
+            overview:
+              'Production was confirmed at Jump Festa 2026; no broadcast date has been given.',
+          },
+        ],
+      },
+      {
+        number: '2',
         type: 'REGULAR',
         status: 'UPCOMING',
         airDate: null,
@@ -552,38 +572,88 @@ const chainsawManSeasons: SeedSeason[] = [
         ],
       },
       {
-        number: '14',
-        type: 'REGULAR',
-        status: 'DELAYED',
-        airDate: null,
-        durationSeconds: null,
+        number: null,
+        type: 'PROMO',
+        status: 'RELEASED',
+        airDate: '2025-12-21',
+        durationSeconds: 95,
         translations: [
-          { locale: 'ja-Jpan', title: '延期', original: true },
-          {
-            locale: 'en',
-            title: 'Postponed',
-            overview:
-              'Production was pushed back and no new date has been set.',
-          },
-        ],
-      },
-      {
-        number: '15',
-        type: 'SPECIAL',
-        status: 'CANCELLED',
-        airDate: null,
-        durationSeconds: null,
-        translations: [
-          { locale: 'ja-Jpan', title: '中止', original: true },
-          {
-            locale: 'en',
-            title: 'Cancelled special',
-            overview:
-              'A planned bonus episode that was dropped from the slate.',
-          },
+          { locale: 'ja-Jpan', title: '公安編 ティザーPV', original: true },
+          { locale: 'en', title: 'Assassins Arc teaser' },
         ],
       },
     ],
+  },
+]
+
+const finalSeasonPart1 = released([
+  [
+    '60',
+    '2020-12-07',
+    '海の向こう側',
+    'The Other Side of the Sea',
+    'Four years after the fall of Wall Maria, the war is seen from Marley and a new generation of warrior candidates.',
+  ],
+  [
+    '61',
+    '2020-12-14',
+    '闇夜の列車',
+    'Midnight Train',
+    'The Eldian units are pulled back from the front and Falco makes a promise he does not understand.',
+  ],
+  [
+    '62',
+    '2020-12-21',
+    '希望の扉',
+    'The Door of Hope',
+    "Reiner's memories return to the day the warriors were chosen and the wall was broken.",
+  ],
+  [
+    '63',
+    '2020-12-28',
+    '手から手へ',
+    'From One Hand to Another',
+    'Willy Tybur prepares to address the world as Marley celebrates its victory.',
+  ],
+])
+
+const finalSeasonPart2 = released([
+  [
+    '76',
+    '2022-01-10',
+    '正論',
+    'Judgment',
+    'The Survey Corps is split over the rumbling as Eren acts without them.',
+  ],
+  [
+    '77',
+    '2022-01-17',
+    '踏切',
+    'Sneak Attack',
+    'Marley strikes back at Shiganshina and the alliance is forced into the open.',
+  ],
+])
+
+const finalSeasonSeasons: SeedSeason[] = [
+  {
+    kind: 'PART',
+    number: '1',
+    translations: [
+      { locale: 'ja-Jpan', title: 'The Final Season 第1部', original: true },
+      { locale: 'en', title: 'The Final Season Part 1' },
+      { locale: 'de', title: 'The Final Season Teil 1' },
+    ],
+    episodes: finalSeasonPart1,
+  },
+  {
+    kind: 'PART',
+    number: '2',
+    translations: [
+      { locale: 'ja-Jpan', title: 'The Final Season 第2部', original: true },
+      { locale: 'en', title: 'The Final Season Part 2' },
+      { locale: 'de', title: 'The Final Season Teil 2' },
+    ],
+    episodes: finalSeasonPart2,
   },
 ]
 
@@ -592,7 +662,7 @@ const kusuriyaEpisodes: SeedEpisode[] = [
     number: '1',
     type: 'REGULAR',
     status: 'UPCOMING',
-    airDate: '2026-04-04',
+    airDate: '2026-10-03',
     durationSeconds: 1_440,
     translations: [
       { locale: 'ja-Jpan', title: '第一話', original: true },
@@ -607,7 +677,7 @@ const kusuriyaEpisodes: SeedEpisode[] = [
     number: '2',
     type: 'REGULAR',
     status: 'UPCOMING',
-    airDate: '2026-04-11',
+    airDate: '2026-10-10',
     durationSeconds: 1_440,
     translations: [
       { locale: 'ja-Jpan', title: '第二話', original: true },
@@ -618,11 +688,42 @@ const kusuriyaEpisodes: SeedEpisode[] = [
     number: null,
     type: 'PROMO',
     status: 'RELEASED',
-    airDate: '2025-12-20',
+    airDate: '2025-10-22',
     durationSeconds: 120,
     translations: [
       { locale: 'ja-Jpan', title: '第3期 ティザーPV', original: true },
       { locale: 'en', title: 'Season 3 teaser' },
+    ],
+  },
+  {
+    number: '13',
+    type: 'REGULAR',
+    status: 'DELAYED',
+    airDate: null,
+    durationSeconds: null,
+    translations: [
+      { locale: 'ja-Jpan', title: '未定', original: true },
+      {
+        locale: 'en',
+        title: 'To be announced',
+        overview:
+          'The second cour is scheduled for April 2027 and has no episode dates yet.',
+      },
+    ],
+  },
+  {
+    number: null,
+    type: 'SPECIAL',
+    status: 'CANCELLED',
+    airDate: null,
+    durationSeconds: null,
+    translations: [
+      { locale: 'ja-Jpan', title: '中止', original: true },
+      {
+        locale: 'en',
+        title: 'Cancelled special',
+        overview: 'A planned bonus episode that was dropped from the slate.',
+      },
     ],
   },
 ]
@@ -681,6 +782,10 @@ const yourNameEpisodes: SeedEpisode[] = [
 export const SEED_STRUCTURES: SeedStructure[] = [
   { animeSlug: 'shingeki-no-kyojin', seasons: attackOnTitanSeasons },
   { animeSlug: 'death-note', seasons: deathNoteSeasons },
+  {
+    animeSlug: 'shingeki-no-kyojin-the-final-season',
+    seasons: finalSeasonSeasons,
+  },
   { animeSlug: 'chainsaw-man', seasons: chainsawManSeasons },
   { animeSlug: 'flcl', episodes: flclEpisodes },
   { animeSlug: 'cyberpunk-edgerunners', episodes: cyberpunkEpisodes },
