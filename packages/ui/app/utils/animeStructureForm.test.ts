@@ -5,6 +5,7 @@ import {
   newEpisodeDraft,
   newSeasonDraft,
   planStructureChanges,
+  preferredStructureTitle,
   type AnimeStructureState,
   type EpisodeDraft,
   type SeasonDraft,
@@ -391,5 +392,35 @@ describe('applyStructurePrefill translation handling', () => {
       { locale: 'en', title: 'Pilot', original: true, overview: 'Hi' },
       { locale: 'ja', title: 'パイロット', original: false, overview: null },
     ])
+  })
+})
+
+describe('preferredStructureTitle', () => {
+  const en = {
+    locale: 'en' as const,
+    title: 'To You, in 2000 Years',
+    original: false,
+  }
+  const ja = {
+    locale: 'ja-Jpan' as const,
+    title: '二千年後の君へ',
+    original: true,
+  }
+
+  it('returns null without any translation', () => {
+    expect(preferredStructureTitle([])).toBeNull()
+  })
+
+  it('prefers english over the original locale', () => {
+    expect(preferredStructureTitle([ja, en])).toBe(en.title)
+    expect(preferredStructureTitle([en, ja])).toBe(en.title)
+  })
+
+  it('falls back to the original locale without english', () => {
+    expect(preferredStructureTitle([ja])).toBe(ja.title)
+  })
+
+  it('ignores a blank english title', () => {
+    expect(preferredStructureTitle([{ ...en, title: '  ' }])).toBeNull()
   })
 })

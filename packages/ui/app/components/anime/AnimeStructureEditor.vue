@@ -84,8 +84,8 @@ const removedEpisodes = computed(() => [
 
 const seasonLabel = (season: SeasonDraft) => {
   const kind = ANIME_SEASON_KIND_LABELS[season.kind]
-  const title = season.translations.find((item) => item.original)?.title
-  return title?.trim() || (season.number ? `${kind} ${season.number}` : kind)
+  const title = preferredStructureTitle(season.translations)
+  return title || (season.number ? `${kind} ${season.number}` : kind)
 }
 
 const episodeLabel = (episode: EpisodeDraft) => {
@@ -93,8 +93,8 @@ const episodeLabel = (episode: EpisodeDraft) => {
     episode.type === 'REGULAR'
       ? (episode.number ?? '–')
       : `${ANIME_EPISODE_TYPE_LABELS[episode.type]}${episode.number ? ` ${episode.number}` : ''}`
-  const title = episode.translations.find((item) => item.original)?.title
-  return `${marker} · ${title?.trim() || 'Untitled'}`
+  const title = preferredStructureTitle(episode.translations)
+  return `${marker} · ${title || 'Untitled'}`
 }
 </script>
 

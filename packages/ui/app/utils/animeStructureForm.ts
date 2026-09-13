@@ -68,6 +68,15 @@ export interface AnimeStructureState {
 export type EpisodeOwner =
   { animeId: string; seasonId: null } | { animeId: null; seasonId: string }
 
+export function preferredStructureTitle(
+  translations: StructureTitle[],
+): string | null {
+  const english = translations.find((item) => item.locale === 'en')
+  const chosen =
+    english ?? translations.find((item) => item.original) ?? translations[0]
+  return chosen?.title.trim() || null
+}
+
 export function emptyStructureState(): AnimeStructureState {
   return { seasons: [], episodes: [] }
 }
