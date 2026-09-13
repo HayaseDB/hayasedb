@@ -4,7 +4,6 @@ import { implement } from '@orpc/server'
 import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { requireAdminUser } from '../../auth/require-user'
-import { negotiatedLanguage } from '../localization'
 import { EpisodeService } from './episode.service'
 
 @Controller()
@@ -14,21 +13,16 @@ export class EpisodeController {
   @AllowAnonymous()
   @Implement(contract.season.list)
   listSeasons() {
-    return implement(contract.season.list).handler(({ input, context }) =>
-      this.episodes.listSeasons(
-        input.animeId,
-        input.limit,
-        input.cursor,
-        negotiatedLanguage(context),
-      ),
+    return implement(contract.season.list).handler(({ input }) =>
+      this.episodes.listSeasons(input.animeId, input.limit, input.cursor),
     )
   }
 
   @AllowAnonymous()
   @Implement(contract.season.get)
   getSeason() {
-    return implement(contract.season.get).handler(({ input, context }) =>
-      this.episodes.getSeason(input.id, negotiatedLanguage(context)),
+    return implement(contract.season.get).handler(({ input }) =>
+      this.episodes.getSeason(input.id),
     )
   }
 
@@ -76,37 +70,33 @@ export class EpisodeController {
   @AllowAnonymous()
   @Implement(contract.episode.listForAnime)
   listEpisodesForAnime() {
-    return implement(contract.episode.listForAnime).handler(
-      ({ input, context }) =>
-        this.episodes.listEpisodesForAnime(
-          input.animeId,
-          input.seasonId,
-          input.limit,
-          input.cursor,
-          negotiatedLanguage(context),
-        ),
+    return implement(contract.episode.listForAnime).handler(({ input }) =>
+      this.episodes.listEpisodesForAnime(
+        input.animeId,
+        input.seasonId,
+        input.limit,
+        input.cursor,
+      ),
     )
   }
 
   @AllowAnonymous()
   @Implement(contract.episode.listForSeason)
   listEpisodesForSeason() {
-    return implement(contract.episode.listForSeason).handler(
-      ({ input, context }) =>
-        this.episodes.listEpisodesForSeason(
-          input.seasonId,
-          input.limit,
-          input.cursor,
-          negotiatedLanguage(context),
-        ),
+    return implement(contract.episode.listForSeason).handler(({ input }) =>
+      this.episodes.listEpisodesForSeason(
+        input.seasonId,
+        input.limit,
+        input.cursor,
+      ),
     )
   }
 
   @AllowAnonymous()
   @Implement(contract.episode.get)
   getEpisode() {
-    return implement(contract.episode.get).handler(({ input, context }) =>
-      this.episodes.getEpisode(input.id, negotiatedLanguage(context)),
+    return implement(contract.episode.get).handler(({ input }) =>
+      this.episodes.getEpisode(input.id),
     )
   }
 

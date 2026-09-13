@@ -15,16 +15,11 @@ function titleCase(value: string): string {
 type RefResolver = (
   db: Database,
   ids: string[],
-  acceptLanguage?: string,
 ) => Promise<Record<string, string>>
 
 function pickLabels<
   T extends { id: string; locale: string; original: boolean },
->(
-  rows: T[],
-  acceptLanguage: string | undefined,
-  label: (row: T) => string,
-): Record<string, string> {
+>(rows: T[], label: (row: T) => string): Record<string, string> {
   const byId = new Map<string, T[]>()
   for (const row of rows) {
     const bucket = byId.get(row.id)
@@ -34,7 +29,7 @@ function pickLabels<
 
   const labels: Record<string, string> = {}
   for (const [id, candidates] of byId) {
-    const preferred = preferredLocalized(candidates, acceptLanguage)
+    const preferred = preferredLocalized(candidates)
     if (preferred) labels[id] = label(preferred)
   }
   return labels
@@ -51,7 +46,7 @@ export class DisplayService {
     Exclude<RefTarget, 'mediaAsset'>,
     RefResolver
   > = {
-    genre: async (db, ids, acceptLanguage) => {
+    genre: async (db, ids) => {
       const rows = await db
         .select({
           id: schema.genre.id,
@@ -79,13 +74,12 @@ export class DisplayService {
                 },
               ],
         ),
-        acceptLanguage,
         (row) => row.name,
       )
       for (const row of rows) labels[row.id] ??= row.slug
       return labels
     },
-    anime: async (db, ids, acceptLanguage) => {
+    anime: async (db, ids) => {
       const rows = await db
         .select({
           id: schema.anime.id,
@@ -114,13 +108,12 @@ export class DisplayService {
                 },
               ],
         ),
-        acceptLanguage,
         (row) => row.title,
       )
       for (const row of rows) labels[row.id] ??= row.slug
       return labels
     },
-    animeSeason: async (db, ids, acceptLanguage) => {
+    animeSeason: async (db, ids) => {
       const rows = await db
         .select({
           id: schema.animeSeason.id,
@@ -151,7 +144,6 @@ export class DisplayService {
                 },
               ],
         ),
-        acceptLanguage,
         (row) => row.title,
       )
       for (const row of rows) {
@@ -165,7 +157,6 @@ export class DisplayService {
 
   async buildDisplay(
     documents: ReadonlyArray<KindedDocument>,
-    acceptLanguage?: string,
   ): Promise<ContributionDisplay> {
     const byTarget = collectDocumentRefs(documents)
     const { mediaAsset: mediaIds = [], ...labelTargets } = byTarget
@@ -179,10 +170,7 @@ export class DisplayService {
         ).map(async ([target, ids]) =>
           ids.length === 0
             ? ([target, {}] as const)
-            : ([
-                target,
-                await this.resolvers[target](this.db, ids, acceptLanguage),
-              ] as const),
+            : ([target, await this.resolvers[target](this.db, ids)] as const),
         ),
       ),
       this.buildMediaAssets(mediaIds),

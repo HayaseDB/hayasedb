@@ -4,7 +4,6 @@ import { implement } from '@orpc/server'
 import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { requireAdminUser } from '../../auth/require-user'
-import { negotiatedLanguage } from '../localization'
 import { GenreService } from './genre.service'
 
 @Controller()
@@ -14,16 +13,16 @@ export class GenreController {
   @AllowAnonymous()
   @Implement(contract.genre.list)
   list() {
-    return implement(contract.genre.list).handler(({ input, context }) =>
-      this.genres.list(input, negotiatedLanguage(context)),
+    return implement(contract.genre.list).handler(({ input }) =>
+      this.genres.list(input),
     )
   }
 
   @AllowAnonymous()
   @Implement(contract.genre.get)
   get() {
-    return implement(contract.genre.get).handler(({ input, context }) =>
-      this.genres.getById(input.id, negotiatedLanguage(context)),
+    return implement(contract.genre.get).handler(({ input }) =>
+      this.genres.getById(input.id),
     )
   }
 

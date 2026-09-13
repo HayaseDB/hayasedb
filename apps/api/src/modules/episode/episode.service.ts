@@ -139,12 +139,11 @@ export class EpisodeService {
     animeId: string,
     limit: number,
     cursor: string | undefined,
-    acceptLanguage?: string,
   ) {
     const rows = await this.seasonRows(animeId)
     const paged = paginate(rows, limit, cursor)
     return {
-      items: await this.decorateSeasons(paged.page, acceptLanguage),
+      items: await this.decorateSeasons(paged.page),
       meta: {
         total: rows.length,
         limit,
@@ -156,7 +155,7 @@ export class EpisodeService {
     }
   }
 
-  async getSeason(id: string, acceptLanguage?: string): Promise<AnimeSeason> {
+  async getSeason(id: string): Promise<AnimeSeason> {
     const [row] = await this.db
       .select({
         ...getTableColumns(schema.animeSeason),
@@ -167,17 +166,14 @@ export class EpisodeService {
       .where(eq(schema.animeSeason.id, id))
       .limit(1)
     if (!row) throw new ORPCError('NOT_FOUND', { message: 'Season not found' })
-    const [season] = await this.decorateSeasons([row], acceptLanguage)
+    const [season] = await this.decorateSeasons([row])
     if (!season) {
       throw new ORPCError('NOT_FOUND', { message: 'Season not found' })
     }
     return season
   }
 
-  private async decorateSeasons(
-    rows: SeasonRow[],
-    acceptLanguage?: string,
-  ): Promise<AnimeSeason[]> {
+  private async decorateSeasons(rows: SeasonRow[]): Promise<AnimeSeason[]> {
     if (rows.length === 0) return []
     const ids = rows.map((row) => row.id)
     const [documents, aggregates] = await Promise.all([
@@ -204,7 +200,7 @@ export class EpisodeService {
         {
           id: row.id,
           ...document,
-          title: preferredLocalized(document.translations, acceptLanguage),
+          title: preferredLocalized(document.translations),
           episodeCount: aggregate?.episodeCount ?? 0,
           firstAirDate: aggregate?.firstAirDate ?? null,
           lastAirDate: aggregate?.lastAirDate ?? null,
@@ -344,13 +340,11 @@ export class EpisodeService {
     seasonId: string | undefined,
     limit: number,
     cursor: string | undefined,
-    acceptLanguage?: string,
   ) {
     return this.episodePage(
       await this.episodeRowsForAnime(animeId, seasonId),
       limit,
       cursor,
-      acceptLanguage,
     )
   }
 
@@ -358,13 +352,11 @@ export class EpisodeService {
     seasonId: string,
     limit: number,
     cursor: string | undefined,
-    acceptLanguage?: string,
   ) {
     return this.episodePage(
       await this.episodeRowsForSeason(seasonId),
       limit,
       cursor,
-      acceptLanguage,
     )
   }
 
@@ -372,11 +364,10 @@ export class EpisodeService {
     rows: EpisodeRow[],
     limit: number,
     cursor: string | undefined,
-    acceptLanguage?: string,
   ) {
     const paged = paginate(rows, limit, cursor)
     return {
-      items: await this.decorateEpisodes(paged.page, acceptLanguage),
+      items: await this.decorateEpisodes(paged.page),
       meta: {
         total: rows.length,
         limit,
@@ -388,7 +379,7 @@ export class EpisodeService {
     }
   }
 
-  async getEpisode(id: string, acceptLanguage?: string): Promise<AnimeEpisode> {
+  async getEpisode(id: string): Promise<AnimeEpisode> {
     const [row] = await this.db
       .select({
         ...getTableColumns(schema.animeEpisode),
@@ -399,17 +390,14 @@ export class EpisodeService {
       .where(eq(schema.animeEpisode.id, id))
       .limit(1)
     if (!row) throw new ORPCError('NOT_FOUND', { message: 'Episode not found' })
-    const [episode] = await this.decorateEpisodes([row], acceptLanguage)
+    const [episode] = await this.decorateEpisodes([row])
     if (!episode) {
       throw new ORPCError('NOT_FOUND', { message: 'Episode not found' })
     }
     return episode
   }
 
-  private async decorateEpisodes(
-    rows: EpisodeRow[],
-    acceptLanguage?: string,
-  ): Promise<AnimeEpisode[]> {
+  private async decorateEpisodes(rows: EpisodeRow[]): Promise<AnimeEpisode[]> {
     if (rows.length === 0) return []
     const documents = await entityHandler('animeEpisode').serializeMany(
       this.db,
@@ -418,10 +406,7 @@ export class EpisodeService {
     return rows.flatMap((row) => {
       const document = documents.get(row.id) as AnimeEpisodeDocument | undefined
       if (!document) return []
-      const preferred = preferredLocalized(
-        document.translations,
-        acceptLanguage,
-      )
+      const preferred = preferredLocalized(document.translations)
       return [
         {
           id: row.id,

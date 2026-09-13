@@ -4,7 +4,6 @@ import { implement } from '@orpc/server'
 import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth'
 import { contract } from '@hayasedb/contract'
 import { isAdminRequest, requireAdminUser } from '../../auth/require-user'
-import { negotiatedLanguage } from '../localization'
 import { AnimeService } from './anime.service'
 import { MediaService } from '../media/media.service'
 
@@ -19,10 +18,8 @@ export class AnimeController {
   @Implement(contract.anime.list)
   list() {
     return implement(contract.anime.list).handler(({ input, context }) => {
-      const acceptLanguage = negotiatedLanguage(context)
       return this.anime.list(input, {
         isAdmin: isAdminRequest(context.request),
-        acceptLanguage,
       })
     })
   }
@@ -31,10 +28,8 @@ export class AnimeController {
   @Implement(contract.anime.get)
   get() {
     return implement(contract.anime.get).handler(({ input, context }) => {
-      const acceptLanguage = negotiatedLanguage(context)
       return this.anime.getById(input.id, {
         includeDeleted: isAdminRequest(context.request),
-        acceptLanguage,
       })
     })
   }

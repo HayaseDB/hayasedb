@@ -30,9 +30,7 @@ describe('http caching', () => {
     expect(response.headers.get('cache-control')).toBe(
       'public, max-age=10, stale-while-revalidate=30',
     )
-    expect(response.headers.get('vary')).toBe(
-      'Accept-Encoding, X-Api-Key, Accept-Language',
-    )
+    expect(response.headers.get('vary')).toBe('Accept-Encoding, X-Api-Key')
     expect(response.headers.get('etag')).toMatch(/^"[\w-]+"$/)
   })
 

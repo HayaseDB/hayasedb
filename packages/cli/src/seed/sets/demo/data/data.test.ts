@@ -387,3 +387,40 @@ describe('seed user fixtures', () => {
     }
   })
 })
+
+describe('seed english coverage', () => {
+  it('give every anime and genre an english translation', () => {
+    expect(
+      SEED_ANIME.filter(
+        (entry) => !entry.translations.some((row) => row.locale === 'en'),
+      ).map((entry) => entry.slug),
+    ).toEqual([])
+    expect(
+      SEED_GENRES.filter(
+        (entry) => !entry.translations.some((row) => row.locale === 'en'),
+      ).map((entry) => entry.name),
+    ).toEqual([])
+  })
+
+  it('give every season and episode an english translation', () => {
+    const missing: string[] = []
+    const check = (label: string, episodes: SeedEpisode[]) => {
+      for (const episode of episodes) {
+        if (!episode.translations.some((row) => row.locale === 'en'))
+          missing.push(`${label} ${episode.number}`)
+      }
+    }
+    for (const structure of SEED_STRUCTURES) {
+      if ('seasons' in structure) {
+        for (const season of structure.seasons) {
+          if (!season.translations.some((row) => row.locale === 'en'))
+            missing.push(`${structure.animeSlug} season ${season.number}`)
+          check(structure.animeSlug, season.episodes)
+        }
+      } else {
+        check(structure.animeSlug, structure.episodes)
+      }
+    }
+    expect(missing).toEqual([])
+  })
+})

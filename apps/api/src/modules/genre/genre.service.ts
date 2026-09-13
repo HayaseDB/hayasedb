@@ -41,7 +41,6 @@ export class GenreService {
 
   async list(
     input: ListGenresInput = {},
-    acceptLanguage?: string,
   ): Promise<{ items: GenreListItem[]; meta: { total: number } }> {
     const conditions = [isNull(schema.entity.deletedAt)]
     if (input.name) {
@@ -77,17 +76,17 @@ export class GenreService {
     const rows = await this.baseQuery(and(...conditions)).orderBy(
       asc(schema.genre.slug),
     )
-    const items = await this.decorate(rows, acceptLanguage)
+    const items = await this.decorate(rows)
     items.sort((a, b) => a.name.localeCompare(b.name))
     return { items, meta: { total: items.length } }
   }
 
-  async getById(id: string, acceptLanguage?: string): Promise<GenreListItem> {
+  async getById(id: string): Promise<GenreListItem> {
     const [row] = await this.baseQuery(
       and(eq(schema.genre.id, id), isNull(schema.entity.deletedAt)),
     ).limit(1)
     if (!row) throw new ORPCError('NOT_FOUND', { message: 'Genre not found' })
-    return (await this.decorate([row], acceptLanguage))[0]!
+    return (await this.decorate([row]))[0]!
   }
 
   async create(
@@ -190,7 +189,6 @@ export class GenreService {
 
   private async decorate(
     rows: { id: string; slug: string; animeCount: number }[],
-    acceptLanguage?: string,
   ): Promise<GenreListItem[]> {
     const documents = await genreHandler.serializeMany(
       this.db,
@@ -198,10 +196,7 @@ export class GenreService {
     )
     return rows.map((row) => {
       const document = documents.get(row.id)!
-      const selected = preferredLocalized(
-        document.translations,
-        acceptLanguage,
-      )!
+      const selected = preferredLocalized(document.translations)!
       return {
         id: row.id,
         slug: row.slug,

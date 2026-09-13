@@ -1,40 +1,44 @@
 import { describe, expect, it } from 'vitest'
-import { preferredLocalized } from './preferred'
+import { preferredLocalized, requirePreferredLocalized } from './preferred'
 
-const translations = [
-  { locale: 'ja-Jpan', title: '進撃の巨人', original: true },
-  { locale: 'ja-Latn', title: 'Shingeki no Kyojin', original: false },
-  { locale: 'en', title: 'Attack on Titan', original: false },
-  { locale: 'de', title: 'Attack on Titan', original: false },
-]
+const en = { locale: 'en', title: 'Attack on Titan' }
+const ja = { locale: 'ja-Jpan', title: '進撃の巨人', original: true }
+const de = { locale: 'de', title: 'Attack on Titan' }
 
 describe('preferredLocalized', () => {
-  it('falls back to english when the client states no preference', () => {
-    expect(preferredLocalized(translations)?.locale).toBe('en')
-  })
-
-  it('prefers an exact locale match over english', () => {
-    expect(preferredLocalized(translations, 'de')?.locale).toBe('de')
-  })
-
-  it('matches on language when no exact tag is available', () => {
-    expect(preferredLocalized(translations, 'ja')?.locale).toBe('ja-Jpan')
-  })
-
-  it('honours quality weights in order', () => {
-    expect(
-      preferredLocalized(translations, 'de;q=0.4,ja-Latn;q=0.9')?.locale,
-    ).toBe('ja-Latn')
-  })
-
-  it('falls back to the original when english is missing', () => {
-    const withoutEnglish = translations.filter(
-      (translation) => translation.locale !== 'en',
-    )
-    expect(preferredLocalized(withoutEnglish, 'fr')?.locale).toBe('ja-Jpan')
-  })
-
-  it('returns null for an empty list', () => {
+  it('returns null when there is nothing to choose from', () => {
     expect(preferredLocalized([])).toBeNull()
+  })
+
+  it('prefers english over the original locale', () => {
+    expect(preferredLocalized([ja, en])).toBe(en)
+  })
+
+  it('prefers english regardless of input order', () => {
+    expect(preferredLocalized([en, ja])).toBe(en)
+  })
+
+  it('falls back to the original locale without english', () => {
+    expect(preferredLocalized([de, ja])).toBe(ja)
+  })
+
+  it('falls back to any locale without english or an original', () => {
+    expect(preferredLocalized([de])).toBe(de)
+  })
+
+  it('breaks ties between fallbacks deterministically', () => {
+    const fr = { locale: 'fr', title: "L'Attaque des Titans" }
+    expect(preferredLocalized([fr, de])).toBe(de)
+    expect(preferredLocalized([de, fr])).toBe(de)
+  })
+})
+
+describe('requirePreferredLocalized', () => {
+  it('returns the preferred translation when one exists', () => {
+    expect(requirePreferredLocalized([ja, en], de)).toBe(en)
+  })
+
+  it('returns the fallback when there is no translation', () => {
+    expect(requirePreferredLocalized([], de)).toBe(de)
   })
 })

@@ -60,14 +60,11 @@ describe('anime seasons and episodes', () => {
       seasonId: null,
       position: 0,
       headRev: 1,
-      title: { locale: 'ja-Jpan' },
+      title: { locale: 'en' },
     })
 
-    const localized = await admin.fetch(`/api/episodes/${episode.id}`, {
-      headers: { 'accept-language': 'en' },
-    })
+    const localized = await admin.fetch(`/api/episodes/${episode.id}`)
     expect(localized.status).toBe(200)
-    expect(localized.headers.get('vary')).toContain('Accept-Language')
     const body = (await localized.json()) as { title: { locale: string } }
     expect(body.title).toMatchObject({ locale: 'en', title: 'Asteroid Blues' })
 
