@@ -50,18 +50,26 @@ WITH folded AS (
 	SELECT "id",
 		coalesce(nullif(trim(both '-' from regexp_replace(lower(regexp_replace(normalize("name", NFKD), '[̀-ͯ]', '', 'g')), '[^a-z0-9]+', '-', 'g')), ''), 'genre') AS base_slug
 	FROM "genre"
-), candidates AS (
+), ranked AS (
 	SELECT "id", base_slug,
 		row_number() OVER (PARTITION BY base_slug ORDER BY "id") AS duplicate_number
 	FROM folded
+), taken AS (
+	SELECT DISTINCT base_slug AS slug FROM folded
+), resolved AS (
+	SELECT r."id",
+		CASE WHEN r.duplicate_number = 1 THEN r.base_slug ELSE (
+			SELECT r.base_slug || '-' || n
+			FROM generate_series(2, 1000) n
+			WHERE NOT EXISTS (SELECT 1 FROM taken t WHERE t.slug = r.base_slug || '-' || n)
+			OFFSET r.duplicate_number - 2 LIMIT 1
+		) END AS slug
+	FROM ranked r
 )
 UPDATE "genre" g
-SET "slug" = CASE
-	WHEN c.duplicate_number = 1 THEN c.base_slug
-	ELSE c.base_slug || '-' || left(g."id"::text, 8)
-END
-FROM candidates c
-WHERE c."id" = g."id";--> statement-breakpoint
+SET "slug" = r.slug
+FROM resolved r
+WHERE r."id" = g."id";--> statement-breakpoint
 
 INSERT INTO "genre_translation" ("genre_id", "locale", "name")
 SELECT "id", 'en', "name" FROM "genre";--> statement-breakpoint

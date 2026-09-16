@@ -7,17 +7,7 @@ const duration = computed(() =>
   formatEpisodeDuration(props.episode.durationSeconds),
 )
 
-const airDate = computed(() => {
-  if (!props.episode.airDate) return null
-  const parsed = new Date(`${props.episode.airDate}T00:00:00Z`)
-  if (Number.isNaN(parsed.getTime())) return props.episode.airDate
-  return parsed.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  })
-})
+const airDate = computed(() => formatEpisodeAirDate(props.episode.airDate))
 
 const marker = computed(() => {
   const { number, type } = props.episode

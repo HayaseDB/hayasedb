@@ -64,9 +64,11 @@ export const animeEpisodeDocumentSchema = animeEpisodeDocumentBaseSchema.refine(
 export const animeSeasonDocumentPatchSchema = animeSeasonDocumentSchema
   .partial()
   .omit({ animeId: true })
+  .extend({ translations: localizedTitleListSchema.optional() })
 
-export const animeEpisodeDocumentPatchSchema =
-  animeEpisodeDocumentBaseSchema.partial()
+export const animeEpisodeDocumentPatchSchema = animeEpisodeDocumentBaseSchema
+  .partial()
+  .extend({ translations: localizedEpisodeTextListSchema.optional() })
 
 export const animeSeasonSchema = animeSeasonDocumentSchema.extend({
   id: idSchema,

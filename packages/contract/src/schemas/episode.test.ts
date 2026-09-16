@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { animeEpisodeDocumentSchema, episodeNumberSchema } from './episode'
+import {
+  animeEpisodeDocumentPatchSchema,
+  animeEpisodeDocumentSchema,
+  animeSeasonDocumentPatchSchema,
+  episodeNumberSchema,
+} from './episode'
 
 describe('episode schemas', () => {
   it('keeps exact decimal episode numbers as strings', () => {
@@ -33,5 +38,21 @@ describe('episode schemas', () => {
         seasonId: null,
       }).success,
     ).toBe(false)
+  })
+
+  it('leaves translations untouched when a patch omits them', () => {
+    expect(
+      animeEpisodeDocumentPatchSchema.parse({ status: 'RELEASED' }),
+    ).toEqual({ status: 'RELEASED' })
+    expect(animeSeasonDocumentPatchSchema.parse({ kind: 'COUR' })).toEqual({
+      kind: 'COUR',
+    })
+  })
+
+  it('keeps translations a patch does supply', () => {
+    const translations = [{ locale: 'en', title: 'Pilot', original: true }]
+    expect(
+      animeSeasonDocumentPatchSchema.parse({ translations }).translations,
+    ).toHaveLength(1)
   })
 })

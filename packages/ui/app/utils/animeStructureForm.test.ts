@@ -382,6 +382,36 @@ describe('applyStructurePrefill translation handling', () => {
           translations: [
             { locale: 'de', overview: 'Ohne Titel' },
             { locale: 'en', title: 'Pilot', original: true, overview: 'Hi' },
+            { locale: 'ja-Jpan', title: 'パイロット', overview: null },
+          ],
+        },
+      },
+    ])
+
+    expect(state.episodes[0]!.translations).toEqual([
+      { locale: 'en', title: 'Pilot', original: true, overview: 'Hi' },
+      {
+        locale: 'ja-Jpan',
+        title: 'パイロット',
+        original: false,
+        overview: null,
+      },
+    ])
+  })
+
+  it('drops rows whose locale is not a known localization locale', () => {
+    const state = emptyStructureState()
+
+    applyStructurePrefill(state, [
+      {
+        entityKind: 'animeEpisode',
+        entityId: UUID(8),
+        op: 'create',
+        payload: {
+          animeId: ANIME,
+          seasonId: null,
+          translations: [
+            { locale: 'en', title: 'Pilot', original: true, overview: 'Hi' },
             { locale: 'ja', title: 'パイロット', overview: null },
           ],
         },
@@ -390,7 +420,6 @@ describe('applyStructurePrefill translation handling', () => {
 
     expect(state.episodes[0]!.translations).toEqual([
       { locale: 'en', title: 'Pilot', original: true, overview: 'Hi' },
-      { locale: 'ja', title: 'パイロット', original: false, overview: null },
     ])
   })
 })

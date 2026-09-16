@@ -1,4 +1,4 @@
-import { formatFuzzyDate, type FuzzyDate } from '@hayasedb/domain'
+import { formatFuzzyDate, isoToFuzzy, type FuzzyDate } from '@hayasedb/domain'
 
 export function formatAnimeDate(value?: FuzzyDate | null): string | null {
   return value ? formatFuzzyDate(value) : null
@@ -12,6 +12,12 @@ export function formatAnimeDateRange(
   const to = formatAnimeDate(end)
   if (from && to) return from === to ? from : `${from} – ${to}`
   return from ?? to
+}
+
+export function formatEpisodeAirDate(iso?: string | null): string | null {
+  if (!iso) return null
+  const fuzzy = isoToFuzzy(iso)
+  return Number.isNaN(fuzzy.year) ? iso : formatFuzzyDate(fuzzy)
 }
 
 export function formatEpisodeDuration(seconds: number | null): string | null {

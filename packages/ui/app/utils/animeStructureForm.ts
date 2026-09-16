@@ -1,5 +1,9 @@
 import type { AnimeEpisode, AnimeSeason, ChangeInput } from '@hayasedb/contract'
 import {
+  ANIME_EPISODE_STATUSES,
+  ANIME_EPISODE_TYPES,
+  ANIME_SEASON_KINDS,
+  LOCALIZATION_LOCALES,
   stableStringify,
   type AnimeEpisodeStatus,
   type AnimeEpisodeType,
@@ -352,6 +356,14 @@ const asString = (value: unknown) => (typeof value === 'string' ? value : null)
 
 const asNumber = (value: unknown) => (typeof value === 'number' ? value : null)
 
+const asMember = <T extends string>(
+  allowed: readonly T[],
+  value: unknown,
+): T | null =>
+  typeof value === 'string' && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : null
+
 function asTranslationRows(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value)
     ? value.filter(
@@ -363,12 +375,12 @@ function asTranslationRows(value: unknown): Record<string, unknown>[] {
 
 const asTranslations = (value: unknown): StructureTitle[] =>
   asTranslationRows(value).flatMap((row) => {
-    const locale = asString(row.locale)
+    const locale = asMember(LOCALIZATION_LOCALES, row.locale)
     const title = asString(row.title)
     if (!locale || title === null) return []
     return [
       {
-        locale: locale as LocalizationLocale,
+        locale,
         title,
         original: row.original === true,
       },
@@ -377,12 +389,12 @@ const asTranslations = (value: unknown): StructureTitle[] =>
 
 const asEpisodeTexts = (value: unknown): EpisodeText[] =>
   asTranslationRows(value).flatMap((row) => {
-    const locale = asString(row.locale)
+    const locale = asMember(LOCALIZATION_LOCALES, row.locale)
     const title = asString(row.title)
     if (!locale || title === null) return []
     return [
       {
-        locale: locale as LocalizationLocale,
+        locale,
         title,
         original: row.original === true,
         overview: asString(row.overview),
@@ -412,7 +424,7 @@ export function applyStructurePrefill(
       id: change.entityId,
     }
     if ('kind' in payload) {
-      season.kind = (payload.kind as SeasonDraft['kind']) ?? season.kind
+      season.kind = asMember(ANIME_SEASON_KINDS, payload.kind) ?? season.kind
     }
     if ('number' in payload) season.number = asString(payload.number)
     if ('translations' in payload) {
@@ -448,11 +460,11 @@ export function applyStructurePrefill(
     }
     if ('number' in payload) episode.number = asString(payload.number)
     if ('type' in payload) {
-      episode.type = (payload.type as EpisodeDraft['type']) ?? episode.type
+      episode.type = asMember(ANIME_EPISODE_TYPES, payload.type) ?? episode.type
     }
     if ('status' in payload) {
       episode.status =
-        (payload.status as EpisodeDraft['status']) ?? episode.status
+        asMember(ANIME_EPISODE_STATUSES, payload.status) ?? episode.status
     }
     if ('airDate' in payload) episode.airDate = asString(payload.airDate)
     if ('durationSeconds' in payload) {
