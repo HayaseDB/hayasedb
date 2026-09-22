@@ -90,6 +90,21 @@ describe('envSchema', () => {
     ).not.toThrow()
   })
 
+  it('allows disabling rate limits locally but never in production', () => {
+    expect(validate(base).RATE_LIMIT_DISABLED).toBe(false)
+    expect(
+      validate({ ...base, RATE_LIMIT_DISABLED: 'true' }).RATE_LIMIT_DISABLED,
+    ).toBe(true)
+    expect(() =>
+      validate({
+        ...base,
+        NODE_ENV: 'production',
+        INTERNAL_API_TOKEN: TOKEN,
+        RATE_LIMIT_DISABLED: 'true',
+      }),
+    ).toThrow('RATE_LIMIT_DISABLED')
+  })
+
   it('coerces numeric ports and rejects invalid ones', () => {
     expect(validate({ ...base, API_PORT: '8080' }).API_PORT).toBe(8080)
     expect(() => validate({ ...base, API_PORT: '0' })).toThrow('API_PORT')

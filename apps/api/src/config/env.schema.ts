@@ -16,6 +16,8 @@ const appEnv = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
 
+  RATE_LIMIT_DISABLED: z.stringbool().default(false),
+
   API_HOST: z.string().default('0.0.0.0'),
   API_PORT: z.coerce.number().int().positive().default(3000),
   API_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
@@ -105,6 +107,15 @@ export const envSchema = z
         path: ['STORAGE_DRIVER'],
         message:
           'STORAGE_DRIVER "local" is not supported in production: the filesystem is not shared across API replicas',
+      })
+    }
+
+    if (env.NODE_ENV === 'production' && env.RATE_LIMIT_DISABLED) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RATE_LIMIT_DISABLED'],
+        message:
+          'RATE_LIMIT_DISABLED is a local development escape hatch and cannot be enabled in production',
       })
     }
 

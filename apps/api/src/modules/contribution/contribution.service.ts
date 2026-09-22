@@ -256,6 +256,8 @@ export class ContributionService {
     userId: string,
     input: {
       status?: (typeof schema.changeset.$inferSelect)['status']
+      entityId?: string
+      entityKind?: EntityKind
       limit: number
       offset: number
     },
@@ -263,6 +265,8 @@ export class ContributionService {
     return this.details.listChangesets({
       authorId: userId,
       status: input.status,
+      entityId: input.entityId,
+      entityKind: input.entityKind,
       limit: input.limit,
       offset: input.offset,
     })

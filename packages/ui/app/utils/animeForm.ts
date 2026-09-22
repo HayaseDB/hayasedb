@@ -59,6 +59,37 @@ function emptyValue(field: ScalarFormField): unknown {
   return empty === 'emptyArray' ? [] : empty
 }
 
+export type AnimeTranslationField = 'title' | 'description'
+
+export function isTranslationFieldChanged(
+  translations: readonly AnimeTranslation[],
+  baseline: readonly AnimeTranslation[] | undefined,
+  index: number,
+  field: AnimeTranslationField,
+): boolean {
+  const current = translations[index]
+  if (!current || !baseline) return false
+  const before = baseline.find((item) => item.locale === current.locale)
+  if (!before) return true
+  return (current[field] ?? '') !== (before[field] ?? '')
+}
+
+export function isTranslationSetChanged(
+  translations: readonly AnimeTranslation[],
+  baseline: readonly AnimeTranslation[] | undefined,
+): boolean {
+  if (!baseline) return false
+  const locales = translations.map((item) => item.locale)
+  const beforeLocales = baseline.map((item) => item.locale)
+  if (locales.length !== beforeLocales.length) return true
+  if ([...locales].sort().join() !== [...beforeLocales].sort().join())
+    return true
+  return translations.some((item) => {
+    const before = baseline.find((entry) => entry.locale === item.locale)
+    return before ? Boolean(item.original) !== Boolean(before.original) : false
+  })
+}
+
 export function relationEdgeKey(edge: AnimeRelationEdgeItem): string {
   return `${edge.animeId}:${edge.kind}`
 }
@@ -79,9 +110,8 @@ export function buildAnimeFormState(
         state.genreIds = anime.genres.map((genre) => genre.id)
         continue
       }
-      state[field] =
-        (anime as unknown as Record<string, unknown>)[field] ??
-        emptyValue(field)
+      const value = (anime as unknown as Record<string, unknown>)[field]
+      state[field] = value == null ? emptyValue(field) : structuredClone(value)
     }
     state.relationEdges = anime.relations.map(
       (relation): AnimeRelationEdgeItem => ({

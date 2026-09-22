@@ -3,6 +3,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AnimeMediaType } from '@hayasedb/domain'
 import {
   createAnimeInputSchema,
+  type AnimeTranslation,
   type CreateAnimeInput,
 } from '@hayasedb/contract'
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
@@ -32,6 +33,7 @@ const props = withDefaults(
     submitLabel?: string
     selfId?: string | null
     relationBaseline?: AnimeRelationEdgeItem[]
+    translationBaseline?: AnimeTranslation[]
     onSubmit: (data: CreateAnimeInput) => unknown | Promise<unknown>
     onCreateGenre?: (name: string) => void
     onSearchAnime: (query: string) => Promise<AnimeRelationSearchResult[]>
@@ -45,6 +47,7 @@ const props = withDefaults(
     submitLabel: undefined,
     selfId: null,
     relationBaseline: undefined,
+    translationBaseline: undefined,
     onCreateGenre: undefined,
     structureLoading: false,
     structureChangeCount: 0,
@@ -115,6 +118,24 @@ const localization = useTranslationEditor({
 
 const activeTranslationIndex = localization.activeIndex
 const activeTranslation = localization.active
+
+const translationFieldChanged = (field: AnimeTranslationField) =>
+  props.isEdit &&
+  isTranslationFieldChanged(
+    state.value.translations,
+    props.translationBaseline,
+    activeTranslationIndex.value,
+    field,
+  )
+
+const localeSetChanged = computed(
+  () =>
+    props.isEdit &&
+    isTranslationSetChanged(
+      state.value.translations,
+      props.translationBaseline,
+    ),
+)
 
 function makeActiveOriginal() {
   state.value.translations.forEach((item, itemIndex) => {
@@ -204,7 +225,7 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
                 :add-options="localization.remainingOptions.value"
                 :can-add="localization.canAdd.value"
                 :can-remove="localization.canRemove.value"
-                :changed="changed('translations')"
+                :changed="localeSetChanged"
                 show-original
                 :is-original="activeTranslation?.original"
                 @add="localization.add"
@@ -223,8 +244,10 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
                     v-model="activeTranslation.title"
                     placeholder="Localized title"
                     class="w-full"
-                    :highlight="changed('translations')"
-                    :color="changed('translations') ? 'info' : undefined"
+                    :highlight="translationFieldChanged('title')"
+                    :color="
+                      translationFieldChanged('title') ? 'info' : undefined
+                    "
                   />
                 </UFormField>
                 <UFormField
@@ -236,8 +259,12 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
                     :rows="4"
                     placeholder="Localized anime description…"
                     class="w-full"
-                    :highlight="changed('translations')"
-                    :color="changed('translations') ? 'info' : undefined"
+                    :highlight="translationFieldChanged('description')"
+                    :color="
+                      translationFieldChanged('description')
+                        ? 'info'
+                        : undefined
+                    "
                     @update:model-value="
                       (value) =>
                         (activeTranslation!.description = value || null)

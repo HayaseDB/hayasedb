@@ -1,0 +1,1 @@
+ALTER TABLE "changeset" ADD COLUMN "reverts_rev" integer;

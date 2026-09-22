@@ -36,6 +36,7 @@ async function resolveLimit(
 export const throttlerOptions = (
   storage: ThrottlerStorage,
   keyLimits?: KeyLimitCache,
+  disabled = false,
 ): ThrottlerModuleOptions => ({
   storage,
   errorMessage: 'Too many requests',
@@ -43,7 +44,7 @@ export const throttlerOptions = (
     {
       ttl: TTL,
       limit: (context) => resolveLimit(context, keyLimits),
-      skipIf: (context) => context.getType() !== 'http',
+      skipIf: (context) => disabled || context.getType() !== 'http',
       getTracker: (_request, context) => {
         const request = requestOf(context)
         const apiKey = getApiKey(request)

@@ -39,9 +39,11 @@ watch(
   },
 )
 
-const relationBaseline = computed(
-  () => buildAnimeFormState(props.anime).relationEdges,
-)
+const savedState = computed(() => buildAnimeFormState(props.anime))
+
+const relationBaseline = computed(() => savedState.value.relationEdges)
+
+const translationBaseline = computed(() => savedState.value.translations)
 
 async function searchAnime(q: string) {
   const { items } = await api.anime.list({ q, limit: 10 })
@@ -79,6 +81,7 @@ async function submit(data: CreateAnimeInput) {
     :on-submit="submit"
     :on-search-anime="searchAnime"
     :relation-baseline="relationBaseline"
+    :translation-baseline="translationBaseline"
     :structure-loading="structure.loading.value"
   />
 </template>

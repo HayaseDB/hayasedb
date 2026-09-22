@@ -313,7 +313,7 @@ export interface TimelineActor {
   image: string | null
 }
 
-type TimelineDate = Date | string
+export type TimelineDate = Date | string
 
 export interface TimelineMessage {
   id: string
@@ -443,4 +443,51 @@ export function buildChangesetTimeline(
   return entries.sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   )
+}
+
+export interface RevisionDiffSource {
+  id: string
+  entityId: string
+  entityKind: EntityKind
+  op: ChangeOp
+  rev: number
+  changedFields: string[]
+  snapshot: Record<string, unknown>
+  previousSnapshot: Record<string, unknown> | null
+}
+
+function pickKeys(
+  document: Record<string, unknown>,
+  keys: string[],
+): Record<string, unknown> {
+  const picked: Record<string, unknown> = {}
+  for (const key of keys) {
+    if (key in document) picked[key] = document[key]
+  }
+  return picked
+}
+
+export function revisionDiffChange(revision: RevisionDiffSource): ChangeDetail {
+  const isDelete = revision.op === 'delete'
+  const previous = revision.previousSnapshot
+  return {
+    id: revision.id,
+    ord: 0,
+    entityKind: revision.entityKind,
+    entityId: revision.entityId,
+    op: revision.op,
+    baseRev: revision.rev > 1 ? revision.rev - 1 : null,
+    payload: isDelete
+      ? {}
+      : pickKeys(revision.snapshot, revision.changedFields),
+    oldValues: previous
+      ? isDelete
+        ? previous
+        : pickKeys(previous, revision.changedFields)
+      : null,
+    currentValues: null,
+    headRev: null,
+    conflicted: false,
+    appliedRevisionId: revision.id,
+  }
 }

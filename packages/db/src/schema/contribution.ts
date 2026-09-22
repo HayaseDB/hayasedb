@@ -66,6 +66,7 @@ export const changeset = pgTable(
       (): AnyPgColumn => changeset.id,
     ),
     revertsId: uuid('reverts_id').references((): AnyPgColumn => changeset.id),
+    revertsRev: integer('reverts_rev'),
     createdAt: createdAt(),
   },
   (table) => [

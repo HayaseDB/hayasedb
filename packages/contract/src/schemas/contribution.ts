@@ -89,6 +89,8 @@ export const changesetMessageBodySchema = z
 export const listChangesetsInputSchema = paginationInputSchema.extend({
   status: changesetStatusSchema.optional(),
   authorId: z.string().optional(),
+  entityId: idSchema.optional(),
+  entityKind: entityKindSchema.optional(),
   mine: z
     .union([z.boolean(), z.enum(['true', 'false'])])
     .transform((value) => value === true || value === 'true')
@@ -108,6 +110,7 @@ export const changesetListItemSchema = z.object({
   author: changesetAuthorSchema,
   changeCount: z.number().int(),
   entityKinds: z.array(entityKindSchema),
+  baseRev: z.number().int().nullable(),
   submittedAt: z.date().nullable(),
   decidedAt: z.date().nullable(),
   createdAt: z.date(),
@@ -195,6 +198,8 @@ export const revisionListItemSchema = z.object({
   editor: changesetAuthorSchema.nullable(),
   changesetId: idSchema.nullable(),
   changesetSummary: z.string().nullable(),
+  baseRev: z.number().int().nullable(),
+  revertsRev: z.number().int().nullable(),
   createdAt: z.date(),
 })
 

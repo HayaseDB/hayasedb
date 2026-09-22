@@ -5,6 +5,8 @@ import {
   buildDiffRows,
   contributionEnumLabel,
   contributionFieldLabel,
+  revisionDiffChange,
+  type RevisionDiffSource,
   type TimelineChangeset,
 } from './contribution'
 
@@ -303,5 +305,60 @@ describe('buildChangesetTimeline', () => {
       'reverted',
     ])
     expect(entries.at(-1)).toMatchObject({ targetId: 'rv' })
+  })
+})
+
+describe('revisionDiffChange', () => {
+  const source = (overrides: Partial<RevisionDiffSource> = {}) => ({
+    id: UUID(1),
+    entityId: UUID(2),
+    entityKind: 'anime' as const,
+    op: 'update' as const,
+    rev: 3,
+    changedFields: ['status'],
+    snapshot: { slug: 'bebop', status: 'FINISHED' },
+    previousSnapshot: { slug: 'bebop', status: 'RELEASING' },
+    ...overrides,
+  })
+
+  it('narrows an update to the fields the revision actually moved', () => {
+    const rows = buildDiffRows(revisionDiffChange(source()))
+    expect(rows.map((row) => row.field)).toEqual(['status'])
+    expect(rows[0]).toMatchObject({
+      before: 'RELEASING',
+      after: 'FINISHED',
+      drifted: false,
+    })
+  })
+
+  it('never reports drift, because an applied revision cannot drift', () => {
+    const change = revisionDiffChange(source())
+    expect(change.currentValues).toBeNull()
+    expect(buildDiffRows(change).every((row) => !row.drifted)).toBe(true)
+  })
+
+  it('has no before column for the revision that created the entity', () => {
+    const change = revisionDiffChange(
+      source({
+        op: 'create',
+        rev: 1,
+        changedFields: ['slug', 'status'],
+        previousSnapshot: null,
+      }),
+    )
+    expect(change.oldValues).toBeNull()
+    expect(change.baseRev).toBeNull()
+  })
+
+  it('shows the whole prior document when the revision was a delete', () => {
+    const change = revisionDiffChange(
+      source({ op: 'delete', changedFields: ['deletedAt'] }),
+    )
+    expect(change.payload).toEqual({})
+
+    expect(change.oldValues).toMatchObject({
+      slug: 'bebop',
+      status: 'RELEASING',
+    })
   })
 })

@@ -46,14 +46,14 @@ function animeTranslationInput(entry: SeedAnime) {
   }))
 }
 
-function englishDescription(entry: SeedAnime): string {
+export function englishDescription(entry: SeedAnime): string {
   return (
     entry.translations.find((translation) => translation.locale === 'en')
       ?.description ?? ''
   )
 }
 
-function withEnglishNote(entry: SeedAnime, note: string) {
+export function withEnglishNote(entry: SeedAnime, note: string) {
   return animeTranslationInput(entry).map((translation) =>
     translation.locale === 'en'
       ? {
@@ -64,7 +64,7 @@ function withEnglishNote(entry: SeedAnime, note: string) {
   )
 }
 
-function romajiTitle(entry: SeedAnime): string {
+export function romajiTitle(entry: SeedAnime): string {
   return (
     entry.translations.find((translation) => translation.locale === 'ja-Latn')
       ?.title ?? entry.slug
@@ -370,7 +370,7 @@ async function requireAnime(client: ApiClient, slug: string) {
   return { id: detail.id, headRev: detail.headRev }
 }
 
-function cycleAt<T>(items: T[], index: number): T {
+export function cycleAt<T>(items: readonly T[], index: number): T {
   const item = items[index % items.length]
   if (item === undefined) throw new Error('Cannot pick from an empty list')
   return item
