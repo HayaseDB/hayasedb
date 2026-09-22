@@ -25,13 +25,13 @@ function buildStorageConfig(env: Env): StorageConfig {
   }
 
   return {
-    driver: 'minio',
-    endpoint: env.STORAGE_MINIO_ENDPOINT,
-    port: env.STORAGE_MINIO_PORT,
-    useSSL: env.STORAGE_MINIO_USE_SSL,
-    accessKey: env.STORAGE_MINIO_ACCESS_KEY,
-    secretKey: env.STORAGE_MINIO_SECRET_KEY,
-    bucket: env.STORAGE_MINIO_BUCKET,
+    driver: 's3',
+    endpoint: env.STORAGE_S3_ENDPOINT,
+    port: env.STORAGE_S3_PORT,
+    useSSL: env.STORAGE_S3_USE_SSL,
+    accessKey: env.STORAGE_S3_ACCESS_KEY,
+    secretKey: env.STORAGE_S3_SECRET_KEY,
+    bucket: env.STORAGE_S3_BUCKET,
     publicBaseUrl,
   }
 }

@@ -1,5 +1,5 @@
 import { createLocalDriver } from './driver/local'
-import { createMinioDriver } from './driver/minio'
+import { createS3Driver } from './driver/s3'
 import type { StorageConfig, StorageDriver } from './types'
 
 function assertNever(value: never): never {
@@ -8,8 +8,8 @@ function assertNever(value: never): never {
 
 export function createStorage(config: StorageConfig): StorageDriver {
   switch (config.driver) {
-    case 'minio':
-      return createMinioDriver(config)
+    case 's3':
+      return createS3Driver(config)
     case 'local':
       return createLocalDriver(config)
     default:

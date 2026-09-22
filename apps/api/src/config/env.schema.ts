@@ -50,17 +50,17 @@ const authEnv = z.object({
 
 const storageEnv = z.discriminatedUnion('STORAGE_DRIVER', [
   z.object({
-    STORAGE_DRIVER: z.literal('minio'),
+    STORAGE_DRIVER: z.literal('s3'),
     STORAGE_PUBLIC_URL: z.string().url(),
-    STORAGE_MINIO_ENDPOINT: z.string().min(1),
-    STORAGE_MINIO_PORT: z.coerce.number().int().positive().default(9000),
-    STORAGE_MINIO_USE_SSL: z
+    STORAGE_S3_ENDPOINT: z.string().min(1),
+    STORAGE_S3_PORT: z.coerce.number().int().positive().default(9000),
+    STORAGE_S3_USE_SSL: z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
-    STORAGE_MINIO_ACCESS_KEY: z.string().min(1),
-    STORAGE_MINIO_SECRET_KEY: z.string().min(1),
-    STORAGE_MINIO_BUCKET: z.string().min(1).default('media'),
+    STORAGE_S3_ACCESS_KEY: z.string().min(1),
+    STORAGE_S3_SECRET_KEY: z.string().min(1),
+    STORAGE_S3_BUCKET: z.string().min(1).default('media'),
   }),
   z.object({
     STORAGE_DRIVER: z.literal('local'),

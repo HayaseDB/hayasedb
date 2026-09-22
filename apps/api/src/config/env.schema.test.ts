@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { envSchema, validate } from './env.schema'
 
-const minioStorage = {
-  STORAGE_DRIVER: 'minio',
+const s3Storage = {
+  STORAGE_DRIVER: 's3',
   STORAGE_PUBLIC_URL: 'http://localhost:9000',
-  STORAGE_MINIO_ENDPOINT: 'localhost',
-  STORAGE_MINIO_ACCESS_KEY: 'minio',
-  STORAGE_MINIO_SECRET_KEY: 'minio123',
+  STORAGE_S3_ENDPOINT: 'localhost',
+  STORAGE_S3_ACCESS_KEY: 'hayase',
+  STORAGE_S3_SECRET_KEY: 'hayase-dev-secret',
 }
 
 const localStorage = {
@@ -18,15 +18,15 @@ const localStorage = {
 const base = {
   DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
   AUTH_SECRET: 's'.repeat(32),
-  ...minioStorage,
+  ...s3Storage,
 }
 
 const TOKEN = 't'.repeat(32)
 
-function minio(config: Record<string, unknown>) {
+function s3(config: Record<string, unknown>) {
   const env = validate(config)
-  if (env.STORAGE_DRIVER !== 'minio') {
-    throw new Error(`expected the minio driver, got "${env.STORAGE_DRIVER}"`)
+  if (env.STORAGE_DRIVER !== 's3') {
+    throw new Error(`expected the s3 driver, got "${env.STORAGE_DRIVER}"`)
   }
   return env
 }
@@ -38,9 +38,9 @@ describe('envSchema', () => {
     expect(env.API_PORT).toBe(3000)
     expect(env.INTERNAL_API_TOKEN).toEqual([])
     expect(env.AUTH_TRUSTED_PROXIES).toContain('127.0.0.1')
-    expect(minio(base).STORAGE_MINIO_USE_SSL).toBe(false)
-    expect(minio(base).STORAGE_MINIO_BUCKET).toBe('media')
-    expect(minio(base).STORAGE_MINIO_PORT).toBe(9000)
+    expect(s3(base).STORAGE_S3_USE_SSL).toBe(false)
+    expect(s3(base).STORAGE_S3_BUCKET).toBe('media')
+    expect(s3(base).STORAGE_S3_PORT).toBe(9000)
     expect(env.MAIL_SMTP_SECURE).toBe(false)
   })
 
@@ -49,9 +49,9 @@ describe('envSchema', () => {
     'AUTH_SECRET',
     'STORAGE_DRIVER',
     'STORAGE_PUBLIC_URL',
-    'STORAGE_MINIO_ENDPOINT',
-    'STORAGE_MINIO_ACCESS_KEY',
-    'STORAGE_MINIO_SECRET_KEY',
+    'STORAGE_S3_ENDPOINT',
+    'STORAGE_S3_ACCESS_KEY',
+    'STORAGE_S3_SECRET_KEY',
   ])('requires %s', (key) => {
     const rest = Object.fromEntries(
       Object.entries(base).filter(([name]) => name !== key),
@@ -114,11 +114,11 @@ describe('envSchema', () => {
   })
 
   it('parses boolean flags from their string form only', () => {
+    expect(s3({ ...base, STORAGE_S3_USE_SSL: 'true' }).STORAGE_S3_USE_SSL).toBe(
+      true,
+    )
     expect(
-      minio({ ...base, STORAGE_MINIO_USE_SSL: 'true' }).STORAGE_MINIO_USE_SSL,
-    ).toBe(true)
-    expect(
-      envSchema.safeParse({ ...base, STORAGE_MINIO_USE_SSL: '1' }).success,
+      envSchema.safeParse({ ...base, STORAGE_S3_USE_SSL: '1' }).success,
     ).toBe(false)
   })
 
@@ -129,8 +129,8 @@ describe('envSchema', () => {
     }
     const env = validate({ ...creds, ...localStorage })
     expect(env.STORAGE_DRIVER).toBe('local')
-    expect(env).not.toHaveProperty('STORAGE_MINIO_ACCESS_KEY')
-    expect(validate({ ...creds, ...minioStorage }).STORAGE_DRIVER).toBe('minio')
+    expect(env).not.toHaveProperty('STORAGE_S3_ACCESS_KEY')
+    expect(validate({ ...creds, ...s3Storage }).STORAGE_DRIVER).toBe('s3')
   })
 
   it('ignores variables belonging to the other driver', () => {
@@ -138,11 +138,11 @@ describe('envSchema', () => {
       DATABASE_URL: base.DATABASE_URL,
       AUTH_SECRET: base.AUTH_SECRET,
       ...localStorage,
-      STORAGE_MINIO_ACCESS_KEY: 'ignored',
-      STORAGE_MINIO_BUCKET: 'ignored',
+      STORAGE_S3_ACCESS_KEY: 'ignored',
+      STORAGE_S3_BUCKET: 'ignored',
     })
-    expect(env).not.toHaveProperty('STORAGE_MINIO_ACCESS_KEY')
-    expect(env).not.toHaveProperty('STORAGE_MINIO_BUCKET')
+    expect(env).not.toHaveProperty('STORAGE_S3_ACCESS_KEY')
+    expect(env).not.toHaveProperty('STORAGE_S3_BUCKET')
   })
 
   it('requires the local root only for the local driver', () => {
@@ -157,13 +157,19 @@ describe('envSchema', () => {
         STORAGE_PUBLIC_URL: localStorage.STORAGE_PUBLIC_URL,
       }),
     ).toThrow('STORAGE_LOCAL_ROOT')
-    expect(validate({ ...creds, ...minioStorage })).not.toHaveProperty(
+    expect(validate({ ...creds, ...s3Storage })).not.toHaveProperty(
       'STORAGE_LOCAL_ROOT',
     )
   })
 
   it('rejects an unknown storage driver', () => {
-    expect(() => validate({ ...base, STORAGE_DRIVER: 's3' })).toThrow(
+    expect(() => validate({ ...base, STORAGE_DRIVER: 'azure' })).toThrow(
+      'STORAGE_DRIVER',
+    )
+  })
+
+  it('rejects the retired minio driver name', () => {
+    expect(() => validate({ ...base, STORAGE_DRIVER: 'minio' })).toThrow(
       'STORAGE_DRIVER',
     )
   })

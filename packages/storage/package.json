@@ -27,7 +27,7 @@
     "test": "bun --bun vitest run"
   },
   "dependencies": {
-    "minio": "catalog:"
+    "@aws-sdk/client-s3": "catalog:"
   },
   "devDependencies": {
     "@hayasedb/eslint-config": "workspace:*",

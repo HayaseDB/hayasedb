@@ -9,7 +9,7 @@ export interface StoredObject {
   cacheControl: string | null
 }
 
-export type StorageProvider = 'minio' | 'local'
+export type StorageProvider = 's3' | 'local'
 
 export interface StorageDriver {
   readonly provider: StorageProvider
@@ -21,8 +21,8 @@ export interface StorageDriver {
   init(): Promise<void>
 }
 
-export interface MinioStorageConfig {
-  readonly driver: 'minio'
+export interface S3StorageConfig {
+  readonly driver: 's3'
   readonly endpoint: string
   readonly port: number
   readonly useSSL: boolean
@@ -38,4 +38,4 @@ export interface LocalStorageConfig {
   readonly publicBaseUrl: string
 }
 
-export type StorageConfig = MinioStorageConfig | LocalStorageConfig
+export type StorageConfig = S3StorageConfig | LocalStorageConfig

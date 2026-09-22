@@ -1,11 +1,11 @@
 export { createStorage } from './storage'
 export { createLocalDriver, resolveKey } from './driver/local'
-export { createMinioDriver } from './driver/minio'
+export { createS3Driver } from './driver/s3'
 export { STORAGE_PUBLIC_PATH } from './constants'
 export type {
   LocalStorageConfig,
   PutObjectOptions,
-  MinioStorageConfig,
+  S3StorageConfig,
   StorageConfig,
   StorageDriver,
   StorageProvider,
