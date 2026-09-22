@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyPayloadToState,
+  isTranslationFieldChanged,
+  isTranslationSetChanged,
   applyRelationPayloadToState,
   buildAnimeFormState,
   isPayloadRelationList,
@@ -178,5 +180,122 @@ describe('relation payload helpers', () => {
       { animeId: B, title: 'B', kind: 'SEQUEL' },
       { animeId: C, title: 'Cee', kind: 'PARENT_STORY' },
     ])
+  })
+})
+
+describe('buildAnimeFormState isolation', () => {
+  const source = {
+    slug: 'bebop',
+    format: 'TV' as const,
+    status: null,
+    translations: [
+      {
+        locale: 'en' as const,
+        title: 'Bebop',
+        description: null,
+        original: true,
+      },
+    ],
+    startDate: { year: 1998, month: 4, day: 3 },
+    endDate: null,
+    genres: [],
+    relations: [],
+  }
+
+  it('does not alias nested values with the source detail', () => {
+    const state = buildAnimeFormState(source)
+    state.translations[0]!.title = 'Changed'
+    expect(source.translations[0]!.title).toBe('Bebop')
+    expect(state.startDate).not.toBe(source.startDate)
+    expect(state.startDate).toEqual(source.startDate)
+  })
+
+  it('returns independent states across calls, so a baseline stays stable', () => {
+    const state = buildAnimeFormState(source)
+    const baseline = buildAnimeFormState(source)
+    state.translations[0]!.title = 'Changed'
+    state.translations[0]!.description = 'New description'
+    expect(baseline.translations[0]!.title).toBe('Bebop')
+    expect(baseline.translations[0]!.description).toBeNull()
+  })
+})
+
+describe('translation highlighting', () => {
+  const base = [
+    {
+      locale: 'en' as const,
+      title: 'Bebop',
+      description: 'Space',
+      original: true,
+    },
+    {
+      locale: 'de' as const,
+      title: 'Bebop DE',
+      description: null,
+      original: false,
+    },
+  ]
+  const edited = (index: number, patch: object) =>
+    base.map((item, i) => (i === index ? { ...item, ...patch } : { ...item }))
+
+  it('flags only the edited locale and field', () => {
+    const next = edited(1, { title: 'Neu' })
+    expect(isTranslationFieldChanged(next, base, 1, 'title')).toBe(true)
+    expect(isTranslationFieldChanged(next, base, 1, 'description')).toBe(false)
+    expect(isTranslationFieldChanged(next, base, 0, 'title')).toBe(false)
+    expect(isTranslationFieldChanged(next, base, 0, 'description')).toBe(false)
+  })
+
+  it('treats null and empty description as the same value', () => {
+    const next = edited(1, { description: '' })
+    expect(isTranslationFieldChanged(next, base, 1, 'description')).toBe(false)
+  })
+
+  it('matches locales by identity, not position', () => {
+    const next = [{ ...base[1]! }]
+    expect(isTranslationFieldChanged(next, base, 0, 'title')).toBe(false)
+  })
+
+  it('flags every field of a newly added locale', () => {
+    const next = [
+      ...base.map((item) => ({ ...item })),
+      {
+        locale: 'ja-Jpan' as const,
+        title: '',
+        description: null,
+        original: false,
+      },
+    ]
+    expect(isTranslationFieldChanged(next, base, 2, 'title')).toBe(true)
+  })
+
+  it('leaves the locale set unchanged when only text is edited', () => {
+    expect(isTranslationSetChanged(edited(1, { title: 'Neu' }), base)).toBe(
+      false,
+    )
+  })
+
+  it('flags the locale set when one is added, removed or made original', () => {
+    const added = [
+      ...base,
+      {
+        locale: 'ja-Jpan' as const,
+        title: '',
+        description: null,
+        original: false,
+      },
+    ]
+    expect(isTranslationSetChanged(added, base)).toBe(true)
+    expect(isTranslationSetChanged([{ ...base[0]! }], base)).toBe(true)
+    const moved = [
+      { ...base[0]!, original: false },
+      { ...base[1]!, original: true },
+    ]
+    expect(isTranslationSetChanged(moved, base)).toBe(true)
+  })
+
+  it('reports nothing changed without a baseline', () => {
+    expect(isTranslationFieldChanged(base, undefined, 0, 'title')).toBe(false)
+    expect(isTranslationSetChanged(base, undefined)).toBe(false)
   })
 })

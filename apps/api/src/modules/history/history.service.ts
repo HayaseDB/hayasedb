@@ -84,8 +84,9 @@ export class HistoryService {
           .filter((id): id is string => Boolean(id)),
       ),
     ]
+    const revisionIds = rows.map((row) => row.id)
 
-    const [editorById, changesets] = await Promise.all([
+    const [editorById, changesets, changes] = await Promise.all([
       this.users.loadAuthors(rows.map((row) => row.editorId)),
       changesetIds.length > 0
         ? this.db
@@ -96,9 +97,21 @@ export class HistoryService {
             .from(schema.changeset)
             .where(inArray(schema.changeset.id, changesetIds))
         : Promise.resolve([]),
+      revisionIds.length > 0
+        ? this.db
+            .select({
+              appliedRevisionId: schema.change.appliedRevisionId,
+              baseRev: schema.change.baseRev,
+            })
+            .from(schema.change)
+            .where(inArray(schema.change.appliedRevisionId, revisionIds))
+        : Promise.resolve([]),
     ])
 
     const summaryById = new Map(changesets.map((row) => [row.id, row.summary]))
+    const baseRevByRevisionId = new Map(
+      changes.map((row) => [row.appliedRevisionId, row.baseRev]),
+    )
 
     return rows.map((row) => ({
       id: row.id,
@@ -112,6 +125,7 @@ export class HistoryService {
       changesetSummary: row.changesetId
         ? (summaryById.get(row.changesetId) ?? null)
         : null,
+      baseRev: baseRevByRevisionId.get(row.id) ?? null,
       createdAt: row.createdAt,
     }))
   }

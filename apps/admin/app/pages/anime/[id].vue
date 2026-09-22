@@ -40,6 +40,22 @@ const { data: history, refresh: refreshHistory } = await useAsyncData(
   { watch: [id] },
 )
 
+const { data: openChangesets, refresh: refreshOpen } = await useAsyncData(
+  () => `admin-anime-open-${id.value}`,
+  () =>
+    api.changeset.list({
+      entityKind: 'anime',
+      entityId: id.value,
+      status: 'pending',
+      limit: 20,
+      offset: 0,
+    }),
+  { watch: [id] },
+)
+
+const loadRevision = async (revisionId: string) =>
+  await api.revision.get({ id: revisionId })
+
 const crumbs = computed<BreadcrumbItem[]>(() => [
   { label: 'Anime', to: '/anime' },
   { label: anime.value?.slug ?? '' },
@@ -51,10 +67,16 @@ const tabs = [
 ]
 const activeTab = ref('0')
 
+const earlierRevisionCount = computed(() => {
+  const meta = history.value?.meta
+  if (!meta) return 0
+  return Math.max(0, meta.total - (history.value?.items.length ?? 0))
+})
+
 const confirmModal = overlay.create(LazyConfirmModal)
 
 async function refreshAll() {
-  await Promise.all([refresh(), refreshHistory()])
+  await Promise.all([refresh(), refreshHistory(), refreshOpen()])
 }
 
 function askRevertTo(revisionId: string) {
@@ -140,10 +162,13 @@ function askRestore() {
             <div class="pt-4">
               <RevisionTimeline
                 :revisions="history?.items ?? []"
+                :open-changesets="openChangesets?.items ?? []"
                 entity-kind="anime"
                 :head-rev="anime?.headRev"
+                :earlier-count="earlierRevisionCount"
                 :busy="moderation.busy.value"
                 :on-revert="askRevertTo"
+                :on-load-revision="loadRevision"
                 :changeset-link="submissionLink"
               />
             </div>

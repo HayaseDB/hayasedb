@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ORPCError } from '@orpc/server'
 import { eq, sql } from 'drizzle-orm'
-import type { ChangesetDetail, ChangesetStatus } from '@hayasedb/contract'
+import type { ChangesetDetail } from '@hayasedb/contract'
 import { type Database, schema } from '@hayasedb/db'
 import { DRIZZLE } from '../../database/database.constants'
 import { ChangesetDetailService } from '../contribution/changeset-detail.service'
@@ -18,12 +18,9 @@ export class ModerationService {
     private readonly revisions: RevisionService,
   ) {}
 
-  async listChangesets(input: {
-    status?: ChangesetStatus
-    authorId?: string
-    limit: number
-    offset: number
-  }) {
+  async listChangesets(
+    input: Parameters<ChangesetDetailService['listChangesets']>[0],
+  ) {
     return this.details.listChangesets(input)
   }
 

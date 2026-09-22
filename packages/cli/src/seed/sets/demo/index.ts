@@ -1,5 +1,6 @@
 import type { SeedSet } from '../../types'
 import { SEED_ADMIN } from './data/users'
+import { historyStep } from './history'
 import {
   animeStep,
   apiKeysStep,
@@ -26,5 +27,6 @@ export const demoSeedSet: SeedSet = {
     relationsStep,
     structureStep,
     contributionsStep,
+    historyStep,
   ],
 }

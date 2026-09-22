@@ -94,8 +94,17 @@ const orpcLogger = new Logger('ORPC')
     }),
     ThrottlerModule.forRootAsync({
       imports: [KeyLimitModule],
-      inject: [RedisThrottlerStorage, KeyLimitCache],
-      useFactory: throttlerOptions,
+      inject: [RedisThrottlerStorage, KeyLimitCache, ConfigService],
+      useFactory: (
+        storage: RedisThrottlerStorage,
+        keyLimits: KeyLimitCache,
+        config: ConfigService<Env, true>,
+      ) =>
+        throttlerOptions(
+          storage,
+          keyLimits,
+          config.get('RATE_LIMIT_DISABLED', { infer: true }),
+        ),
     }),
     KeyLimitModule,
     HealthModule,

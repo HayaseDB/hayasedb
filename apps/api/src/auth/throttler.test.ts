@@ -20,8 +20,15 @@ function httpContext(
   } as unknown as ExecutionContext
 }
 
-function single(keyLimits?: Parameters<typeof throttlerOptions>[1]) {
-  const options = throttlerOptions({} as ThrottlerStorage, keyLimits) as {
+function single(
+  keyLimits?: Parameters<typeof throttlerOptions>[1],
+  disabled?: boolean,
+) {
+  const options = throttlerOptions(
+    {} as ThrottlerStorage,
+    keyLimits,
+    disabled,
+  ) as {
     throttlers: unknown[]
   }
   const [throttler] = options.throttlers as Array<{
@@ -103,6 +110,12 @@ describe('throttlerOptions', () => {
     expect(t.generateKey(context, 'ip:1.1.1.1', 'default')).toBe('ip:1.1.1.1')
     expect(t.skipIf(context)).toBe(false)
     expect(t.skipIf({ getType: () => 'rpc' } as never)).toBe(true)
+  })
+
+  it('skips every http request when rate limiting is disabled', () => {
+    const t = single(undefined, true)
+    expect(t.skipIf(httpContext({}))).toBe(true)
+    expect(t.skipIf(httpContext({ [API_KEY_HEADER]: 'hyd_x' }))).toBe(true)
   })
 })
 

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ORPCError } from '@orpc/server'
-import { and, asc, desc, eq, inArray, sql, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, exists, inArray, sql, type SQL } from 'drizzle-orm'
 import {
   genreDocumentSchema,
   type ChangeDetail,
@@ -51,6 +51,8 @@ export class ChangesetDetailService {
   async listChangesets(filter: {
     authorId?: string
     status?: ChangesetStatus
+    entityId?: string
+    entityKind?: EntityKind
     limit: number
     offset: number
   }): Promise<{
@@ -63,6 +65,23 @@ export class ChangesetDetailService {
     }
     if (filter.status) {
       conditions.push(eq(schema.changeset.status, filter.status))
+    }
+    if (filter.entityId) {
+      const touchesEntity: SQL[] = [
+        eq(schema.change.changesetId, schema.changeset.id),
+        eq(schema.change.entityId, filter.entityId),
+      ]
+      if (filter.entityKind) {
+        touchesEntity.push(eq(schema.change.entityKind, filter.entityKind))
+      }
+      conditions.push(
+        exists(
+          this.db
+            .select({ one: sql`1` })
+            .from(schema.change)
+            .where(and(...touchesEntity)),
+        ),
+      )
     }
     const where = conditions.length > 0 ? and(...conditions) : undefined
 
@@ -107,7 +126,7 @@ export class ChangesetDetailService {
     return {
       items: rows.map((row) => {
         const rowChanges = changesByChangeset.get(row.id) ?? []
-        return this.toListItem(row, rowChanges, authors)
+        return this.toListItem(row, rowChanges, authors, filter.entityId)
       }),
       meta: {
         total: countRow?.total ?? 0,
@@ -296,7 +315,11 @@ export class ChangesetDetailService {
     row: ChangesetRow,
     changes: ChangeRow[],
     authors: Map<string, ChangesetAuthor>,
+    entityId?: string,
   ): ChangesetListItem {
+    const scoped = entityId
+      ? changes.find((change) => change.entityId === entityId)
+      : undefined
     return {
       id: row.id,
       status: row.status,
@@ -306,6 +329,7 @@ export class ChangesetDetailService {
         : NULL_AUTHOR,
       changeCount: changes.length,
       entityKinds: changes.map((change) => change.entityKind),
+      baseRev: scoped?.baseRev ?? null,
       submittedAt: row.submittedAt,
       decidedAt: row.decidedAt,
       createdAt: row.createdAt,
