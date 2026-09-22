@@ -39,13 +39,11 @@ watch(
   },
 )
 
-const relationBaseline = computed(
-  () => buildAnimeFormState(props.anime).relationEdges,
-)
+const savedState = computed(() => buildAnimeFormState(props.anime))
 
-const translationBaseline = computed(
-  () => buildAnimeFormState(props.anime).translations,
-)
+const relationBaseline = computed(() => savedState.value.relationEdges)
+
+const translationBaseline = computed(() => savedState.value.translations)
 
 async function searchAnime(q: string) {
   const { items } = await api.anime.list({ q, limit: 10 })

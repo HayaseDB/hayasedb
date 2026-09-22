@@ -412,6 +412,13 @@ describe('changeset apply and moderation', () => {
       headRev: 4,
     })
 
+    const afterRevert = await admin.client.revision.list({
+      entityKind: 'anime',
+      entityId: anime.id,
+    })
+    expect(afterRevert.items[0]).toMatchObject({ rev: 4, revertsRev: 1 })
+    expect(afterRevert.items.find((r) => r.rev === 3)?.revertsRev).toBeNull()
+
     await admin.client.anime.remove({ id: anime.id })
     const deleted = await admin.client.revision.list({
       entityKind: 'anime',

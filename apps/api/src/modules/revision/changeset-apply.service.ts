@@ -542,6 +542,7 @@ export class ChangesetApplyService {
           },
         ]
       },
+      toRev,
     )
   }
 
@@ -550,6 +551,7 @@ export class ChangesetApplyService {
     summary: string,
     revertsId: string | null,
     prepare: (tx: Tx) => Promise<RevertChangeDraft[]>,
+    revertsRev: number | null = null,
   ): Promise<{ changesetId: string; result: ApplyResult }> {
     let changesetId = ''
     let committed = false
@@ -581,6 +583,7 @@ export class ChangesetApplyService {
               summary,
               submittedAt: new Date(),
               revertsId,
+              revertsRev,
             })
             .returning({ id: schema.changeset.id })
           changesetId = cs!.id

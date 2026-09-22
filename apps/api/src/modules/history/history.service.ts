@@ -93,6 +93,7 @@ export class HistoryService {
             .select({
               id: schema.changeset.id,
               summary: schema.changeset.summary,
+              revertsRev: schema.changeset.revertsRev,
             })
             .from(schema.changeset)
             .where(inArray(schema.changeset.id, changesetIds))
@@ -109,6 +110,9 @@ export class HistoryService {
     ])
 
     const summaryById = new Map(changesets.map((row) => [row.id, row.summary]))
+    const revertsRevById = new Map(
+      changesets.map((row) => [row.id, row.revertsRev]),
+    )
     const baseRevByRevisionId = new Map(
       changes.map((row) => [row.appliedRevisionId, row.baseRev]),
     )
@@ -126,6 +130,9 @@ export class HistoryService {
         ? (summaryById.get(row.changesetId) ?? null)
         : null,
       baseRev: baseRevByRevisionId.get(row.id) ?? null,
+      revertsRev: row.changesetId
+        ? (revertsRevById.get(row.changesetId) ?? null)
+        : null,
       createdAt: row.createdAt,
     }))
   }

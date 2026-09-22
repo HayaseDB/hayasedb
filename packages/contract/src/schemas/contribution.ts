@@ -199,6 +199,7 @@ export const revisionListItemSchema = z.object({
   changesetId: idSchema.nullable(),
   changesetSummary: z.string().nullable(),
   baseRev: z.number().int().nullable(),
+  revertsRev: z.number().int().nullable(),
   createdAt: z.date(),
 })
 

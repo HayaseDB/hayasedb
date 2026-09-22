@@ -66,11 +66,13 @@ export class ChangesetDetailService {
     if (filter.status) {
       conditions.push(eq(schema.changeset.status, filter.status))
     }
-    if (filter.entityId) {
+    if (filter.entityId || filter.entityKind) {
       const touchesEntity: SQL[] = [
         eq(schema.change.changesetId, schema.changeset.id),
-        eq(schema.change.entityId, filter.entityId),
       ]
+      if (filter.entityId) {
+        touchesEntity.push(eq(schema.change.entityId, filter.entityId))
+      }
       if (filter.entityKind) {
         touchesEntity.push(eq(schema.change.entityKind, filter.entityKind))
       }

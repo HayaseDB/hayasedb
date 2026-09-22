@@ -370,6 +370,7 @@ export const historyStep: SeedStep = {
           await moderator.changeset.approve({ id: branch.id })
           release(branch.author.id)
         } catch {
+          release(branch.author.id)
           log.info(`Left "${branch.summary}" pending, it no longer applies.`)
           continue
         }

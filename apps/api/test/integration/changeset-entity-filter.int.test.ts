@@ -112,6 +112,30 @@ describe('changeset list, filtered to one entity', () => {
     expect(scoped.meta.total).toBe(scoped.items.length)
   })
 
+  it('filters by entity kind alone, without an entity id', async () => {
+    const seasonOnly = await alice.client.changeset.submit({
+      summary: 'Add a season to the bystander',
+      changes: [seasonCreate(randomUUID(), otherAnimeId, 2)],
+    })
+
+    const scoped = await admin.client.changeset.list({
+      entityKind: 'animeSeason',
+      status: 'pending',
+      limit: 50,
+      offset: 0,
+    })
+
+    expect(scoped.items.map((item) => item.id)).toContain(seasonOnly.id)
+    expect(scoped.meta.total).toBe(scoped.items.length)
+
+    const unscoped = await admin.client.changeset.list({
+      status: 'pending',
+      limit: 50,
+      offset: 0,
+    })
+    expect(unscoped.meta.total).toBeGreaterThan(scoped.meta.total)
+  })
+
   it('leaves the unfiltered admin queue untouched', async () => {
     const all = await admin.client.changeset.list({ limit: 50, offset: 0 })
     const scoped = await admin.client.changeset.list({

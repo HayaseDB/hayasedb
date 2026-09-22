@@ -59,9 +59,9 @@ async function toggle(id: string) {
     const detail = await props.onLoadRevision(id)
     diffs.value = { ...diffs.value, [id]: revisionDiffChange(detail) }
   } catch {
-    failedId.value = id
+    if (loadingId.value === id) failedId.value = id
   } finally {
-    loadingId.value = null
+    if (loadingId.value === id) loadingId.value = null
   }
 }
 
