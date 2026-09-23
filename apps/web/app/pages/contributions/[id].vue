@@ -32,6 +32,10 @@ const detail = computed(() => changeset.value!)
 
 provideContributionDisplay(() => detail.value.display)
 
+const changeGroups = computed(() =>
+  groupChanges(detail.value.changes, detail.value.display),
+)
+
 const confirmModal = overlay.create(LazyConfirmModal)
 
 function confirmWithdraw() {
@@ -153,10 +157,10 @@ useSeoMeta({ title: () => `Contribution – ${detail.value.summary}` })
       </aside>
 
       <div class="flex min-w-0 flex-col gap-6">
-        <ChangeCard
-          v-for="change in detail.changes"
-          :key="change.id"
-          :change="change"
+        <ChangeGroupCard
+          v-for="group in changeGroups"
+          :key="group.key"
+          :group="group"
         />
 
         <ChangesetTimeline

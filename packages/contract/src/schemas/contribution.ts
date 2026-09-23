@@ -139,8 +139,16 @@ export const changesetMessageSchema = z.object({
   createdAt: z.date(),
 })
 
+export const changeParentSchema = z.object({
+  animeId: idSchema.nullable(),
+  seasonId: idSchema.nullable(),
+  label: z.string().nullable(),
+})
+
 export const contributionDisplaySchema = z.object({
   refs: z.record(z.string(), z.record(z.string(), z.string())),
+  parents: z.record(z.string(), changeParentSchema),
+  contexts: z.record(z.string(), z.record(z.string(), z.unknown())),
   mediaAssets: z.record(
     z.string(),
     z.object({
@@ -222,6 +230,7 @@ export type ChangesetRevertedBy = z.output<typeof changesetRevertedBySchema>
 export type ChangesetDetail = z.output<typeof changesetDetailSchema>
 export type ChangesetStats = z.output<typeof changesetStatsSchema>
 export type ContributionDisplay = z.output<typeof contributionDisplaySchema>
+export type ChangeParent = z.output<typeof changeParentSchema>
 export type UploadMediaOutput = z.output<typeof uploadMediaOutputSchema>
 export type RevisionListItem = z.output<typeof revisionListItemSchema>
 export type RevisionDetail = z.output<typeof revisionDetailSchema>

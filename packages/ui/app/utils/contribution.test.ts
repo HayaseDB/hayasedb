@@ -1,3 +1,4 @@
+import type { ContributionDisplay } from '@hayasedb/contract'
 import { describe, expect, it } from 'vitest'
 import { change, UUID } from '../../test/contribution-fixtures'
 import {
@@ -5,6 +6,8 @@ import {
   buildDiffRows,
   contributionEnumLabel,
   contributionFieldLabel,
+  groupChanges,
+  hiddenDiffFields,
   revisionDiffChange,
   type RevisionDiffSource,
   type TimelineChangeset,
@@ -360,5 +363,228 @@ describe('revisionDiffChange', () => {
       slug: 'bebop',
       status: 'RELEASING',
     })
+  })
+})
+
+const display = (
+  overrides: Partial<ContributionDisplay> = {},
+): ContributionDisplay => ({
+  refs: {},
+  parents: {},
+  contexts: {},
+  mediaAssets: {},
+  ...overrides,
+})
+
+describe('hiddenDiffFields', () => {
+  it('hides only the parent links from a diff', () => {
+    const season = change({ entityKind: 'animeSeason' })
+    expect([...hiddenDiffFields(season)]).toEqual(['animeId'])
+
+    const episode = change({ entityKind: 'animeEpisode' })
+    expect([...hiddenDiffFields(episode)].sort()).toEqual([
+      'animeId',
+      'seasonId',
+    ])
+  })
+
+  it('drops the hidden rows from the diff table', () => {
+    const rows = buildDiffRows(
+      change({
+        entityKind: 'animeSeason',
+        op: 'create',
+        baseRev: null,
+        payload: { animeId: UUID(9), kind: 'SEASON', number: '1' },
+      }),
+      hiddenDiffFields(change({ entityKind: 'animeSeason' })),
+    )
+    expect(rows.map((row) => row.field)).toEqual(['kind', 'number'])
+  })
+})
+
+describe('groupChanges', () => {
+  it('shows the anime for a changeset that only edits an episode', () => {
+    const episode = change({
+      id: UUID(1),
+      entityKind: 'animeEpisode',
+      entityId: UUID(2),
+      payload: { durationSeconds: 1500 },
+    })
+    const groups = groupChanges(
+      [episode],
+      display({
+        refs: { anime: { [UUID(3)]: 'Cowboy Bebop' } },
+        parents: {
+          [UUID(1)]: {
+            animeId: UUID(3),
+            seasonId: UUID(4),
+            label: 'Episode 3',
+          },
+        },
+      }),
+    )
+
+    expect(groups).toHaveLength(1)
+    expect(groups[0]).toMatchObject({ title: 'Anime', anime: null })
+    expect(groups[0]!.children.map((child) => child.title)).toEqual(['Episode'])
+  })
+
+  it('survives a display payload that carries no parents map', () => {
+    const episode = change({ entityKind: 'animeEpisode' })
+    const stale = {
+      refs: {},
+      mediaAssets: {},
+    } as unknown as ContributionDisplay
+
+    expect(() => groupChanges([episode], stale)).not.toThrow()
+    expect(groupChanges([episode], stale)).toHaveLength(1)
+  })
+
+  it('nests an episode under the season it belongs to', () => {
+    const season = change({
+      id: UUID(1),
+      entityKind: 'animeSeason',
+      entityId: UUID(5),
+    })
+    const episode = change({
+      id: UUID(2),
+      entityKind: 'animeEpisode',
+      entityId: UUID(6),
+    })
+    const groups = groupChanges(
+      [season, episode],
+      display({
+        refs: { anime: { [UUID(3)]: 'Bebop' } },
+        parents: {
+          [UUID(1)]: { animeId: UUID(3), seasonId: null, label: 'Season 1' },
+          [UUID(2)]: {
+            animeId: UUID(3),
+            seasonId: UUID(5),
+            label: 'Episode 3',
+          },
+        },
+      }),
+    )
+
+    expect(groups).toHaveLength(1)
+    expect(groups[0]!.children.map((child) => child.change?.id)).toEqual([
+      UUID(1),
+    ])
+    expect(groups[0]!.children[0]!.episodes.map((e) => e.change?.id)).toEqual([
+      UUID(2),
+    ])
+  })
+
+  it('nests an episode that arrives before its season', () => {
+    const season = change({
+      id: UUID(1),
+      entityKind: 'animeSeason',
+      entityId: UUID(5),
+    })
+    const episode = change({
+      id: UUID(2),
+      entityKind: 'animeEpisode',
+      entityId: UUID(6),
+    })
+    const groups = groupChanges(
+      [episode, season],
+      display({
+        parents: {
+          [UUID(1)]: { animeId: UUID(3), seasonId: null, label: 'Season 1' },
+          [UUID(2)]: {
+            animeId: UUID(3),
+            seasonId: UUID(5),
+            label: 'Episode 3',
+          },
+        },
+      }),
+    )
+
+    expect(groups[0]!.children.map((child) => child.change?.id)).toEqual([
+      UUID(1),
+    ])
+    expect(groups[0]!.children[0]!.episodes.map((e) => e.change?.id)).toEqual([
+      UUID(2),
+    ])
+  })
+
+  it('nests an episode under a season that is only context', () => {
+    const episode = change({
+      id: UUID(2),
+      entityKind: 'animeEpisode',
+      entityId: UUID(6),
+    })
+    const groups = groupChanges(
+      [episode],
+      display({
+        refs: { animeSeason: { [UUID(5)]: 'Season One' } },
+        contexts: { [UUID(5)]: { kind: 'SEASON', number: '1' } },
+        parents: {
+          [UUID(2)]: {
+            animeId: UUID(3),
+            seasonId: UUID(5),
+            label: 'Episode 3',
+          },
+        },
+      }),
+    )
+
+    expect(groups[0]!.children).toHaveLength(1)
+    const season = groups[0]!.children[0]!
+    expect(season.change).toBeNull()
+    expect(season.title).toBe('Season')
+    expect(season.context).toEqual({ kind: 'SEASON', number: '1' })
+    expect(
+      buildContextRows('animeSeason', { number: '1.000' }).map(
+        (row) => row.value,
+      ),
+    ).toEqual(['1'])
+    expect(season.episodes.map((e) => e.change?.id)).toEqual([UUID(2)])
+  })
+
+  it('keeps an episode at anime level when its season is not in the changeset', () => {
+    const episode = change({
+      id: UUID(2),
+      entityKind: 'animeEpisode',
+      entityId: UUID(6),
+    })
+    const groups = groupChanges(
+      [episode],
+      display({
+        parents: {
+          [UUID(2)]: {
+            animeId: UUID(3),
+            seasonId: UUID(5),
+            label: 'Episode 3',
+          },
+        },
+      }),
+    )
+
+    expect(groups[0]!.children).toHaveLength(1)
+    expect(groups[0]!.children[0]!.episodes).toEqual([])
+  })
+
+  it('files the anime and its children under one group', () => {
+    const anime = change({ id: UUID(1), entityId: UUID(3) })
+    const season = change({
+      id: UUID(2),
+      entityKind: 'animeSeason',
+      entityId: UUID(5),
+    })
+    const groups = groupChanges(
+      [anime, season],
+      display({
+        refs: { anime: { [UUID(3)]: 'Bebop' } },
+        parents: {
+          [UUID(1)]: { animeId: UUID(3), seasonId: null, label: null },
+          [UUID(2)]: { animeId: UUID(3), seasonId: null, label: 'Season 1' },
+        },
+      }),
+    )
+
+    expect(groups).toHaveLength(1)
+    expect(groups[0]!.anime).toBe(anime)
+    expect(groups[0]!.children).toHaveLength(1)
   })
 })

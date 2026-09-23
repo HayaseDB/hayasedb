@@ -2,8 +2,9 @@
 import type { ChangeDetail } from '@hayasedb/contract'
 const props = defineProps<{
   change: ChangeDetail
+  hidden?: ReadonlySet<string>
 }>()
-const rows = computed(() => buildDiffRows(props.change))
+const rows = computed(() => buildDiffRows(props.change, props.hidden))
 const showBefore = computed(() => props.change.op !== 'create')
 const isDelete = computed(() => props.change.op === 'delete')
 const gridClass = computed(() =>

@@ -99,8 +99,13 @@ async function addMessage(body: string) {
 }
 
 function entityLink(change: ChangeDetail): string | null {
-  return change.op === 'create' ? null : `/anime/${change.entityId}`
+  if (change.op === 'create' || change.entityKind !== 'anime') return null
+  return `/anime/${change.entityId}`
 }
+
+const changeGroups = computed(() =>
+  detail.value ? groupChanges(detail.value.changes, detail.value.display) : [],
+)
 
 function changesetPath(id: string): string {
   return `/submissions/${id}`
@@ -242,12 +247,12 @@ function isLocked(action: ModerationAction) {
             </template>
           </UAlert>
 
-          <ChangeCard
-            v-for="change in detail.changes"
-            :key="change.id"
-            :change="change"
+          <ChangeGroupCard
+            v-for="group in changeGroups"
+            :key="group.key"
+            :group="group"
           >
-            <template #actions>
+            <template #actions="{ change }">
               <UButton
                 v-if="entityLink(change)"
                 :to="entityLink(change)!"
@@ -258,7 +263,7 @@ function isLocked(action: ModerationAction) {
                 size="xs"
               />
             </template>
-          </ChangeCard>
+          </ChangeGroupCard>
 
           <ChangesetTimeline
             :changeset="detail"

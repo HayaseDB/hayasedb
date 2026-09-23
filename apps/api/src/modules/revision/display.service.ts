@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { eq, inArray } from 'drizzle-orm'
 import type { ContributionDisplay } from '@hayasedb/contract'
-import type { RefTarget } from '@hayasedb/domain'
+import { formatEpisodeNumber, type RefTarget } from '@hayasedb/domain'
 import { type Database, schema } from '@hayasedb/db'
 import { DRIZZLE } from '../../database/database.constants'
 import { preferredLocalized } from '../localization'
@@ -148,7 +148,7 @@ export class DisplayService {
       )
       for (const row of rows) {
         labels[row.id] ??= `${titleCase(row.kind)} ${
-          row.number ?? row.position + 1
+          formatEpisodeNumber(row.number) ?? row.position + 1
         }`
       }
       return labels
@@ -177,6 +177,8 @@ export class DisplayService {
     ])
 
     return {
+      parents: {},
+      contexts: {},
       refs: {
         ...Object.fromEntries(labelled),
         mediaAsset: Object.fromEntries(

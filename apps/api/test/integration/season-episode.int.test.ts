@@ -71,7 +71,7 @@ describe('anime seasons and episodes', () => {
     const beside = await admin.client.season.create({
       animeId: anime.id,
       kind: 'SEASON',
-      number: '1',
+      number: null,
     })
     expect(beside).toMatchObject({ animeId: anime.id, position: 1 })
     await admin.client.season.remove({ id: beside.id })
@@ -308,6 +308,225 @@ describe('anime seasons and episodes', () => {
     expect(restored).toMatchObject({
       animeId: anime.id,
       title: { locale: 'en', title: 'Season One' },
+    })
+  })
+
+  it('reports the parent anime and a label for an episode-only changeset', async () => {
+    const anime = await admin.client.anime.create(
+      createAnimeInput('episode-parents'),
+    )
+    const season = await admin.client.season.create({
+      animeId: anime.id,
+      kind: 'SEASON',
+      number: '1',
+      translations: [{ locale: 'en', title: 'Season One', original: true }],
+    })
+    const grouped = await admin.client.episode.createForSeason({
+      seasonId: season.id,
+      ...episodeFields,
+      number: '3',
+    })
+
+    const detail = await admin.client.changeset.submit({
+      summary: 'Fix the runtime of a single episode',
+      changes: [
+        {
+          op: 'update',
+          entityKind: 'animeEpisode',
+          entityId: grouped.id,
+          baseRev: grouped.headRev,
+          payload: { durationSeconds: 1500 },
+        },
+      ],
+    })
+
+    const change = detail.changes[0]!
+    expect(change.payload).toEqual({ durationSeconds: 1500 })
+
+    const parent = detail.display.parents[change.id]
+    expect(parent).toMatchObject({
+      animeId: anime.id,
+      seasonId: season.id,
+      label: 'Episode 3',
+    })
+    expect(detail.display.refs.anime?.[anime.id]).toBeTruthy()
+    expect(detail.display.refs.animeSeason?.[season.id]).toBe('Season One')
+
+    const context = detail.display.contexts[anime.id]
+    expect(context).toBeTruthy()
+    expect(context).toMatchObject({ slug: 'episode-parents' })
+
+    expect(detail.display.contexts[season.id]).toMatchObject({
+      kind: 'SEASON',
+    })
+  })
+
+  it('reports parentage for a season and episode created in one changeset', async () => {
+    const anime = await admin.client.anime.create(
+      createAnimeInput('nest-creates'),
+    )
+    const seasonId = crypto.randomUUID()
+    const episodeId = crypto.randomUUID()
+
+    const detail = await admin.client.changeset.submit({
+      summary: 'Create a season and one episode inside it',
+      changes: [
+        seasonCreate(seasonId, anime.id, 0),
+        episodeCreate(episodeId, { seasonId }, 0),
+      ],
+    })
+
+    const byEntity = new Map(
+      detail.changes.map((change) => [change.entityId, change]),
+    )
+    const parentOf = (entityId: string) =>
+      detail.display.parents[byEntity.get(entityId)!.id]
+
+    expect(parentOf(seasonId)).toMatchObject({ animeId: anime.id })
+    expect(parentOf(episodeId)).toMatchObject({
+      animeId: anime.id,
+      seasonId,
+    })
+  })
+
+  it('nests every episode of a newly created season under that season', async () => {
+    const anime = await admin.client.anime.create(
+      createAnimeInput('nest-many-episodes'),
+    )
+    const seasonId = crypto.randomUUID()
+    const episodeIds = [
+      crypto.randomUUID(),
+      crypto.randomUUID(),
+      crypto.randomUUID(),
+    ]
+
+    const detail = await admin.client.changeset.submit({
+      summary: 'Create a season with three episodes',
+      changes: [
+        seasonCreate(seasonId, anime.id, 0),
+        ...episodeIds.map((id, index) =>
+          episodeCreate(id, { seasonId }, index),
+        ),
+      ],
+    })
+
+    const byEntity = new Map(
+      detail.changes.map((change) => [change.entityId, change]),
+    )
+    for (const id of episodeIds) {
+      expect(detail.display.parents[byEntity.get(id)!.id]).toMatchObject({
+        animeId: anime.id,
+        seasonId,
+      })
+    }
+  })
+
+  it('reports the full anime, season and episode parentage in one changeset', async () => {
+    const anime = await admin.client.anime.create(
+      createAnimeInput('nest-chain'),
+    )
+    const season = await admin.client.season.create({
+      animeId: anime.id,
+      kind: 'SEASON',
+      number: '1',
+      translations: [{ locale: 'en', title: 'Season One', original: true }],
+    })
+    const grouped = await admin.client.episode.createForSeason({
+      seasonId: season.id,
+      ...episodeFields,
+      number: '3',
+    })
+    const standalone = await admin.client.episode.createForAnime({
+      animeId: anime.id,
+      ...episodeFields,
+      number: '4',
+    })
+
+    const detail = await admin.client.changeset.submit({
+      summary: 'Edit a season, its episode and a standalone episode',
+      changes: [
+        {
+          op: 'update',
+          entityKind: 'animeSeason',
+          entityId: season.id,
+          baseRev: season.headRev,
+          payload: { number: '2' },
+        },
+        {
+          op: 'update',
+          entityKind: 'animeEpisode',
+          entityId: grouped.id,
+          baseRev: grouped.headRev,
+          payload: { durationSeconds: 1500 },
+        },
+        {
+          op: 'update',
+          entityKind: 'animeEpisode',
+          entityId: standalone.id,
+          baseRev: standalone.headRev,
+          payload: { durationSeconds: 1600 },
+        },
+      ],
+    })
+
+    const byEntity = new Map(
+      detail.changes.map((change) => [change.entityId, change]),
+    )
+    const parentOf = (entityId: string) =>
+      detail.display.parents[byEntity.get(entityId)!.id]
+
+    expect(parentOf(season.id)).toMatchObject({
+      animeId: anime.id,
+      seasonId: null,
+    })
+    expect(parentOf(grouped.id)).toMatchObject({
+      animeId: anime.id,
+      seasonId: season.id,
+    })
+    expect(parentOf(standalone.id)).toMatchObject({
+      animeId: anime.id,
+      seasonId: null,
+    })
+  })
+
+  it('still sends the anime context when the anime is edited in the same changeset', async () => {
+    const anime = await admin.client.anime.create(
+      createAnimeInput('episode-context-edited'),
+    )
+    const season = await admin.client.season.create({
+      animeId: anime.id,
+      kind: 'SEASON',
+      number: '1',
+      translations: [{ locale: 'en', title: 'Season One', original: true }],
+    })
+    const grouped = await admin.client.episode.createForSeason({
+      seasonId: season.id,
+      ...episodeFields,
+      number: '3',
+    })
+
+    const detail = await admin.client.changeset.submit({
+      summary: 'Edit the anime and one of its episodes',
+      changes: [
+        {
+          op: 'update',
+          entityKind: 'anime',
+          entityId: anime.id,
+          baseRev: anime.headRev,
+          payload: { slug: 'episode-context-renamed' },
+        },
+        {
+          op: 'update',
+          entityKind: 'animeEpisode',
+          entityId: grouped.id,
+          baseRev: grouped.headRev,
+          payload: { durationSeconds: 1500 },
+        },
+      ],
+    })
+
+    expect(detail.display.contexts[anime.id]).toMatchObject({
+      slug: 'episode-context-edited',
     })
   })
 })

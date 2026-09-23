@@ -1,6 +1,7 @@
 import {
   ENTITY_FIELD_META,
   fieldOrderFor,
+  formatEpisodeNumber,
   sameFieldValue,
   type AnimeFieldKey,
   type ChangeOp,
@@ -9,7 +10,11 @@ import {
   type FieldMeta,
   type MessageKind,
 } from '@hayasedb/domain'
-import type { AnimeDocument, ChangeDetail } from '@hayasedb/contract'
+import type {
+  AnimeDocument,
+  ChangeDetail,
+  ContributionDisplay,
+} from '@hayasedb/contract'
 
 type BadgeColor = 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
@@ -29,6 +34,13 @@ export const CHANGESET_STATUS_COLORS: Record<ChangesetStatus, BadgeColor> = {
   rejected: 'error',
   withdrawn: 'neutral',
   superseded: 'neutral',
+}
+
+export const ENTITY_KIND_ICONS: Record<EntityKind, string> = {
+  anime: 'i-lucide-tv',
+  animeSeason: 'i-lucide-layers',
+  animeEpisode: 'i-lucide-clapperboard',
+  genre: 'i-lucide-tag',
 }
 
 export const ENTITY_KIND_LABELS: Record<EntityKind, string> = {
@@ -199,12 +211,24 @@ export function changesetSeasonId(changes: ChangeDetail[]): string | null {
   return null
 }
 
-export function buildDiffRows(change: ChangeDetail): ChangeDiffRow[] {
+const PARENT_FIELDS: Record<string, readonly string[]> = {
+  animeSeason: ['animeId'],
+  animeEpisode: ['animeId', 'seasonId'],
+}
+
+export function hiddenDiffFields(change: ChangeDetail): ReadonlySet<string> {
+  return new Set(PARENT_FIELDS[change.entityKind] ?? [])
+}
+
+export function buildDiffRows(
+  change: ChangeDetail,
+  hidden: ReadonlySet<string> = new Set(),
+): ChangeDiffRow[] {
   const isDelete = change.op === 'delete'
   const source = isDelete ? (change.oldValues ?? {}) : change.payload
 
   const rows = fieldOrderFor(change.entityKind)
-    .filter((field) => field in source)
+    .filter((field) => field in source && !hidden.has(field))
     .flatMap((field): ChangeDiffRow[] => {
       const meta = contributionFieldMeta(change.entityKind, field)
       const label = contributionFieldLabel(change.entityKind, field)
@@ -255,6 +279,131 @@ export function buildDiffRows(change: ChangeDetail): ChangeDiffRow[] {
     })
 
   return change.op === 'create' ? rows : rows.filter((row) => row.changed)
+}
+
+export interface ChangeGroupChild {
+  change: ChangeDetail | null
+  title: string
+  seasonId: string | null
+  context: Record<string, unknown> | null
+  episodes: ChangeGroupChild[]
+}
+
+export interface ChangeGroup {
+  key: string
+  title: string
+  animeId: string | null
+  anime: ChangeDetail | null
+  context: Record<string, unknown> | null
+  children: ChangeGroupChild[]
+}
+
+export interface ChangeContextRow {
+  key: string
+  label: string
+  meta: FieldMeta | undefined
+  value: unknown
+}
+
+export function buildContextRows(
+  entityKind: EntityKind,
+  document: Record<string, unknown>,
+): ChangeContextRow[] {
+  return fieldOrderFor(entityKind)
+    .filter((field) => field in document)
+    .map((field) => ({
+      key: field,
+      label: contributionFieldLabel(entityKind, field),
+      meta: contributionFieldMeta(entityKind, field),
+      value:
+        field === 'number'
+          ? formatEpisodeNumber(document[field] as string | number | null)
+          : (document[field] ?? null),
+    }))
+}
+
+export function groupChanges(
+  changes: ChangeDetail[],
+  display: ContributionDisplay,
+): ChangeGroup[] {
+  const groups = new Map<string, ChangeGroup>()
+  const seasons = new Map<string, ChangeGroupChild>()
+  const groupFor = (key: string, animeId: string | null): ChangeGroup => {
+    const existing = groups.get(key)
+    if (existing) return existing
+    const created: ChangeGroup = {
+      key,
+      title: ENTITY_KIND_LABELS.anime,
+      animeId,
+      anime: null,
+      context: (animeId && display.contexts?.[animeId]) || null,
+      children: [],
+    }
+    groups.set(key, created)
+    return created
+  }
+
+  for (const change of changes) {
+    if (change.entityKind === 'genre') {
+      const group = groupFor(`genre:${change.id}`, null)
+      group.title = ENTITY_KIND_LABELS.genre
+      group.anime = change
+      continue
+    }
+
+    if (change.entityKind === 'anime') {
+      const group = groupFor(`anime:${change.entityId}`, change.entityId)
+      group.anime = change
+      continue
+    }
+
+    const parent = display.parents?.[change.id]
+    const animeId = parent?.animeId ?? null
+    const group = groupFor(
+      animeId ? `anime:${animeId}` : `orphan:${change.id}`,
+      animeId,
+    )
+    const child: ChangeGroupChild = {
+      change,
+      title: ENTITY_KIND_LABELS[change.entityKind],
+      seasonId: parent?.seasonId ?? null,
+      context: display.contexts?.[change.entityId] ?? null,
+      episodes: [],
+    }
+    group.children.push(child)
+    if (change.entityKind === 'animeSeason') {
+      seasons.set(change.entityId, child)
+    }
+  }
+
+  for (const group of groups.values()) {
+    const placeholders: ChangeGroupChild[] = []
+    group.children = group.children.filter((child) => {
+      if (!child.seasonId || child.change?.entityKind !== 'animeEpisode') {
+        return true
+      }
+      let season = seasons.get(child.seasonId)
+      if (season && !group.children.includes(season)) season = undefined
+      if (!season) {
+        const context = display.contexts?.[child.seasonId]
+        if (!context) return true
+        season = {
+          change: null,
+          title: ENTITY_KIND_LABELS.animeSeason,
+          seasonId: null,
+          context,
+          episodes: [],
+        }
+        seasons.set(child.seasonId, season)
+        placeholders.push(season)
+      }
+      season.episodes.push(child)
+      return false
+    })
+    group.children.push(...placeholders)
+  }
+
+  return [...groups.values()]
 }
 
 export interface TimelineActor {

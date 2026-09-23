@@ -4,7 +4,12 @@ import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from '#imports'
 const CONTRIBUTION_DISPLAY: InjectionKey<ComputedRef<ContributionDisplay>> =
   Symbol('contributionDisplay')
 
-const EMPTY_DISPLAY: ContributionDisplay = { refs: {}, mediaAssets: {} }
+const EMPTY_DISPLAY: ContributionDisplay = {
+  refs: {},
+  parents: {},
+  contexts: {},
+  mediaAssets: {},
+}
 
 export function provideContributionDisplay(
   display: MaybeRefOrGetter<ContributionDisplay | null | undefined>,

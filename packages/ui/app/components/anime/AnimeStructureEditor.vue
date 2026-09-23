@@ -37,7 +37,10 @@ const visibleChildren = computed(() =>
 
 function openStandalone(child: AnimeChild) {
   if (child.kind !== 'episode') return
-  openEpisode(visibleEpisodes.value, visibleEpisodes.value.indexOf(child.episode))
+  openEpisode(
+    visibleEpisodes.value,
+    visibleEpisodes.value.indexOf(child.episode),
+  )
 }
 
 function openSeasonEpisode(child: AnimeChild, index: number) {
@@ -84,17 +87,12 @@ const { openEpisode, openSeason } = useAnimeStructureOverlays(
 )
 
 function addSeason() {
-  const draft = newSeasonDraft()
-  state.value.seasons.push(draft)
-  openSeason(draft)
+  state.value.seasons.push(newSeasonDraft())
 }
 
 function addEpisode(season?: SeasonDraft) {
-  const draft = newEpisodeDraft()
   const list = season ? season.episodes : state.value.episodes
-  list.push(draft)
-  const visible = list.filter((episode) => !episode.removed)
-  openEpisode(visible, visible.indexOf(draft), season && seasonLabel(season))
+  list.push(newEpisodeDraft())
 }
 
 function removeSeason(season: SeasonDraft) {
@@ -331,25 +329,7 @@ const episodeLabel = (episode: EpisodeDraft) => {
               @remove="removeEpisode(episode, child.season)"
             />
 
-            <p
-              v-if="!visibleSeasonEpisodes(child.season).length"
-              class="text-muted text-sm"
-            >
-              No episodes in this
-              {{ ANIME_SEASON_KIND_LABELS[child.season.kind].toLowerCase() }}
-              yet.
-            </p>
-
-            <UButton
-              type="button"
-              label="Add episode"
-              icon="i-lucide-plus"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              class="self-start"
-              @click="addEpisode(child.season)"
-            />
+            <AnimeAddCard label="Add episode" @add="addEpisode(child.season)" />
           </div>
         </div>
       </template>

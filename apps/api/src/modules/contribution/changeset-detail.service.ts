@@ -4,12 +4,13 @@ import { and, asc, desc, eq, exists, inArray, sql, type SQL } from 'drizzle-orm'
 import {
   genreDocumentSchema,
   type ChangeDetail,
+  type ChangeParent,
   type ChangesetAuthor,
   type ChangesetDetail,
   type ChangesetListItem,
   type ChangesetStatus,
 } from '@hayasedb/contract'
-import type { EntityKind } from '@hayasedb/domain'
+import { formatEpisodeNumber, type EntityKind } from '@hayasedb/domain'
 import { type Database, schema } from '@hayasedb/db'
 import { DRIZZLE } from '../../database/database.constants'
 import { preferredLocalized } from '../localization'
@@ -192,6 +193,7 @@ export class ChangesetDetailService {
 
     const changeDetails: ChangeDetail[] = []
     const displayDocuments: KindedDocument[] = []
+    const parents: Record<string, ChangeParent> = {}
     for (const change of changes) {
       const payload = asDocument(change.payload)
       const oldValues = change.oldValues ? asDocument(change.oldValues) : null
@@ -208,6 +210,27 @@ export class ChangesetDetailService {
       for (const doc of [payload, oldValues, currentValues]) {
         displayDocuments.push({ kind: change.entityKind, doc })
       }
+
+      const parent = this.changeParent(
+        change,
+        payload,
+        headDocs.get(change.entityId) ?? oldValues,
+      )
+      if (parent) {
+        parents[change.id] = parent
+        if (parent.animeId) {
+          displayDocuments.push({
+            kind: change.entityKind,
+            doc: { animeId: parent.animeId },
+          })
+        }
+        if (parent.seasonId) {
+          displayDocuments.push({
+            kind: 'animeEpisode',
+            doc: { seasonId: parent.seasonId },
+          })
+        }
+      }
       changeDetails.push({
         id: change.id,
         ord: change.ord,
@@ -223,6 +246,10 @@ export class ChangesetDetailService {
         appliedRevisionId: change.appliedRevisionId,
       })
     }
+
+    await this.resolveSeasonAnime(parents, changes, headDocs)
+
+    const contexts = await this.loadAnimeContexts(parents, changes, headDocs)
 
     const authors = await this.users.loadAuthors([
       row.authorId,
@@ -258,11 +285,160 @@ export class ChangesetDetailService {
         body: message.body,
         createdAt: message.createdAt,
       })),
-      display: this.overlayPendingGenreLabels(
-        await this.display.buildDisplay(displayDocuments),
-        changes,
-      ),
+      display: {
+        ...this.overlayPendingGenreLabels(
+          await this.display.buildDisplay([
+            ...displayDocuments,
+            ...Object.values(parents).map((parent) => ({
+              kind: 'animeSeason' as const,
+              doc: { animeId: parent.animeId },
+            })),
+          ]),
+          changes,
+        ),
+        parents,
+        contexts,
+      },
     }
+  }
+
+  private async loadAnimeContexts(
+    parents: Record<string, ChangeParent>,
+    changes: ChangeRow[],
+    headDocs: Map<string, Record<string, unknown>>,
+  ): Promise<Record<string, Record<string, unknown>>> {
+    const edited = new Set(
+      changes
+        .filter((change) => change.op === 'create')
+        .map((change) => change.entityId),
+    )
+    const wanted = new Map<string, EntityKind>()
+    for (const parent of Object.values(parents)) {
+      if (parent.animeId && !edited.has(parent.animeId)) {
+        wanted.set(parent.animeId, 'anime')
+      }
+      if (parent.seasonId && !edited.has(parent.seasonId)) {
+        wanted.set(parent.seasonId, 'animeSeason')
+      }
+    }
+    if (wanted.size === 0) return {}
+
+    const contexts: Record<string, Record<string, unknown>> = {}
+    const missingByKind = new Map<EntityKind, string[]>()
+    for (const [id, kind] of wanted) {
+      const doc = headDocs.get(id)
+      if (doc) {
+        contexts[id] = doc
+        continue
+      }
+      const ids = missingByKind.get(kind) ?? []
+      ids.push(id)
+      missingByKind.set(kind, ids)
+    }
+
+    const batches = await Promise.all(
+      [...missingByKind].map(([kind, ids]) =>
+        entityHandler(kind).serializeMany(this.db, ids),
+      ),
+    )
+    for (const batch of batches) {
+      for (const [entityId, doc] of batch) contexts[entityId] = doc
+    }
+    return contexts
+  }
+
+  private async resolveSeasonAnime(
+    parents: Record<string, ChangeParent>,
+    changes: ChangeRow[],
+    headDocs: Map<string, Record<string, unknown>>,
+  ): Promise<void> {
+    const pending = Object.values(parents).filter(
+      (parent) => !parent.animeId && parent.seasonId,
+    )
+    if (pending.length === 0) return
+
+    const seasonIds = [...new Set(pending.map((parent) => parent.seasonId!))]
+    const known = new Map<string, string>()
+
+    for (const change of changes) {
+      if (change.entityKind !== 'animeSeason') continue
+      const doc = {
+        ...(headDocs.get(change.entityId) ?? {}),
+        ...asDocument(change.payload),
+      }
+      const animeId = doc.animeId
+      if (typeof animeId === 'string') known.set(change.entityId, animeId)
+    }
+
+    const missing = seasonIds.filter((id) => !known.has(id))
+    if (missing.length > 0) {
+      const rows = await this.db
+        .select({
+          id: schema.animeSeason.id,
+          animeId: schema.animeSeason.animeId,
+        })
+        .from(schema.animeSeason)
+        .where(inArray(schema.animeSeason.id, missing))
+      for (const row of rows) known.set(row.id, row.animeId)
+    }
+
+    for (const parent of pending) {
+      parent.animeId = known.get(parent.seasonId!) ?? null
+    }
+  }
+
+  private changeParent(
+    change: ChangeRow,
+    payload: Record<string, unknown>,
+    fallback: Record<string, unknown> | null,
+  ): ChangeParent | null {
+    if (change.entityKind === 'anime') {
+      return { animeId: change.entityId, seasonId: null, label: null }
+    }
+    if (
+      change.entityKind !== 'animeSeason' &&
+      change.entityKind !== 'animeEpisode'
+    ) {
+      return null
+    }
+
+    const read = (key: string): string | null => {
+      const value = payload[key] ?? fallback?.[key]
+      return typeof value === 'string' ? value : null
+    }
+
+    return {
+      animeId: read('animeId'),
+      seasonId: change.entityKind === 'animeEpisode' ? read('seasonId') : null,
+      label: this.entityLabel(change.entityKind, payload, fallback),
+    }
+  }
+
+  private entityLabel(
+    kind: EntityKind,
+    payload: Record<string, unknown>,
+    fallback: Record<string, unknown> | null,
+  ): string | null {
+    const source = { ...(fallback ?? {}), ...payload }
+    const translations = source.translations
+    if (Array.isArray(translations)) {
+      const preferred = preferredLocalized(
+        translations as { locale: string; original?: boolean }[],
+      )
+      const title = (preferred as { title?: unknown } | undefined)?.title
+      if (typeof title === 'string' && title.length > 0) return title
+    }
+
+    const number = source.number
+    if (typeof number === 'string' || typeof number === 'number') {
+      const formatted = formatEpisodeNumber(number)
+      if (formatted) {
+        return kind === 'animeSeason'
+          ? `Season ${formatted}`
+          : `Episode ${formatted}`
+      }
+    }
+    return null
   }
 
   private overlayPendingGenreLabels(
