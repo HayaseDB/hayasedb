@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import type { EpisodeDraft } from '#imports'
+import type { ChangeSet, EpisodeDraft } from '#imports'
 
 const props = withDefaults(
   defineProps<{
     episodes: EpisodeDraft[]
     startIndex?: number
     context?: string
+    changes?: ChangeSet
   }>(),
-  { startIndex: 0, context: undefined },
+  { startIndex: 0, context: undefined, changes: undefined },
 )
 
 const emit = defineEmits<{ close: [boolean] }>()
@@ -58,7 +59,12 @@ const description = computed(() =>
     :ui="{ content: 'sm:max-w-lg' }"
   >
     <template #body>
-      <AnimeEpisodeFields v-if="active" :key="active.id" :episode="active" />
+      <AnimeEpisodeFields
+        v-if="active"
+        :key="active.id"
+        :episode="active"
+        :changes="changes"
+      />
     </template>
 
     <template #footer>

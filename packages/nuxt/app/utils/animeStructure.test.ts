@@ -38,7 +38,7 @@ describe('fetchAnimeStructure', () => {
       listForSeason: vi
         .fn()
         .mockResolvedValue(page([episode('e1')], '"s1-episodes"')),
-      listForAnime: vi.fn(),
+      listForAnime: vi.fn().mockResolvedValue(page([], '"direct"')),
     })
 
     const structure = await fetchAnimeStructure(api, 'anime-1')
@@ -56,7 +56,7 @@ describe('fetchAnimeStructure', () => {
     const api = clientOf({
       seasons: list,
       listForSeason: vi.fn().mockResolvedValue(page([], '"none"')),
-      listForAnime: vi.fn(),
+      listForAnime: vi.fn().mockResolvedValue(page([], '"direct"')),
     })
 
     const structure = await fetchAnimeStructure(api, 'anime-1')
@@ -66,7 +66,7 @@ describe('fetchAnimeStructure', () => {
     expect(structure.seasons.orderEtag).toBe('"first"')
   })
 
-  it('reads direct episodes only when the anime has no seasons', async () => {
+  it('reads direct episodes when the anime has no seasons', async () => {
     const listForAnime = vi
       .fn()
       .mockResolvedValue(page([episode('e1')], '"direct"'))
@@ -82,8 +82,10 @@ describe('fetchAnimeStructure', () => {
     expect(structure.episodes.orderEtag).toBe('"direct"')
   })
 
-  it('skips the direct episode read when seasons exist', async () => {
-    const listForAnime = vi.fn()
+  it('reads direct episodes even when seasons exist', async () => {
+    const listForAnime = vi
+      .fn()
+      .mockResolvedValue(page([episode('e1')], '"direct"'))
     const api = clientOf({
       seasons: vi.fn().mockResolvedValue(page([season('s1')], '"seasons"')),
       listForSeason: vi.fn().mockResolvedValue(page([], '"none"')),
@@ -92,8 +94,9 @@ describe('fetchAnimeStructure', () => {
 
     const structure = await fetchAnimeStructure(api, 'anime-1')
 
-    expect(listForAnime).not.toHaveBeenCalled()
-    expect(structure.episodes).toEqual({ items: [], orderEtag: '' })
+    expect(listForAnime).toHaveBeenCalledOnce()
+    expect(structure.seasons.items.map((item) => item.id)).toEqual(['s1'])
+    expect(structure.episodes.items.map((item) => item.id)).toEqual(['e1'])
   })
 
   it('starts empty', () => {

@@ -218,21 +218,7 @@ export class EpisodeService {
   ): Promise<AnimeSeason> {
     const id = await this.db.transaction(async (tx) => {
       await this.lockLiveEntity(tx, input.animeId, 'anime')
-      const [direct] = await tx
-        .select({ id: schema.animeEpisode.id })
-        .from(schema.animeEpisode)
-        .where(eq(schema.animeEpisode.animeId, input.animeId))
-        .limit(1)
-      if (direct) {
-        throw new ORPCError('CONFLICT', {
-          message: 'Anime with direct episodes cannot also contain seasons',
-        })
-      }
-      const position = await this.nextPosition(
-        tx,
-        schema.animeSeason,
-        eq(schema.animeSeason.animeId, input.animeId),
-      )
+      const position = await this.nextAnimeChildPosition(tx, input.animeId)
       const document = entityHandler('animeSeason').parseDocument({
         ...input,
         position,
@@ -317,7 +303,7 @@ export class EpisodeService {
       )
       .where(and(...conditions))
       .orderBy(
-        sql`${schema.animeSeason.position} asc nulls first`,
+        sql`coalesce(${schema.animeSeason.position}, ${schema.animeEpisode.position}) asc`,
         asc(schema.animeEpisode.position),
         asc(schema.animeEpisode.id),
       )
@@ -457,6 +443,27 @@ export class EpisodeService {
     return row?.value ?? 0
   }
 
+  private async nextAnimeChildPosition(
+    tx: Tx,
+    animeId: string,
+  ): Promise<number> {
+    const [seasons, episodes] = await Promise.all([
+      tx
+        .select({
+          value: sql<number>`coalesce(max(${schema.animeSeason.position}) + 1, 0)::int`,
+        })
+        .from(schema.animeSeason)
+        .where(eq(schema.animeSeason.animeId, animeId)),
+      tx
+        .select({
+          value: sql<number>`coalesce(max(${schema.animeEpisode.position}) + 1, 0)::int`,
+        })
+        .from(schema.animeEpisode)
+        .where(eq(schema.animeEpisode.animeId, animeId)),
+    ])
+    return Math.max(seasons[0]?.value ?? 0, episodes[0]?.value ?? 0)
+  }
+
   private async createEpisode(
     input: CreateAnimeEpisodeForAnimeInput | CreateAnimeEpisodeForSeasonInput,
     owner:
@@ -466,26 +473,17 @@ export class EpisodeService {
     const id = await this.db.transaction(async (tx) => {
       if (owner.animeId !== null) {
         await this.lockLiveEntity(tx, owner.animeId, 'anime')
-        const [season] = await tx
-          .select({ id: schema.animeSeason.id })
-          .from(schema.animeSeason)
-          .where(eq(schema.animeSeason.animeId, owner.animeId))
-          .limit(1)
-        if (season) {
-          throw new ORPCError('CONFLICT', {
-            message: 'Anime with seasons cannot contain direct episodes',
-          })
-        }
       } else {
         await this.lockLiveEntity(tx, owner.seasonId, 'animeSeason')
       }
-      const position = await this.nextPosition(
-        tx,
-        schema.animeEpisode,
+      const position =
         owner.animeId !== null
-          ? eq(schema.animeEpisode.animeId, owner.animeId)
-          : eq(schema.animeEpisode.seasonId, owner.seasonId),
-      )
+          ? await this.nextAnimeChildPosition(tx, owner.animeId)
+          : await this.nextPosition(
+              tx,
+              schema.animeEpisode,
+              eq(schema.animeEpisode.seasonId, owner.seasonId),
+            )
       const { translations, ...fields } = input
       const document = entityHandler('animeEpisode').parseDocument({
         ...fields,

@@ -574,6 +574,7 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
             :loading="structureLoading"
             :change-count="structureChangeCount"
             :change-budget="structureChangeBudget"
+            :changes="changes"
           />
         </UPageCard>
       </template>

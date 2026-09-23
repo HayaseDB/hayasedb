@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { LocalizationLocale } from '@hayasedb/domain'
-import type { SeasonDraft, StructureTitle } from '#imports'
+import type { SeasonDraft, StructureTitle, ChangeSet } from '#imports'
 
-const props = defineProps<{ season: SeasonDraft }>()
+const props = defineProps<{
+  season: SeasonDraft
+  changes?: ChangeSet
+}>()
 
 const season = computed(() => props.season)
 
@@ -25,7 +28,10 @@ const localization = useTranslationEditor({
 
 const { activeIndex, active } = localization
 
-const scope = provideNestedChangeScope(() => `seasons.${props.season.id}`)
+const scope = provideRootedChangeScope({
+  prefix: () => `seasons.${props.season.id}`,
+  changes: () => props.changes,
+})
 
 const titlePath = computed(
   () => `translations.${active.value?.locale ?? ''}.title`,

@@ -46,3 +46,24 @@ export function provideNestedChangeScope(
   provide(CHANGE_SCOPE_KEY, scope)
   return scope
 }
+
+export function provideRootedChangeScope(options: {
+  prefix: MaybeRefOrGetter<string | undefined>
+  changes?: MaybeRefOrGetter<ChangeSet | undefined>
+}) {
+  const inherited = useChangeScope(options.prefix)
+
+  const scope: ChangeScope = {
+    kindOf: (path) => {
+      const given = toValue(options.changes)
+      if (!given) return inherited.kindOf(path)
+      const at = toValue(options.prefix)
+      return given.paths?.has(at ? `${at}.${path}` : path)
+        ? 'changed'
+        : 'unchanged'
+    },
+  }
+
+  provide(CHANGE_SCOPE_KEY, scope)
+  return scope
+}

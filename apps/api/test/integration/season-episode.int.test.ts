@@ -43,7 +43,7 @@ describe('anime seasons and episodes', () => {
     await app.close()
   })
 
-  it('serves localized episodes and keeps season and direct episodes exclusive', async () => {
+  it('serves localized episodes and allows seasons beside direct episodes', async () => {
     const anime = await admin.client.anime.create(
       createAnimeInput('flat-episodes'),
     )
@@ -68,14 +68,13 @@ describe('anime seasons and episodes', () => {
     const body = (await localized.json()) as { title: { locale: string } }
     expect(body.title).toMatchObject({ locale: 'en', title: 'Asteroid Blues' })
 
-    const mixed = await errorOf(
-      admin.client.season.create({
-        animeId: anime.id,
-        kind: 'SEASON',
-        number: '1',
-      }),
-    )
-    expect(mixed?.code).toBe('CONFLICT')
+    const beside = await admin.client.season.create({
+      animeId: anime.id,
+      kind: 'SEASON',
+      number: '1',
+    })
+    expect(beside).toMatchObject({ animeId: anime.id, position: 1 })
+    await admin.client.season.remove({ id: beside.id })
 
     const renamed = await admin.client.episode.update({
       id: episode.id,
@@ -188,7 +187,7 @@ describe('anime seasons and episodes', () => {
     })
   })
 
-  it('blocks a changeset that would leave seasons beside direct episodes', async () => {
+  it('applies a changeset that puts a direct episode beside a season', async () => {
     const anime = await admin.client.anime.create(
       createAnimeInput('mixed-structure'),
     )
@@ -196,6 +195,74 @@ describe('anime seasons and episodes', () => {
     const episodeId = '00000000-0000-7000-8000-000000000202'
     const submitted = await contributor.client.changeset.submit({
       summary: 'Add a season and a direct episode',
+      changes: [
+        seasonCreate(seasonId, anime.id, 0),
+        episodeCreate(episodeId, { animeId: anime.id }, 1),
+      ],
+    })
+
+    const decision = await admin.client.changeset.approve({ id: submitted.id })
+    expect(decision.status).toBe('approved')
+    expect(await admin.client.season.get({ id: seasonId })).toMatchObject({
+      animeId: anime.id,
+      position: 0,
+    })
+    expect(await admin.client.episode.get({ id: episodeId })).toMatchObject({
+      animeId: anime.id,
+      seasonId: null,
+      position: 1,
+    })
+  })
+
+  it('reads a direct episode between two seasons in rank order', async () => {
+    const anime = await admin.client.anime.create(
+      createAnimeInput('interleaved-children'),
+    )
+    const first = await admin.client.season.create({
+      animeId: anime.id,
+      kind: 'SEASON',
+      number: '1',
+    })
+    const between = await admin.client.episode.createForAnime({
+      animeId: anime.id,
+      ...episodeFields,
+    })
+    const second = await admin.client.season.create({
+      animeId: anime.id,
+      kind: 'SEASON',
+      number: '2',
+    })
+    expect([first.position, between.position, second.position]).toEqual([
+      0, 1, 2,
+    ])
+
+    const inFirst = await admin.client.episode.createForSeason({
+      seasonId: first.id,
+      ...episodeFields,
+    })
+    const inSecond = await admin.client.episode.createForSeason({
+      seasonId: second.id,
+      ...episodeFields,
+    })
+
+    const listed = await admin.client.episode.listForAnime({
+      animeId: anime.id,
+    })
+    expect(listed.items.map((item) => item.id)).toEqual([
+      inFirst.id,
+      between.id,
+      inSecond.id,
+    ])
+  })
+
+  it('blocks a changeset that puts two anime children at one position', async () => {
+    const anime = await admin.client.anime.create(
+      createAnimeInput('duplicate-rank'),
+    )
+    const seasonId = '00000000-0000-7000-8000-000000000211'
+    const episodeId = '00000000-0000-7000-8000-000000000212'
+    const submitted = await contributor.client.changeset.submit({
+      summary: 'Add a season and a direct episode at the same position',
       changes: [
         seasonCreate(seasonId, anime.id, 0),
         episodeCreate(episodeId, { animeId: anime.id }, 0),

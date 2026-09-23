@@ -104,9 +104,7 @@ export async function fetchAnimeStructure(
 
   return {
     seasons,
-    episodes: seasons.items.length
-      ? { items: [], orderEtag: '' }
-      : await fetchAnimeEpisodes(api, animeId),
+    episodes: await fetchAnimeEpisodes(api, animeId),
     episodesBySeason: Object.fromEntries(perSeason),
   }
 }

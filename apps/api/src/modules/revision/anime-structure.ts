@@ -11,11 +11,17 @@ export async function findStructureConflicts(
 
   const [seasons, episodes] = await Promise.all([
     tx
-      .selectDistinct({ animeId: schema.animeSeason.animeId })
+      .select({
+        animeId: schema.animeSeason.animeId,
+        position: schema.animeSeason.position,
+      })
       .from(schema.animeSeason)
       .where(inArray(schema.animeSeason.animeId, ids)),
     tx
-      .selectDistinct({ animeId: schema.animeEpisode.animeId })
+      .select({
+        animeId: schema.animeEpisode.animeId,
+        position: schema.animeEpisode.position,
+      })
       .from(schema.animeEpisode)
       .where(
         and(
@@ -25,11 +31,20 @@ export async function findStructureConflicts(
       ),
   ])
 
-  const withSeasons = new Set(seasons.map((row) => row.animeId))
-  return episodes
-    .filter((row) => row.animeId !== null && withSeasons.has(row.animeId))
-    .map(
-      (row) =>
-        `Anime ${row.animeId} cannot contain both seasons and direct episodes`,
-    )
+  const seen = new Map<string, number>()
+  const problems: string[] = []
+
+  for (const row of [...seasons, ...episodes]) {
+    if (row.animeId === null) continue
+    const key = `${row.animeId}:${row.position}`
+    const count = (seen.get(key) ?? 0) + 1
+    seen.set(key, count)
+    if (count === 2) {
+      problems.push(
+        `Anime ${row.animeId} has more than one season or direct episode at position ${row.position}`,
+      )
+    }
+  }
+
+  return problems
 }

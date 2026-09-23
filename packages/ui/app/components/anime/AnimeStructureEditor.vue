@@ -6,19 +6,21 @@ import {
 import type {
   AnimeStructureState,
   ChangeKind,
+  ChangeSet,
   EpisodeDraft,
   SeasonDraft,
 } from '#imports'
 
 const state = defineModel<AnimeStructureState>('state', { required: true })
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     loading?: boolean
     changeCount?: number
     changeBudget?: number
+    changes?: ChangeSet
   }>(),
-  { loading: false, changeCount: 0, changeBudget: 0 },
+  { loading: false, changeCount: 0, changeBudget: 0, changes: undefined },
 )
 
 const visibleSeasons = computed(() =>
@@ -31,7 +33,9 @@ const visibleEpisodes = computed(() =>
 const hasSeasons = computed(() => visibleSeasons.value.length > 0)
 const hasEpisodes = computed(() => visibleEpisodes.value.length > 0)
 
-const { openEpisode, openSeason } = useAnimeStructureOverlays()
+const { openEpisode, openSeason } = useAnimeStructureOverlays(
+  () => props.changes,
+)
 
 function addSeason() {
   const draft = newSeasonDraft()

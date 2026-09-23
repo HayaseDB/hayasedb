@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import type { SeasonDraft } from '#imports'
+import type { ChangeSet, SeasonDraft } from '#imports'
 
-const props = defineProps<{ season: SeasonDraft }>()
+const props = defineProps<{
+  season: SeasonDraft
+  changes?: ChangeSet
+}>()
 
 const emit = defineEmits<{ close: [boolean] }>()
 
@@ -29,7 +32,7 @@ const description = computed(
     :ui="{ content: 'sm:max-w-lg' }"
   >
     <template #body>
-      <AnimeSeasonFields :season="season" />
+      <AnimeSeasonFields :season="season" :changes="changes" />
     </template>
 
     <template #footer>
