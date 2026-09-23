@@ -15,7 +15,7 @@
   "dependencies": {
     "@eslint/js": "catalog:",
     "eslint-config-prettier": "catalog:",
-    "eslint-plugin-turbo": "^2.10.11",
+    "eslint-plugin-turbo": "^2.11.2",
     "typescript-eslint": "catalog:"
   },
   "peerDependencies": {
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@hayasedb/typescript-config": "workspace:*",
-    "@types/node": "^22.20.1",
+    "@types/node": "^22.20.4",
     "eslint": "catalog:",
     "typescript": "catalog:"
   }
