@@ -323,7 +323,7 @@ describe('structure diffing edge cases', () => {
     expect(change).toMatchObject({
       op: 'update',
       entityId: UUID(6),
-      payload: { animeId: ANIME, seasonId: null, position: 0 },
+      payload: { animeId: ANIME, seasonId: null, position: 1 },
     })
   })
 

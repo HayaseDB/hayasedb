@@ -211,3 +211,43 @@ describe('AnimeStructureEditor', () => {
     expect(wrapper.find('[data-change="changed"]').exists()).toBe(false)
   })
 })
+
+describe('mixed season and episode ordering', () => {
+  const mixed = (): AnimeStructureState => ({
+    seasons: [
+      { ...newSeasonDraft(), id: 's1', isNew: false, baseRev: 1, position: 0 },
+      { ...newSeasonDraft(), id: 's2', isNew: false, baseRev: 1, position: 2 },
+    ],
+    episodes: [
+      { ...newEpisodeDraft(), id: 'e1', isNew: false, baseRev: 1, position: 1 },
+    ],
+  })
+
+  it('renders a standalone episode between two seasons', async () => {
+    const { wrapper } = await mount(mixed())
+
+    const kinds = wrapper
+      .findAll('[aria-label="Move season up"], [aria-label="Move episode up"]')
+      .map((el) =>
+        el.attributes('aria-label') === 'Move season up' ? 'season' : 'episode',
+      )
+
+    expect(kinds).toEqual(['season', 'episode', 'season'])
+  })
+
+  it('moves a standalone episode above the first season', async () => {
+    const initial = mixed()
+    const { wrapper } = await mount(initial)
+
+    const up = wrapper
+      .findAll('button')
+      .filter((el) => el.attributes('aria-label') === 'Move episode up')
+
+    expect(up.length).toBe(1)
+    await up[0]!.trigger('click')
+
+    const episode = initial.episodes[0]!
+    const first = initial.seasons.find((s) => s.id === 's1')!
+    expect(episode.position).toBeLessThan(first.position)
+  })
+})

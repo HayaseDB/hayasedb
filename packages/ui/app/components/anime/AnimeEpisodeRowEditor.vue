@@ -20,12 +20,7 @@ const emit = defineEmits<{
 
 const scope = useChangeScope(() => `episodes.${props.episode.id}`)
 
-const marker = computed(() => {
-  const { number, type } = props.episode
-  if (type === 'REGULAR') return number ?? '–'
-  const label = ANIME_EPISODE_TYPE_LABELS[type]
-  return number ? `${label} ${number}` : label
-})
+const marker = computed(() => props.episode.number ?? '–')
 
 const title = computed(() =>
   preferredStructureTitle(props.episode.translations),
@@ -35,6 +30,10 @@ const airDate = computed(() => formatEpisodeAirDate(props.episode.airDate))
 
 const duration = computed(() =>
   formatEpisodeDuration(props.episode.durationSeconds),
+)
+
+const meta = computed(
+  () => [airDate.value, duration.value].filter(Boolean).join(' · ') || '—',
 )
 
 const changedPaths = computed(() => {
@@ -102,12 +101,8 @@ const actions = computed(() => [
         >
           {{ title || 'Untitled' }}
         </span>
-        <span
-          v-if="airDate || duration"
-          class="text-muted flex items-center gap-2 text-xs"
-        >
-          <span v-if="airDate">{{ airDate }}</span>
-          <span v-if="duration">{{ duration }}</span>
+        <span class="text-muted flex items-center gap-2 text-xs">
+          <span class="truncate">{{ meta }}</span>
         </span>
       </span>
     </button>
@@ -118,7 +113,7 @@ const actions = computed(() => [
       color="neutral"
       variant="subtle"
       size="sm"
-      class="hidden sm:inline-flex"
+      class="shrink-0"
     />
 
     <UBadge
@@ -127,15 +122,6 @@ const actions = computed(() => [
       :color="ANIME_EPISODE_STATUS_COLORS[episode.status]"
       variant="subtle"
       size="sm"
-    />
-
-    <UBadge
-      v-if="kind === 'changed' && changedPaths > 0"
-      :label="`${changedPaths} changed`"
-      color="warning"
-      variant="subtle"
-      size="sm"
-      class="hidden sm:inline-flex"
     />
 
     <div class="hidden items-center gap-1 sm:flex">

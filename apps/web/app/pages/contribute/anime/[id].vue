@@ -49,6 +49,8 @@ const title = computed(
   () => anime.value?.title.title ?? anime.value?.slug ?? '',
 )
 
+definePageMeta({ layout: 'contribute' })
+
 useSeoMeta({
   title: () => `Suggest an edit – ${title.value}`,
 })

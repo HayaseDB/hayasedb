@@ -6,7 +6,7 @@ const props = withDefaults(
     episodes: EpisodeDraft[]
     startIndex?: number
     context?: string
-    changes?: ChangeSet
+    changes?: MaybeRefOrGetter<ChangeSet | undefined>
   }>(),
   { startIndex: 0, context: undefined, changes: undefined },
 )

@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import {
-  ANIME_EPISODE_FIELD_ORDER,
-  ANIME_SEASON_FIELD_ORDER,
-} from '@hayasedb/domain'
+import { ANIME_SEASON_FIELD_ORDER } from '@hayasedb/domain'
 import type {
+  AnimeChild,
   AnimeStructureState,
   ChangeKind,
   ChangeSet,
@@ -32,6 +30,54 @@ const visibleEpisodes = computed(() =>
 
 const hasSeasons = computed(() => visibleSeasons.value.length > 0)
 const hasEpisodes = computed(() => visibleEpisodes.value.length > 0)
+
+const visibleChildren = computed(() =>
+  animeChildren(state.value).filter((child) => !childRemoved(child)),
+)
+
+function openStandalone(child: AnimeChild) {
+  if (child.kind !== 'episode') return
+  openEpisode(visibleEpisodes.value, visibleEpisodes.value.indexOf(child.episode))
+}
+
+function openSeasonEpisode(child: AnimeChild, index: number) {
+  if (child.kind !== 'season') return
+  openEpisode(
+    visibleSeasonEpisodes(child.season),
+    index,
+    seasonLabel(child.season),
+  )
+}
+
+function moveChild(child: AnimeChild, delta: number) {
+  const order = visibleChildren.value
+  const from = order.indexOf(child)
+  const target = order[from + delta]
+  if (from < 0 || !target) return
+
+  const next = [...order]
+  next.splice(from, 1)
+  next.splice(order.indexOf(target), 0, child)
+
+  next.forEach((entry, index) => {
+    if (entry.kind === 'season') entry.season.position = index
+    else entry.episode.position = index
+  })
+
+  let trailing = next.length
+  for (const entry of animeChildren(state.value)) {
+    if (!childRemoved(entry)) continue
+    if (entry.kind === 'season') entry.season.position = trailing++
+    else entry.episode.position = trailing++
+  }
+
+  state.value.seasons = [...state.value.seasons].sort(
+    (a, b) => a.position - b.position,
+  )
+  state.value.episodes = [...state.value.episodes].sort(
+    (a, b) => a.position - b.position,
+  )
+}
 
 const { openEpisode, openSeason } = useAnimeStructureOverlays(
   () => props.changes,
@@ -129,29 +175,6 @@ const seasonKind = (season: SeasonDraft): ChangeKind => {
   return touched ? 'changed' : 'unchanged'
 }
 
-const changedEpisodeCount = (episodes: EpisodeDraft[]) =>
-  episodes.filter((episode) => {
-    if (episode.removed) return false
-    if (episode.isNew) return true
-    const at = `episodes.${episode.id}`
-    return (
-      scope.kindOf(`${at}.$state`) !== 'unchanged' ||
-      ANIME_EPISODE_FIELD_ORDER.some(
-        (field) => scope.kindOf(`${at}.${field}`) !== 'unchanged',
-      ) ||
-      episode.translations.some((item) =>
-        ['title', 'overview'].some(
-          (field) =>
-            scope.kindOf(`${at}.translations.${item.locale}.${field}`) !==
-            'unchanged',
-        ),
-      )
-    )
-  }).length
-
-const episodeChangeLabel = (count: number) =>
-  `${count} ${count === 1 ? 'episode' : 'episodes'} changed`
-
 const seasonLabel = (season: SeasonDraft) => {
   const kind = ANIME_SEASON_KIND_LABELS[season.kind]
   const title = preferredStructureTitle(season.translations)
@@ -219,131 +242,117 @@ const episodeLabel = (episode: EpisodeDraft) => {
       description="Add seasons for a multi-cour show, or standalone episodes for a single run."
     />
 
-    <div v-if="hasSeasons" class="flex flex-col gap-4">
-      <div
-        v-for="(season, seasonIndex) in visibleSeasons"
-        :key="season.id"
-        class="flex flex-col gap-2"
-      >
-        <div
-          class="border-default flex min-h-12 items-center gap-2 rounded-md border p-2"
-          :data-change="seasonKind(season)"
-          :class="CHANGE_RING_CLASS[seasonKind(season)]"
-        >
-          <button
-            type="button"
-            class="flex min-w-0 flex-1 items-center gap-3 text-left"
-            @click="openSeason(season)"
+    <div v-if="hasSeasons || hasEpisodes" class="flex flex-col gap-4">
+      <template v-for="(child, childIndex) in visibleChildren">
+        <AnimeEpisodeRowEditor
+          v-if="child.kind === 'episode'"
+          :key="child.episode.id"
+          :episode="child.episode"
+          :is-first="childIndex === 0"
+          :is-last="childIndex === visibleChildren.length - 1"
+          @open="openStandalone(child)"
+          @move-up="moveChild(child, -1)"
+          @move-down="moveChild(child, 1)"
+          @remove="removeEpisode(child.episode)"
+        />
+
+        <div v-else :key="child.season.id" class="flex flex-col gap-2">
+          <div
+            class="border-default flex min-h-12 items-center gap-2 rounded-md border p-2"
+            :data-change="seasonKind(child.season)"
+            :class="CHANGE_RING_CLASS[seasonKind(child.season)]"
           >
-            <UIcon
-              name="i-lucide-layers"
-              class="text-dimmed size-4 shrink-0"
-              aria-hidden="true"
-            />
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="text-highlighted truncate text-sm font-medium">
-                {{ seasonLabel(season) }}
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 items-center gap-3 text-left"
+              @click="openSeason(child.season)"
+            >
+              <UIcon
+                name="i-lucide-layers"
+                class="text-dimmed size-4 shrink-0"
+                aria-hidden="true"
+              />
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="text-highlighted truncate text-sm font-medium">
+                  {{ seasonLabel(child.season) }}
+                </span>
+                <span class="text-muted text-xs">{{
+                  seasonMeta(child.season)
+                }}</span>
               </span>
-              <span class="text-muted text-xs">{{ seasonMeta(season) }}</span>
-            </span>
-          </button>
+            </button>
 
-          <UBadge
-            v-if="changedEpisodeCount(season.episodes) > 0"
-            :label="episodeChangeLabel(changedEpisodeCount(season.episodes))"
-            color="warning"
-            variant="subtle"
-            size="sm"
-            class="hidden sm:inline-flex"
-          />
+            <UButton
+              type="button"
+              icon="i-lucide-chevron-up"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              square
+              :disabled="childIndex === 0"
+              aria-label="Move season up"
+              @click="moveChild(child, -1)"
+            />
+            <UButton
+              type="button"
+              icon="i-lucide-chevron-down"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              square
+              :disabled="childIndex === visibleChildren.length - 1"
+              aria-label="Move season down"
+              @click="moveChild(child, 1)"
+            />
+            <UButton
+              type="button"
+              icon="i-lucide-trash-2"
+              color="error"
+              variant="ghost"
+              size="xs"
+              square
+              aria-label="Remove season"
+              @click="removeSeason(child.season)"
+            />
+          </div>
 
-          <UButton
-            type="button"
-            icon="i-lucide-chevron-up"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            square
-            :disabled="seasonIndex === 0"
-            aria-label="Move season up"
-            @click="moveVisible(state.seasons, season, -1)"
-          />
-          <UButton
-            type="button"
-            icon="i-lucide-chevron-down"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            square
-            :disabled="seasonIndex === visibleSeasons.length - 1"
-            aria-label="Move season down"
-            @click="moveVisible(state.seasons, season, 1)"
-          />
-          <UButton
-            type="button"
-            icon="i-lucide-trash-2"
-            color="error"
-            variant="ghost"
-            size="xs"
-            square
-            aria-label="Remove season"
-            @click="removeSeason(season)"
-          />
+          <div class="flex flex-col gap-2 pl-4">
+            <AnimeEpisodeRowEditor
+              v-for="(episode, index) in visibleSeasonEpisodes(child.season)"
+              :key="episode.id"
+              :episode="episode"
+              :is-first="index === 0"
+              :is-last="
+                index === visibleSeasonEpisodes(child.season).length - 1
+              "
+              @open="openSeasonEpisode(child, index)"
+              @move-up="moveVisible(child.season.episodes, episode, -1)"
+              @move-down="moveVisible(child.season.episodes, episode, 1)"
+              @remove="removeEpisode(episode, child.season)"
+            />
+
+            <p
+              v-if="!visibleSeasonEpisodes(child.season).length"
+              class="text-muted text-sm"
+            >
+              No episodes in this
+              {{ ANIME_SEASON_KIND_LABELS[child.season.kind].toLowerCase() }}
+              yet.
+            </p>
+
+            <UButton
+              type="button"
+              label="Add episode"
+              icon="i-lucide-plus"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              class="self-start"
+              @click="addEpisode(child.season)"
+            />
+          </div>
         </div>
-
-        <div class="flex flex-col gap-2 pl-4">
-          <AnimeEpisodeRowEditor
-            v-for="(episode, index) in visibleSeasonEpisodes(season)"
-            :key="episode.id"
-            :episode="episode"
-            :is-first="index === 0"
-            :is-last="index === visibleSeasonEpisodes(season).length - 1"
-            @open="
-              openEpisode(
-                visibleSeasonEpisodes(season),
-                index,
-                seasonLabel(season),
-              )
-            "
-            @move-up="moveVisible(season.episodes, episode, -1)"
-            @move-down="moveVisible(season.episodes, episode, 1)"
-            @remove="removeEpisode(episode, season)"
-          />
-
-          <p
-            v-if="!visibleSeasonEpisodes(season).length"
-            class="text-muted text-sm"
-          >
-            No episodes in this
-            {{ ANIME_SEASON_KIND_LABELS[season.kind].toLowerCase() }} yet.
-          </p>
-
-          <UButton
-            type="button"
-            label="Add episode"
-            icon="i-lucide-plus"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            class="self-start"
-            @click="addEpisode(season)"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div v-if="hasEpisodes" class="flex flex-col gap-2">
-      <AnimeEpisodeRowEditor
-        v-for="(episode, index) in visibleEpisodes"
-        :key="episode.id"
-        :episode="episode"
-        :is-first="index === 0"
-        :is-last="index === visibleEpisodes.length - 1"
-        @open="openEpisode(visibleEpisodes, index)"
-        @move-up="moveVisible(state.episodes, episode, -1)"
-        @move-down="moveVisible(state.episodes, episode, 1)"
-        @remove="removeEpisode(episode)"
-      />
+      </template>
     </div>
 
     <div

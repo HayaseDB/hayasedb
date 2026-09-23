@@ -27,6 +27,8 @@ const { data: prefill } = await useAsyncData(
   },
 )
 
+definePageMeta({ layout: 'contribute' })
+
 useSeoMeta({
   title: 'Add anime',
   description: 'Submit a new anime for review.',

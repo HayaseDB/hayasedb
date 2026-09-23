@@ -21,12 +21,12 @@ export function useAnimeStructureOverlays(
       episodes,
       startIndex,
       context,
-      changes: toValue(changes),
+      changes: () => toValue(changes),
     })
   }
 
   function openSeason(season: SeasonDraft) {
-    seasonSlideover.open({ season, changes: toValue(changes) })
+    seasonSlideover.open({ season, changes: () => toValue(changes) })
   }
 
   return { openEpisode, openSeason }

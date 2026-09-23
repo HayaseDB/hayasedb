@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { createAnimeEpisodeFieldsSchema } from '@hayasedb/contract'
 import type { LocalizationLocale } from '@hayasedb/domain'
 import type { EpisodeDraft, EpisodeText, ChangeSet } from '#imports'
 
 const props = defineProps<{
   episode: EpisodeDraft
-  changes?: ChangeSet
+  changes?: MaybeRefOrGetter<ChangeSet | undefined>
 }>()
 
 const episode = computed(() => props.episode)
@@ -31,11 +32,18 @@ const { activeIndex, active } = localization
 
 const scope = provideRootedChangeScope({
   prefix: () => `episodes.${props.episode.id}`,
-  changes: () => props.changes,
+  changes: () => toValue(props.changes),
 })
 
 const translationPath = (field: 'title' | 'overview') =>
   `translations.${active.value?.locale ?? ''}.${field}`
+
+const translationName = (field: 'title' | 'overview') =>
+  activeIndex.value >= 0
+    ? `translations.${activeIndex.value}.${field}`
+    : undefined
+
+const schema = createAnimeEpisodeFieldsSchema
 
 const localeSetChanged = computed(
   () => scope.kindOf(`translations.${TRANSLATION_SET_PATH}`) !== 'unchanged',
@@ -76,9 +84,9 @@ const durationMinutes = computed({
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <UForm :schema="schema" :state="episode" class="flex flex-col gap-4">
     <div class="grid gap-3 sm:grid-cols-2">
-      <AppFormField path="number" label="Number">
+      <AppFormField path="number" name="number" label="Number">
         <template #default="{ field }">
           <UInput
             :model-value="episode.number ?? ''"
@@ -93,7 +101,7 @@ const durationMinutes = computed({
         </template>
       </AppFormField>
 
-      <AppFormField path="type" label="Type" required>
+      <AppFormField path="type" name="type" label="Type" required>
         <template #default="{ field }">
           <USelect
             v-model="episode.type"
@@ -105,7 +113,7 @@ const durationMinutes = computed({
         </template>
       </AppFormField>
 
-      <AppFormField path="status" label="Status" required>
+      <AppFormField path="status" name="status" label="Status" required>
         <template #default="{ field }">
           <USelect
             v-model="episode.status"
@@ -117,7 +125,7 @@ const durationMinutes = computed({
         </template>
       </AppFormField>
 
-      <AppFormField path="airDate" label="Air date">
+      <AppFormField path="airDate" name="airDate" label="Air date">
         <template #default="{ field }">
           <UInput
             :model-value="episode.airDate ?? ''"
@@ -131,7 +139,11 @@ const durationMinutes = computed({
         </template>
       </AppFormField>
 
-      <AppFormField path="durationSeconds" label="Runtime (minutes)">
+      <AppFormField
+        path="durationSeconds"
+        name="durationSeconds"
+        label="Runtime (minutes)"
+      >
         <template #default="{ field }">
           <UInputNumber
             v-model="durationMinutes"
@@ -159,7 +171,11 @@ const durationMinutes = computed({
     />
 
     <template v-if="active">
-      <AppFormField :path="translationPath('title')" label="Title">
+      <AppFormField
+        :path="translationPath('title')"
+        :name="translationName('title')"
+        label="Title"
+      >
         <template #default="{ field }">
           <UInput
             v-model="active!.title"
@@ -170,7 +186,11 @@ const durationMinutes = computed({
         </template>
       </AppFormField>
 
-      <AppFormField :path="translationPath('overview')" label="Overview">
+      <AppFormField
+        :path="translationPath('overview')"
+        :name="translationName('overview')"
+        label="Overview"
+      >
         <template #default="{ field }">
           <UTextarea
             :model-value="active!.overview ?? ''"
@@ -185,5 +205,5 @@ const durationMinutes = computed({
         </template>
       </AppFormField>
     </template>
-  </div>
+  </UForm>
 </template>

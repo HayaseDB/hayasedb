@@ -37,7 +37,7 @@ describe('AnimeEpisodeRowEditor', () => {
     expect(wrapper.text()).not.toContain('New')
   })
 
-  it('rings a changed episode while collapsed and counts the fields', async () => {
+  it('rings a changed episode while collapsed without counting the fields', async () => {
     const episode = savedEpisode()
     const wrapper = await mount(episode, [
       `episodes.${episode.id}.durationSeconds`,
@@ -45,7 +45,7 @@ describe('AnimeEpisodeRowEditor', () => {
     ])
 
     expect(wrapper.find('[data-change="changed"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('2 changed')
+    expect(wrapper.text()).not.toMatch(/\d+ changed/)
   })
 
   it('leaves an untouched saved episode unringed', async () => {

@@ -3,7 +3,7 @@ import type { ChangeSet, SeasonDraft } from '#imports'
 
 const props = defineProps<{
   season: SeasonDraft
-  changes?: ChangeSet
+  changes?: MaybeRefOrGetter<ChangeSet | undefined>
 }>()
 
 const emit = defineEmits<{ close: [boolean] }>()

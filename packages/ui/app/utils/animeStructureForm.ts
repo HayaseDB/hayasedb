@@ -21,6 +21,7 @@ type EpisodeSource = Pick<
   AnimeEpisode,
   | 'id'
   | 'headRev'
+  | 'position'
   | 'number'
   | 'type'
   | 'status'
@@ -32,7 +33,7 @@ type EpisodeSource = Pick<
 
 type SeasonSource = Pick<
   AnimeSeason,
-  'id' | 'headRev' | 'kind' | 'number' | 'translations'
+  'id' | 'headRev' | 'kind' | 'number' | 'translations' | 'position'
 >
 
 export interface StructureTitle {
@@ -50,6 +51,7 @@ export interface EpisodeDraft {
   isNew: boolean
   removed: boolean
   baseRev: number | null
+  position: number
   number: string | null
   type: AnimeEpisodeType
   status: AnimeEpisodeStatus
@@ -64,6 +66,7 @@ export interface SeasonDraft {
   isNew: boolean
   removed: boolean
   baseRev: number | null
+  position: number
   kind: AnimeSeasonKind
   number: string | null
   translations: StructureTitle[]
@@ -89,6 +92,47 @@ export function preferredStructureTitle(
   return chosen?.title.trim() || null
 }
 
+export type AnimeChild =
+  | { kind: 'season'; season: SeasonDraft }
+  | { kind: 'episode'; episode: EpisodeDraft }
+
+export function animeChildren(state: AnimeStructureState): AnimeChild[] {
+  const seasons = state.seasons.map((season) => ({
+    kind: 'season' as const,
+    season,
+  }))
+  const episodes = state.episodes.map((episode) => ({
+    kind: 'episode' as const,
+    episode,
+  }))
+
+  const merged: AnimeChild[] = []
+  let seasonAt = 0
+  let episodeAt = 0
+
+  while (seasonAt < seasons.length && episodeAt < episodes.length) {
+    const season = seasons[seasonAt]!
+    const episode = episodes[episodeAt]!
+    if (episode.episode.position < season.season.position) {
+      merged.push(episode)
+      episodeAt += 1
+    } else {
+      merged.push(season)
+      seasonAt += 1
+    }
+  }
+
+  return [...merged, ...seasons.slice(seasonAt), ...episodes.slice(episodeAt)]
+}
+
+export function childId(child: AnimeChild): string {
+  return child.kind === 'season' ? child.season.id : child.episode.id
+}
+
+export function childRemoved(child: AnimeChild): boolean {
+  return child.kind === 'season' ? child.season.removed : child.episode.removed
+}
+
 export function emptyStructureState(): AnimeStructureState {
   return { seasons: [], episodes: [] }
 }
@@ -99,6 +143,7 @@ function toEpisodeDraft(episode: EpisodeSource): EpisodeDraft {
     isNew: false,
     removed: false,
     baseRev: episode.headRev,
+    position: episode.position,
     number: episode.number,
     type: episode.type,
     status: episode.status,
@@ -120,6 +165,7 @@ function toSeasonDraft(
     isNew: false,
     removed: false,
     baseRev: season.headRev,
+    position: season.position,
     kind: season.kind,
     number: season.number,
     translations: season.translations.map((translation) => ({
@@ -148,6 +194,7 @@ export function newEpisodeDraft(): EpisodeDraft {
     isNew: true,
     removed: false,
     baseRev: null,
+    position: Number.MAX_SAFE_INTEGER,
     number: null,
     type: 'REGULAR',
     status: 'RELEASED',
@@ -164,6 +211,7 @@ export function newSeasonDraft(): SeasonDraft {
     isNew: true,
     removed: false,
     baseRev: null,
+    position: Number.MAX_SAFE_INTEGER,
     kind: 'SEASON',
     number: null,
     translations: [{ locale: 'en', title: '', original: true }],
@@ -232,6 +280,24 @@ interface EpisodePlacement {
   position: number
 }
 
+function rankedChildren(
+  state: AnimeStructureState,
+): { child: AnimeChild; rank: number }[] {
+  let rank = 0
+  return animeChildren(state).map((child) => ({
+    child,
+    rank: childRemoved(child) ? -1 : rank++,
+  }))
+}
+
+function baselineRanks(baseline: AnimeStructureState): Map<string, number> {
+  return new Map(
+    rankedChildren(baseline)
+      .filter(({ rank }) => rank >= 0)
+      .map(({ child, rank }) => [childId(child), rank]),
+  )
+}
+
 function baselinePlacements(
   animeId: string,
   baseline: AnimeStructureState,
@@ -246,13 +312,14 @@ function baselinePlacements(
       })
     })
   }
-  baseline.episodes.forEach((episode, position) => {
+  const ranks = baselineRanks(baseline)
+  for (const episode of baseline.episodes) {
     placements.set(episode.id, {
       episode,
       owner: { animeId, seasonId: null },
-      position,
+      position: ranks.get(episode.id) ?? -1,
     })
-  })
+  }
   return placements
 }
 
@@ -266,6 +333,7 @@ export function planStructureChanges(
     baseline.seasons.map((season) => [season.id, season]),
   )
   const basePlacements = baselinePlacements(animeId, baseline)
+  const baseRanks = baselineRanks(baseline)
 
   const pushEpisode = (
     draft: EpisodeDraft,
@@ -314,7 +382,13 @@ export function planStructureChanges(
     }
   }
 
-  next.seasons.forEach((season, seasonIndex) => {
+  rankedChildren(next).forEach(({ child, rank: seasonIndex }) => {
+    if (child.kind === 'episode') {
+      pushEpisode(child.episode, { animeId, seasonId: null }, seasonIndex)
+      return
+    }
+
+    const season = child.season
     if (season.removed) {
       if (!season.isNew && season.baseRev !== null) {
         changes.push({
@@ -342,7 +416,7 @@ export function planStructureChanges(
         const previousDocument = seasonDocument(
           previous,
           animeId,
-          baseline.seasons.findIndex((item) => item.id === season.id),
+          baseRanks.get(season.id) ?? -1,
         )
         if (changedFrom(document, previousDocument)) {
           changes.push({
@@ -359,10 +433,6 @@ export function planStructureChanges(
     season.episodes.forEach((episode, index) => {
       pushEpisode(episode, { animeId: null, seasonId: season.id }, index)
     })
-  })
-
-  next.episodes.forEach((episode, index) => {
-    pushEpisode(episode, { animeId, seasonId: null }, index)
   })
 
   return changes
@@ -524,6 +594,7 @@ export function structureChangePaths(
   const animeId = 'self'
   const paths: string[] = []
   const basePlacements = baselinePlacements(animeId, baseline)
+  const baseRanks = baselineRanks(baseline)
   const baseSeasons = new Map(
     baseline.seasons.map((season) => [season.id, season]),
   )
@@ -553,7 +624,13 @@ export function structureChangePaths(
     for (const field of fields) paths.push(`${prefix}.${field}`)
   }
 
-  next.seasons.forEach((season, seasonIndex) => {
+  rankedChildren(next).forEach(({ child, rank: seasonIndex }) => {
+    if (child.kind === 'episode') {
+      pushEpisode(child.episode, { animeId, seasonId: null }, seasonIndex)
+      return
+    }
+
+    const season = child.season
     const prefix = `seasons.${season.id}`
     if (season.removed || season.isNew) {
       paths.push(`${prefix}.$state`)
@@ -562,11 +639,7 @@ export function structureChangePaths(
       if (previous) {
         const fields = documentFieldPaths(
           seasonDocument(season, animeId, seasonIndex),
-          seasonDocument(
-            previous,
-            animeId,
-            baseline.seasons.findIndex((item) => item.id === season.id),
-          ),
+          seasonDocument(previous, animeId, baseRanks.get(season.id) ?? -1),
           ANIME_SEASON_FIELD_META,
           ANIME_SEASON_FIELD_ORDER,
         )
@@ -578,10 +651,6 @@ export function structureChangePaths(
     season.episodes.forEach((episode, index) => {
       pushEpisode(episode, { animeId: null, seasonId: season.id }, index)
     })
-  })
-
-  next.episodes.forEach((episode, index) => {
-    pushEpisode(episode, { animeId, seasonId: null }, index)
   })
 
   return [...new Set(paths)]
