@@ -86,14 +86,18 @@ export async function seedRelatedPair() {
     }
     const first = await create({
       slug: `browse-one-${stamp}`,
-      titleEnglish: `Browse One ${stamp}`,
+      translations: [
+        { locale: 'en', title: `Browse One ${stamp}`, original: true },
+      ],
       format: 'TV',
       status: 'FINISHED',
       startDate: { year: 2001, month: null, day: null },
     })
     const second = await create({
       slug: `browse-two-${stamp}`,
-      titleEnglish: `Browse Two ${stamp}`,
+      translations: [
+        { locale: 'en', title: `Browse Two ${stamp}`, original: true },
+      ],
       format: 'MOVIE',
       status: 'FINISHED',
       startDate: { year: 2003, month: 4, day: null },

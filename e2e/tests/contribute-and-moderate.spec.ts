@@ -15,8 +15,8 @@ test('@smoke contributor submits an anime and a moderator publishes it', async (
   ).toBeVisible()
 
   await open(page, '/contribute/new')
-  await page.getByLabel('Slug').fill(slug)
-  await page.getByLabel('English title').fill(title)
+  await page.locator('#anime-slug').fill(slug)
+  await page.locator('#anime-title').fill(title)
 
   await page.getByRole('tab', { name: 'Images' }).click()
   const chooser = page.waitForEvent('filechooser')
