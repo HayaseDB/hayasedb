@@ -6,6 +6,7 @@ interface SwitcherItem {
   value: LocalizationLocale
   label: string
   invalid?: boolean
+  changed?: boolean
 }
 
 const props = withDefaults(
@@ -68,6 +69,12 @@ const invalidCount = computed(
             name="i-lucide-circle-alert"
             class="text-error size-4"
             aria-label="Has errors"
+          />
+          <UIcon
+            v-else-if="item.changed"
+            name="i-lucide-dot"
+            class="text-info size-4"
+            aria-label="Has unsaved changes"
           />
         </template>
       </USelectMenu>

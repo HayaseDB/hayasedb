@@ -15,7 +15,7 @@ const model = defineModel<FuzzyDate | null>({ default: null })
 
 defineProps<{
   highlight?: boolean
-  color?: 'info'
+  color?: 'info' | 'error'
 }>()
 
 const precisionItems = [

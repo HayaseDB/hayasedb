@@ -8,6 +8,8 @@ const model = defineModel<T>()
 
 const props = defineProps<{
   clearValue?: T
+  highlight?: boolean
+  color?: 'info' | 'error'
 }>()
 
 const attrs = useAttrs()
@@ -31,6 +33,8 @@ function clear() {
     <USelect
       v-model="model"
       v-bind="selectAttrs"
+      :highlight="highlight"
+      :color="color"
       class="w-full"
       :ui="{ trailing: hasValue ? 'invisible' : undefined }"
     />

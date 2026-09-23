@@ -3,16 +3,17 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AnimeMediaType } from '@hayasedb/domain'
 import {
   createAnimeInputSchema,
-  type AnimeTranslation,
   type CreateAnimeInput,
 } from '@hayasedb/contract'
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
 import type {
   AnimeFormState,
   AnimeMediaController,
-  AnimeStructureState,
-  AnimeRelationEdgeItem,
+  AnimeRelationRow,
   AnimeRelationSearchResult,
+  AnimeStructureState,
+  ChangeKind,
+  ChangeSet,
 } from '#imports'
 
 const state = defineModel<AnimeFormState>('state', { required: true })
@@ -28,12 +29,11 @@ const props = withDefaults(
     proposedGenres?: { id: string; name: string }[]
     isEdit: boolean
     isDirty: boolean
-    changedFields?: (keyof AnimeFormState)[]
+    changes: ChangeSet
+    relationRows: AnimeRelationRow[]
     saving: boolean
     submitLabel?: string
     selfId?: string | null
-    relationBaseline?: AnimeRelationEdgeItem[]
-    translationBaseline?: AnimeTranslation[]
     onSubmit: (data: CreateAnimeInput) => unknown | Promise<unknown>
     onCreateGenre?: (name: string) => void
     onSearchAnime: (query: string) => Promise<AnimeRelationSearchResult[]>
@@ -43,11 +43,8 @@ const props = withDefaults(
   }>(),
   {
     proposedGenres: () => [],
-    changedFields: () => [],
     submitLabel: undefined,
     selfId: null,
-    relationBaseline: undefined,
-    translationBaseline: undefined,
     onCreateGenre: undefined,
     structureLoading: false,
     structureChangeCount: 0,
@@ -55,8 +52,7 @@ const props = withDefaults(
   },
 )
 
-const changed = (field: keyof AnimeFormState) =>
-  props.isEdit && props.changedFields.includes(field)
+provideChangeScope({ changes: () => props.changes })
 
 const cover = computed(() => props.media.cover.value)
 const banner = computed(() => props.media.banner.value)
@@ -119,22 +115,24 @@ const localization = useTranslationEditor({
 const activeTranslationIndex = localization.activeIndex
 const activeTranslation = localization.active
 
-const translationFieldChanged = (field: AnimeTranslationField) =>
-  props.isEdit &&
-  isTranslationFieldChanged(
-    state.value.translations,
-    props.translationBaseline,
-    activeTranslationIndex.value,
-    field,
-  )
+const translationPath = (field: AnimeTranslationField) =>
+  `translations.${activeTranslation.value?.locale ?? ''}.${field}`
 
-const localeSetChanged = computed(
-  () =>
-    props.isEdit &&
-    isTranslationSetChanged(
-      state.value.translations,
-      props.translationBaseline,
+const changedPaths = computed<ReadonlySet<string>>(
+  () => props.changes?.paths ?? new Set<string>(),
+)
+
+const localeSetChanged = computed(() =>
+  changedPaths.value.has(`translations.${TRANSLATION_SET_PATH}`),
+)
+
+const switcherItems = computed(() =>
+  localization.switcherItems.value.map((item) => ({
+    ...item,
+    changed: [...changedPaths.value].some((path) =>
+      path.startsWith(`translations.${item.value}.`),
     ),
+  })),
 )
 
 function makeActiveOriginal() {
@@ -152,6 +150,14 @@ function removeActiveTranslation() {
 }
 
 const mediaLabel = (type: AnimeMediaType) => ANIME_MEDIA_TYPE_LABELS[type]
+
+const mediaKind = (path: string): ChangeKind =>
+  changedPaths.value.has(`media.${path}`) ? 'changed' : 'unchanged'
+
+const galleryKind = (item: { key: string; kind?: string }): ChangeKind => {
+  const id = 'id' in item ? String((item as { id: string }).id) : item.key
+  return changedPaths.value.has(`media.GALLERY.${id}`) ? 'changed' : 'unchanged'
+}
 
 const dragIndex = ref<number | null>(null)
 const dragOverIndex = ref<number | null>(null)
@@ -208,20 +214,21 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
         <div class="flex flex-col gap-6">
           <UPageCard title="General information" variant="subtle">
             <div class="flex flex-col gap-4">
-              <UFormField label="Slug" name="slug" required>
-                <UInput
-                  id="anime-slug"
-                  v-model="state.slug"
-                  placeholder="cowboy-bebop"
-                  class="w-full"
-                  :highlight="changed('slug')"
-                  :color="changed('slug') ? 'info' : undefined"
-                />
-              </UFormField>
+              <AppFormField path="slug" label="Slug" name="slug" required>
+                <template #default="{ field }">
+                  <UInput
+                    id="anime-slug"
+                    v-model="state.slug"
+                    placeholder="cowboy-bebop"
+                    class="w-full"
+                    v-bind="field"
+                  />
+                </template>
+              </AppFormField>
 
               <LocaleSwitcher
                 v-model:locale="localization.activeLocale.value"
-                :items="localization.switcherItems.value"
+                :items="switcherItems"
                 :add-options="localization.remainingOptions.value"
                 :can-add="localization.canAdd.value"
                 :can-remove="localization.canRemove.value"
@@ -234,97 +241,106 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
               />
 
               <template v-if="activeTranslation">
-                <UFormField
+                <AppFormField
+                  :path="translationPath('title')"
                   label="Title"
                   :name="`translations.${activeTranslationIndex}.title`"
                   required
                 >
-                  <UInput
-                    id="anime-title"
-                    v-model="activeTranslation.title"
-                    placeholder="Localized title"
-                    class="w-full"
-                    :highlight="translationFieldChanged('title')"
-                    :color="
-                      translationFieldChanged('title') ? 'info' : undefined
-                    "
-                  />
-                </UFormField>
-                <UFormField
+                  <template #default="{ field }">
+                    <UInput
+                      id="anime-title"
+                      v-model="activeTranslation!.title"
+                      placeholder="Localized title"
+                      class="w-full"
+                      v-bind="field"
+                    />
+                  </template>
+                </AppFormField>
+                <AppFormField
+                  :path="translationPath('description')"
                   label="Description"
                   :name="`translations.${activeTranslationIndex}.description`"
                 >
-                  <UTextarea
-                    :model-value="activeTranslation.description ?? undefined"
-                    :rows="4"
-                    placeholder="Localized anime description…"
-                    class="w-full"
-                    :highlight="translationFieldChanged('description')"
-                    :color="
-                      translationFieldChanged('description')
-                        ? 'info'
-                        : undefined
-                    "
-                    @update:model-value="
-                      (value) =>
-                        (activeTranslation!.description = value || null)
-                    "
-                  />
-                </UFormField>
+                  <template #default="{ field }">
+                    <UTextarea
+                      :model-value="activeTranslation!.description ?? undefined"
+                      :rows="4"
+                      placeholder="Localized anime description…"
+                      class="w-full"
+                      v-bind="field"
+                      @update:model-value="
+                        (value) =>
+                          (activeTranslation!.description = value || null)
+                      "
+                    />
+                  </template>
+                </AppFormField>
               </template>
             </div>
           </UPageCard>
 
           <UPageCard title="Format" variant="subtle">
             <div class="grid gap-4 sm:grid-cols-2">
-              <UFormField label="Format" name="format">
-                <AppSelect
-                  v-model="state.format"
-                  :items="formatItems"
-                  :clear-value="null"
-                  value-key="value"
-                  placeholder="None"
-                  class="w-full"
-                  :highlight="changed('format')"
-                  :color="changed('format') ? 'info' : undefined"
-                />
-              </UFormField>
+              <AppFormField path="format" label="Format" name="format">
+                <template #default="{ field }">
+                  <AppSelect
+                    v-model="state.format"
+                    :items="formatItems"
+                    :clear-value="null"
+                    value-key="value"
+                    placeholder="None"
+                    class="w-full"
+                    v-bind="field"
+                  />
+                </template>
+              </AppFormField>
             </div>
           </UPageCard>
 
           <UPageCard title="Release Data" variant="subtle">
             <div class="grid gap-4 sm:grid-cols-2">
-              <UFormField label="Status" name="status" class="sm:col-span-2">
-                <AppSelect
-                  v-model="state.status"
-                  :items="statusItems"
-                  :clear-value="null"
-                  value-key="value"
-                  placeholder="None"
-                  class="w-full"
-                  :highlight="changed('status')"
-                  :color="changed('status') ? 'info' : undefined"
-                />
-              </UFormField>
-              <UFormField label="Start date" name="startDate">
-                <AnimeFuzzyDateInput
-                  v-model="state.startDate"
-                  :highlight="changed('startDate')"
-                  :color="changed('startDate') ? 'info' : undefined"
-                />
-              </UFormField>
-              <UFormField label="End date" name="endDate">
-                <AnimeFuzzyDateInput
-                  v-model="state.endDate"
-                  :highlight="changed('endDate')"
-                  :color="changed('endDate') ? 'info' : undefined"
-                />
-              </UFormField>
+              <AppFormField
+                path="status"
+                label="Status"
+                name="status"
+                class="sm:col-span-2"
+              >
+                <template #default="{ field }">
+                  <AppSelect
+                    v-model="state.status"
+                    :items="statusItems"
+                    :clear-value="null"
+                    value-key="value"
+                    placeholder="None"
+                    class="w-full"
+                    v-bind="field"
+                  />
+                </template>
+              </AppFormField>
+              <AppFormField
+                path="startDate"
+                label="Start date"
+                name="startDate"
+              >
+                <template #default="{ field }">
+                  <AnimeFuzzyDateInput
+                    v-model="state.startDate"
+                    v-bind="field"
+                  />
+                </template>
+              </AppFormField>
+              <AppFormField path="endDate" label="End date" name="endDate">
+                <template #default="{ field }">
+                  <AnimeFuzzyDateInput v-model="state.endDate" v-bind="field" />
+                </template>
+              </AppFormField>
             </div>
           </UPageCard>
 
           <UPageCard title="Genres" variant="subtle">
-            <UFormField
+            <AppFormField
+              path="genreIds"
               name="genreIds"
               :description="
                 onCreateGenre
@@ -332,20 +348,21 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
                   : undefined
               "
             >
-              <USelectMenu
-                id="anime-genres"
-                v-model="state.genreIds"
-                :items="genreItems"
-                value-key="value"
-                multiple
-                placeholder="Select genres"
-                class="w-full"
-                :create-item="Boolean(onCreateGenre)"
-                :highlight="changed('genreIds')"
-                :color="changed('genreIds') ? 'info' : undefined"
-                @create="handleCreateGenre"
-              />
-            </UFormField>
+              <template #default="{ field }">
+                <USelectMenu
+                  id="anime-genres"
+                  v-model="state.genreIds"
+                  :items="genreItems"
+                  value-key="value"
+                  multiple
+                  placeholder="Select genres"
+                  class="w-full"
+                  :create-item="Boolean(onCreateGenre)"
+                  v-bind="field"
+                  @create="handleCreateGenre"
+                />
+              </template>
+            </AppFormField>
           </UPageCard>
         </div>
       </template>
@@ -361,7 +378,7 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
               v-model="state.relationEdges"
               :self-id="selfId"
               :search-anime="onSearchAnime"
-              :baseline="isEdit ? relationBaseline : undefined"
+              :rows="relationRows"
             />
           </UPageCard>
         </div>
@@ -374,7 +391,9 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
               <AnimeCoverImage
                 :src="cover?.url"
                 :alt="mediaLabel('COVER')"
+                :data-change="mediaKind('COVER')"
                 class="border-default aspect-2/3 w-28 shrink-0 rounded-md border"
+                :class="CHANGE_RING_CLASS[mediaKind('COVER')]"
               />
               <div class="flex flex-col gap-2">
                 <UFileUpload
@@ -416,7 +435,9 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
               <AnimeCoverImage
                 :src="banner?.url"
                 :alt="mediaLabel('BANNER')"
+                :data-change="mediaKind('BANNER')"
                 class="border-default h-32 rounded-md border"
+                :class="CHANGE_RING_CLASS[mediaKind('BANNER')]"
               />
               <div class="flex gap-2">
                 <UFileUpload
@@ -473,7 +494,9 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
                     <AnimeCoverImage
                       :src="m.url"
                       :alt="`Gallery image ${Number(index) + 1}`"
+                      :data-change="galleryKind(m)"
                       class="bg-default h-32 w-24 rounded"
+                      :class="CHANGE_RING_CLASS[galleryKind(m)]"
                     />
                     <UIcon
                       name="i-lucide-grip-vertical"

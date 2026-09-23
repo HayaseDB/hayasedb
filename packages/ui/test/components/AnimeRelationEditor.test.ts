@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { ref } from 'vue'
 import AnimeRelationEditor from '../../app/components/anime/AnimeRelationEditor.vue'
-import type { AnimeRelationEdgeItem } from '../../app/utils/animeForm'
+import {
+  buildRelationRows,
+  type AnimeRelationEdgeItem,
+} from '../../app/utils/animeForm'
 import { UUID } from '../contribution-fixtures'
 
 const edge = (
@@ -12,20 +15,23 @@ const edge = (
 
 async function mount(
   model: AnimeRelationEdgeItem[],
-  baseline?: AnimeRelationEdgeItem[],
+  baseline: AnimeRelationEdgeItem[] = [],
 ) {
   const value = ref(model)
-  const wrapper = await mountSuspended(AnimeRelationEditor, {
-    props: {
-      modelValue: value.value,
-      'onUpdate:modelValue': (next: AnimeRelationEdgeItem[]) => {
-        value.value = next
-      },
-      selfId: UUID(99),
-      baseline,
-      searchAnime: async () => [],
+  const props = {
+    modelValue: value.value,
+    'onUpdate:modelValue': (next: AnimeRelationEdgeItem[]) => {
+      value.value = next
+      void wrapper.setProps({
+        modelValue: next,
+        rows: buildRelationRows(next, baseline),
+      })
     },
-  })
+    selfId: UUID(99),
+    rows: buildRelationRows(model, baseline),
+    searchAnime: async () => [],
+  }
+  const wrapper = await mountSuspended(AnimeRelationEditor, { props })
   return { wrapper, value }
 }
 
@@ -76,7 +82,10 @@ describe('AnimeRelationEditor', () => {
       [edge(1, 'SEQUEL')],
       [edge(1, 'SEQUEL')],
     )
-    await wrapper.setProps({ modelValue: [], baseline: [edge(1, 'SEQUEL')] })
+    await wrapper.setProps({
+      modelValue: [],
+      rows: buildRelationRows([], [edge(1, 'SEQUEL')]),
+    })
     const restore = wrapper.find('[aria-label="Restore relation"]')
     await restore.trigger('click')
     await restore.trigger('click')

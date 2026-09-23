@@ -2,13 +2,16 @@ import {
   ANIME_FIELD_META,
   ANIME_FIELD_ORDER,
   canonicalizeRelation,
+  isEmptyValue,
   isoToFuzzy,
   relationViewKind,
+  sameFieldValue,
   type AnimeFieldKey,
   type AnimeRelationKind,
   type AnimeRelationViewKind,
   type FuzzyDate,
 } from '@hayasedb/domain'
+import type { ChangeKind } from '#imports'
 import type {
   AnimeDetail,
   AnimeFormat,
@@ -61,37 +64,111 @@ function emptyValue(field: ScalarFormField): unknown {
 
 export type AnimeTranslationField = 'title' | 'description'
 
-export function isTranslationFieldChanged(
-  translations: readonly AnimeTranslation[],
-  baseline: readonly AnimeTranslation[] | undefined,
-  index: number,
-  field: AnimeTranslationField,
-): boolean {
-  const current = translations[index]
-  if (!current || !baseline) return false
-  const before = baseline.find((item) => item.locale === current.locale)
-  if (!before) return true
-  return (current[field] ?? '') !== (before[field] ?? '')
+export const ANIME_TRANSLATION_FIELDS = [
+  'title',
+  'description',
+] as const satisfies readonly AnimeTranslationField[]
+
+export const TRANSLATION_SET_PATH = '$set'
+
+export function expandTranslationPaths(
+  next: readonly Record<string, unknown>[] | undefined,
+  base: readonly Record<string, unknown>[] | undefined,
+  fields: readonly string[],
+): string[] {
+  const nextRows = next ?? []
+  const baseRows = base ?? []
+  const paths: string[] = []
+
+  const byLocale = (rows: readonly Record<string, unknown>[]) =>
+    new Map(rows.map((row) => [String(row.locale), row]))
+  const nextByLocale = byLocale(nextRows)
+  const baseByLocale = byLocale(baseRows)
+
+  for (const [locale, row] of nextByLocale) {
+    const before = baseByLocale.get(locale)
+    if (!before) {
+      paths.push(TRANSLATION_SET_PATH)
+      for (const field of fields) {
+        if (!isEmptyValue(row[field])) paths.push(`${locale}.${field}`)
+      }
+      continue
+    }
+    for (const field of fields) {
+      if (!sameFieldValue(row[field], before[field])) {
+        paths.push(`${locale}.${field}`)
+      }
+    }
+    if (Boolean(row.original) !== Boolean(before.original)) {
+      paths.push(TRANSLATION_SET_PATH)
+    }
+  }
+
+  for (const locale of baseByLocale.keys()) {
+    if (!nextByLocale.has(locale)) paths.push(TRANSLATION_SET_PATH)
+  }
+
+  return [...new Set(paths)]
 }
 
-export function isTranslationSetChanged(
-  translations: readonly AnimeTranslation[],
-  baseline: readonly AnimeTranslation[] | undefined,
-): boolean {
-  if (!baseline) return false
-  const locales = translations.map((item) => item.locale)
-  const beforeLocales = baseline.map((item) => item.locale)
-  if (locales.length !== beforeLocales.length) return true
-  if ([...locales].sort().join() !== [...beforeLocales].sort().join())
-    return true
-  return translations.some((item) => {
-    const before = baseline.find((entry) => entry.locale === item.locale)
-    return before ? Boolean(item.original) !== Boolean(before.original) : false
-  })
+export function expandAnimeTranslationPaths(
+  next: readonly AnimeTranslation[] | undefined,
+  base: readonly AnimeTranslation[] | undefined,
+): string[] {
+  return expandTranslationPaths(
+    next as readonly Record<string, unknown>[] | undefined,
+    base as readonly Record<string, unknown>[] | undefined,
+    ANIME_TRANSLATION_FIELDS,
+  )
 }
 
 export function relationEdgeKey(edge: AnimeRelationEdgeItem): string {
   return `${edge.animeId}:${edge.kind}`
+}
+
+export interface AnimeRelationRow {
+  state: ChangeKind
+  edge: AnimeRelationEdgeItem
+  order: number
+}
+
+export function buildRelationRows(
+  edges: readonly AnimeRelationEdgeItem[],
+  baseline: readonly AnimeRelationEdgeItem[],
+): AnimeRelationRow[] {
+  const baselineKeys = new Set(baseline.map(relationEdgeKey))
+  const consumed = new Set<string>()
+  const rows: AnimeRelationRow[] = []
+
+  baseline.forEach((base, index) => {
+    const exact = edges.find(
+      (edge) => relationEdgeKey(edge) === relationEdgeKey(base),
+    )
+    if (exact) {
+      consumed.add(relationEdgeKey(exact))
+      rows.push({ state: 'unchanged', edge: exact, order: index })
+      return
+    }
+    const reassigned = edges.find(
+      (edge) =>
+        edge.animeId === base.animeId &&
+        !baselineKeys.has(relationEdgeKey(edge)) &&
+        !consumed.has(relationEdgeKey(edge)),
+    )
+    if (reassigned) {
+      consumed.add(relationEdgeKey(reassigned))
+      rows.push({ state: 'changed', edge: reassigned, order: index })
+      return
+    }
+    rows.push({ state: 'removed', edge: base, order: index })
+  })
+
+  edges.forEach((edge, index) => {
+    if (consumed.has(relationEdgeKey(edge))) return
+    rows.push({ state: 'added', edge, order: baseline.length + index })
+  })
+
+  return rows.sort((a, b) => a.order - b.order)
 }
 
 export function buildAnimeFormState(

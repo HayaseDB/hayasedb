@@ -25,6 +25,23 @@ const localization = useTranslationEditor({
 
 const { activeIndex, active } = localization
 
+const scope = provideNestedChangeScope(() => `seasons.${props.season.id}`)
+
+const titlePath = computed(
+  () => `translations.${active.value?.locale ?? ''}.title`,
+)
+
+const localeSetChanged = computed(
+  () => scope.kindOf(`translations.${TRANSLATION_SET_PATH}`) !== 'unchanged',
+)
+
+const switcherItems = computed(() =>
+  localization.switcherItems.value.map((item) => ({
+    ...item,
+    changed: scope.kindOf(`translations.${item.value}.title`) !== 'unchanged',
+  })),
+)
+
 function makeActiveOriginal() {
   season.value.translations.forEach((item, index) => {
     item.original = index === activeIndex.value
@@ -42,34 +59,41 @@ function removeActive() {
 <template>
   <div class="border-default flex flex-col gap-3 rounded-lg border p-3">
     <div class="grid gap-3 sm:grid-cols-2">
-      <UFormField label="Kind" required>
-        <USelect
-          v-model="season.kind"
-          :items="animeSeasonKindOptions"
-          value-key="value"
-          class="w-full"
-        />
-      </UFormField>
+      <AppFormField path="kind" label="Kind" required>
+        <template #default="{ field }">
+          <USelect
+            v-model="season.kind"
+            :items="animeSeasonKindOptions"
+            value-key="value"
+            class="w-full"
+            v-bind="field"
+          />
+        </template>
+      </AppFormField>
 
-      <UFormField label="Number" hint="Optional">
-        <UInput
-          :model-value="season.number ?? ''"
-          placeholder="1"
-          inputmode="decimal"
-          class="w-full"
-          @update:model-value="
-            (value) => (season.number = String(value) || null)
-          "
-        />
-      </UFormField>
+      <AppFormField path="number" label="Number" hint="Optional">
+        <template #default="{ field }">
+          <UInput
+            :model-value="season.number ?? ''"
+            placeholder="1"
+            inputmode="decimal"
+            class="w-full"
+            v-bind="field"
+            @update:model-value="
+              (value) => (season.number = String(value) || null)
+            "
+          />
+        </template>
+      </AppFormField>
     </div>
 
     <LocaleSwitcher
       v-model:locale="localization.activeLocale.value"
-      :items="localization.switcherItems.value"
+      :items="switcherItems"
       :add-options="localization.remainingOptions.value"
       :can-add="localization.canAdd.value"
       :can-remove="localization.canRemove.value"
+      :changed="localeSetChanged"
       show-original
       :is-original="active?.original"
       @add="localization.add"
@@ -77,12 +101,15 @@ function removeActive() {
       @make-original="makeActiveOriginal"
     />
 
-    <UFormField v-if="active" label="Title" hint="Optional">
-      <UInput
-        v-model="active.title"
-        placeholder="Season title"
-        class="w-full"
-      />
-    </UFormField>
+    <AppFormField v-if="active" :path="titlePath" label="Title" hint="Optional">
+      <template #default="{ field }">
+        <UInput
+          v-model="active!.title"
+          placeholder="Season title"
+          class="w-full"
+          v-bind="field"
+        />
+      </template>
+    </AppFormField>
   </div>
 </template>

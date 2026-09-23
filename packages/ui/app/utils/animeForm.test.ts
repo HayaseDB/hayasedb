@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyPayloadToState,
-  isTranslationFieldChanged,
-  isTranslationSetChanged,
   applyRelationPayloadToState,
+  expandAnimeTranslationPaths,
   buildAnimeFormState,
   isPayloadRelationList,
   relationEdgeKey,
@@ -220,7 +219,7 @@ describe('buildAnimeFormState isolation', () => {
   })
 })
 
-describe('translation highlighting', () => {
+describe('expandAnimeTranslationPaths', () => {
   const base = [
     {
       locale: 'en' as const,
@@ -238,44 +237,43 @@ describe('translation highlighting', () => {
   const edited = (index: number, patch: object) =>
     base.map((item, i) => (i === index ? { ...item, ...patch } : { ...item }))
 
-  it('flags only the edited locale and field', () => {
-    const next = edited(1, { title: 'Neu' })
-    expect(isTranslationFieldChanged(next, base, 1, 'title')).toBe(true)
-    expect(isTranslationFieldChanged(next, base, 1, 'description')).toBe(false)
-    expect(isTranslationFieldChanged(next, base, 0, 'title')).toBe(false)
-    expect(isTranslationFieldChanged(next, base, 0, 'description')).toBe(false)
+  it('names only the edited locale and field', () => {
+    expect(
+      expandAnimeTranslationPaths(edited(1, { title: 'Neu' }), base),
+    ).toEqual(['de.title'])
   })
 
   it('treats null and empty description as the same value', () => {
-    const next = edited(1, { description: '' })
-    expect(isTranslationFieldChanged(next, base, 1, 'description')).toBe(false)
+    expect(
+      expandAnimeTranslationPaths(edited(1, { description: '' }), base),
+    ).toEqual([])
   })
 
-  it('matches locales by identity, not position', () => {
-    const next = [{ ...base[1]! }]
-    expect(isTranslationFieldChanged(next, base, 0, 'title')).toBe(false)
+  it('keys by locale, so removing one does not shift the others', () => {
+    const next = [{ ...base[1]!, title: 'Neu' }]
+    expect(expandAnimeTranslationPaths(next, base)).toEqual([
+      'de.title',
+      '$set',
+    ])
   })
 
-  it('flags every field of a newly added locale', () => {
+  it('names the filled fields of a newly added locale', () => {
     const next = [
       ...base.map((item) => ({ ...item })),
       {
         locale: 'ja-Jpan' as const,
-        title: '',
+        title: 'ビバップ',
         description: null,
         original: false,
       },
     ]
-    expect(isTranslationFieldChanged(next, base, 2, 'title')).toBe(true)
+    expect(expandAnimeTranslationPaths(next, base)).toEqual([
+      '$set',
+      'ja-Jpan.title',
+    ])
   })
 
-  it('leaves the locale set unchanged when only text is edited', () => {
-    expect(isTranslationSetChanged(edited(1, { title: 'Neu' }), base)).toBe(
-      false,
-    )
-  })
-
-  it('flags the locale set when one is added, removed or made original', () => {
+  it('names the set when a locale is added empty, removed or made original', () => {
     const added = [
       ...base,
       {
@@ -285,17 +283,18 @@ describe('translation highlighting', () => {
         original: false,
       },
     ]
-    expect(isTranslationSetChanged(added, base)).toBe(true)
-    expect(isTranslationSetChanged([{ ...base[0]! }], base)).toBe(true)
+    expect(expandAnimeTranslationPaths(added, base)).toEqual(['$set'])
+    expect(expandAnimeTranslationPaths([{ ...base[0]! }], base)).toEqual([
+      '$set',
+    ])
     const moved = [
       { ...base[0]!, original: false },
       { ...base[1]!, original: true },
     ]
-    expect(isTranslationSetChanged(moved, base)).toBe(true)
+    expect(expandAnimeTranslationPaths(moved, base)).toEqual(['$set'])
   })
 
-  it('reports nothing changed without a baseline', () => {
-    expect(isTranslationFieldChanged(base, undefined, 0, 'title')).toBe(false)
-    expect(isTranslationSetChanged(base, undefined)).toBe(false)
+  it('names nothing when the list is unchanged', () => {
+    expect(expandAnimeTranslationPaths(base, base)).toEqual([])
   })
 })

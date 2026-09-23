@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LocalizationLocale } from '@hayasedb/domain'
-import type { EpisodeDraft, EpisodeText } from '#imports'
+import type { ChangeKind, EpisodeDraft, EpisodeText } from '#imports'
 
 const props = withDefaults(
   defineProps<{
@@ -39,6 +39,45 @@ const localization = useTranslationEditor({
 
 const { activeIndex, active } = localization
 
+const scope = provideNestedChangeScope(() => `episodes.${props.episode.id}`)
+
+const translationPath = (field: 'title' | 'overview') =>
+  `translations.${active.value?.locale ?? ''}.${field}`
+
+const localeSetChanged = computed(
+  () => scope.kindOf(`translations.${TRANSLATION_SET_PATH}`) !== 'unchanged',
+)
+
+const switcherItems = computed(() =>
+  localization.switcherItems.value.map((item) => ({
+    ...item,
+    changed: ['title', 'overview'].some(
+      (field) =>
+        scope.kindOf(`translations.${item.value}.${field}`) !== 'unchanged',
+    ),
+  })),
+)
+
+const EPISODE_FIELDS = [
+  'number',
+  'type',
+  'status',
+  'airDate',
+  'durationSeconds',
+  'position',
+  'translations',
+]
+
+const episodeKind = computed<ChangeKind>(() => {
+  if (props.episode.isNew) return 'added'
+  if (props.episode.removed) return 'removed'
+  const touched =
+    scope.kindOf('$state') !== 'unchanged' ||
+    EPISODE_FIELDS.some((field) => scope.kindOf(field) !== 'unchanged') ||
+    switcherItems.value.some((item) => item.changed)
+  return touched ? 'changed' : 'unchanged'
+})
+
 function makeActiveOriginal() {
   episode.value.translations.forEach((item, index) => {
     item.original = index === activeIndex.value
@@ -66,7 +105,11 @@ const durationMinutes = computed({
 <template>
   <div
     class="rounded-lg"
-    :class="bordered ? 'border-default border' : 'bg-elevated/40'"
+    :data-change="episodeKind"
+    :class="[
+      bordered ? 'border-default border' : 'bg-elevated/40',
+      CHANGE_RING_CLASS[episodeKind],
+    ]"
   >
     <div class="flex items-center gap-1 px-2 py-1.5">
       <UButton
@@ -140,63 +183,83 @@ const durationMinutes = computed({
 
     <div v-if="open" class="flex flex-col gap-3 px-3 pb-3">
       <div class="grid gap-3 sm:grid-cols-2">
-        <UFormField label="Number" hint="Optional">
-          <UInput
-            :model-value="episode.number ?? ''"
-            placeholder="1"
-            inputmode="decimal"
-            class="w-full"
-            @update:model-value="
-              (value) => (episode.number = String(value) || null)
-            "
-          />
-        </UFormField>
+        <AppFormField path="number" label="Number" hint="Optional">
+          <template #default="{ field }">
+            <UInput
+              :model-value="episode.number ?? ''"
+              placeholder="1"
+              inputmode="decimal"
+              class="w-full"
+              v-bind="field"
+              @update:model-value="
+                (value) => (episode.number = String(value) || null)
+              "
+            />
+          </template>
+        </AppFormField>
 
-        <UFormField label="Type" required>
-          <USelect
-            v-model="episode.type"
-            :items="animeEpisodeTypeOptions"
-            value-key="value"
-            class="w-full"
-          />
-        </UFormField>
+        <AppFormField path="type" label="Type" required>
+          <template #default="{ field }">
+            <USelect
+              v-model="episode.type"
+              :items="animeEpisodeTypeOptions"
+              value-key="value"
+              class="w-full"
+              v-bind="field"
+            />
+          </template>
+        </AppFormField>
 
-        <UFormField label="Status" required>
-          <USelect
-            v-model="episode.status"
-            :items="animeEpisodeStatusOptions"
-            value-key="value"
-            class="w-full"
-          />
-        </UFormField>
+        <AppFormField path="status" label="Status" required>
+          <template #default="{ field }">
+            <USelect
+              v-model="episode.status"
+              :items="animeEpisodeStatusOptions"
+              value-key="value"
+              class="w-full"
+              v-bind="field"
+            />
+          </template>
+        </AppFormField>
 
-        <UFormField label="Air date" hint="Optional">
-          <UInput
-            :model-value="episode.airDate ?? ''"
-            type="date"
-            class="w-full"
-            @update:model-value="
-              (value) => (episode.airDate = String(value) || null)
-            "
-          />
-        </UFormField>
+        <AppFormField path="airDate" label="Air date" hint="Optional">
+          <template #default="{ field }">
+            <UInput
+              :model-value="episode.airDate ?? ''"
+              type="date"
+              class="w-full"
+              v-bind="field"
+              @update:model-value="
+                (value) => (episode.airDate = String(value) || null)
+              "
+            />
+          </template>
+        </AppFormField>
 
-        <UFormField label="Runtime" hint="Minutes, optional">
-          <UInputNumber
-            v-model="durationMinutes"
-            :min="1"
-            placeholder="24"
-            class="w-full"
-          />
-        </UFormField>
+        <AppFormField
+          path="durationSeconds"
+          label="Runtime"
+          hint="Minutes, optional"
+        >
+          <template #default="{ field }">
+            <UInputNumber
+              v-model="durationMinutes"
+              :min="1"
+              placeholder="24"
+              class="w-full"
+              v-bind="field"
+            />
+          </template>
+        </AppFormField>
       </div>
 
       <LocaleSwitcher
         v-model:locale="localization.activeLocale.value"
-        :items="localization.switcherItems.value"
+        :items="switcherItems"
         :add-options="localization.remainingOptions.value"
         :can-add="localization.canAdd.value"
         :can-remove="localization.canRemove.value"
+        :changed="localeSetChanged"
         show-original
         :is-original="active?.original"
         @add="localization.add"
@@ -205,25 +268,39 @@ const durationMinutes = computed({
       />
 
       <template v-if="active">
-        <UFormField label="Title" hint="Optional">
-          <UInput
-            v-model="active.title"
-            placeholder="Episode title"
-            class="w-full"
-          />
-        </UFormField>
+        <AppFormField
+          :path="translationPath('title')"
+          label="Title"
+          hint="Optional"
+        >
+          <template #default="{ field }">
+            <UInput
+              v-model="active!.title"
+              placeholder="Episode title"
+              class="w-full"
+              v-bind="field"
+            />
+          </template>
+        </AppFormField>
 
-        <UFormField label="Overview" hint="Optional">
-          <UTextarea
-            :model-value="active.overview ?? ''"
-            :rows="3"
-            placeholder="Short plot description…"
-            class="w-full"
-            @update:model-value="
-              (value) => (active!.overview = String(value) || null)
-            "
-          />
-        </UFormField>
+        <AppFormField
+          :path="translationPath('overview')"
+          label="Overview"
+          hint="Optional"
+        >
+          <template #default="{ field }">
+            <UTextarea
+              :model-value="active!.overview ?? ''"
+              :rows="3"
+              placeholder="Short plot description…"
+              class="w-full"
+              v-bind="field"
+              @update:model-value="
+                (value) => (active!.overview = String(value) || null)
+              "
+            />
+          </template>
+        </AppFormField>
       </template>
     </div>
   </div>

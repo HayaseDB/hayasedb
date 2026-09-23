@@ -1,13 +1,19 @@
 import type { AnimeEpisode, AnimeSeason, ChangeInput } from '@hayasedb/contract'
 import {
+  ANIME_EPISODE_FIELD_META,
+  ANIME_EPISODE_FIELD_ORDER,
   ANIME_EPISODE_STATUSES,
   ANIME_EPISODE_TYPES,
+  ANIME_SEASON_FIELD_META,
+  ANIME_SEASON_FIELD_ORDER,
   ANIME_SEASON_KINDS,
   LOCALIZATION_LOCALES,
+  changedFieldKeys,
   stableStringify,
   type AnimeEpisodeStatus,
   type AnimeEpisodeType,
   type AnimeSeasonKind,
+  type FieldMeta,
   type LocalizationLocale,
 } from '@hayasedb/domain'
 
@@ -71,6 +77,8 @@ export interface AnimeStructureState {
 
 export type EpisodeOwner =
   { animeId: string; seasonId: null } | { animeId: null; seasonId: string }
+
+const STRUCTURE_TRANSLATION_FIELDS = ['title', 'overview'] as const
 
 export function preferredStructureTitle(
   translations: StructureTitle[],
@@ -189,6 +197,29 @@ function seasonDocument(draft: SeasonDraft, animeId: string, position: number) {
     position,
     translations: draft.translations.filter((item) => item.title.trim() !== ''),
   }
+}
+
+function documentFieldPaths(
+  next: Record<string, unknown>,
+  previous: Record<string, unknown>,
+  meta: Readonly<Record<string, FieldMeta>>,
+  order: readonly string[],
+): string[] {
+  const paths: string[] = []
+  for (const field of changedFieldKeys(next, previous, meta, order)) {
+    if (field === 'translations') {
+      for (const path of expandTranslationPaths(
+        next.translations as Record<string, unknown>[],
+        previous.translations as Record<string, unknown>[],
+        STRUCTURE_TRANSLATION_FIELDS,
+      )) {
+        paths.push(`translations.${path}`)
+      }
+      continue
+    }
+    paths.push(field)
+  }
+  return paths
 }
 
 function changedFrom(next: unknown, previous: unknown): boolean {
@@ -484,4 +515,74 @@ export function applyStructurePrefill(
     else state.episodes.push(episode)
     episodeById.set(episode.id, episode)
   }
+}
+
+export function structureChangePaths(
+  next: AnimeStructureState,
+  baseline: AnimeStructureState,
+): string[] {
+  const animeId = 'self'
+  const paths: string[] = []
+  const basePlacements = baselinePlacements(animeId, baseline)
+  const baseSeasons = new Map(
+    baseline.seasons.map((season) => [season.id, season]),
+  )
+
+  const pushEpisode = (
+    draft: EpisodeDraft,
+    owner: EpisodeOwner,
+    position: number,
+  ) => {
+    const prefix = `episodes.${draft.id}`
+    if (draft.removed) {
+      paths.push(`${prefix}.$state`)
+      return
+    }
+    if (draft.isNew) {
+      paths.push(`${prefix}.$state`)
+      return
+    }
+    const placement = basePlacements.get(draft.id)
+    if (!placement) return
+    const fields = documentFieldPaths(
+      episodeDocument(draft, owner, position),
+      episodeDocument(placement.episode, placement.owner, placement.position),
+      ANIME_EPISODE_FIELD_META,
+      ANIME_EPISODE_FIELD_ORDER,
+    )
+    for (const field of fields) paths.push(`${prefix}.${field}`)
+  }
+
+  next.seasons.forEach((season, seasonIndex) => {
+    const prefix = `seasons.${season.id}`
+    if (season.removed || season.isNew) {
+      paths.push(`${prefix}.$state`)
+    } else {
+      const previous = baseSeasons.get(season.id)
+      if (previous) {
+        const fields = documentFieldPaths(
+          seasonDocument(season, animeId, seasonIndex),
+          seasonDocument(
+            previous,
+            animeId,
+            baseline.seasons.findIndex((item) => item.id === season.id),
+          ),
+          ANIME_SEASON_FIELD_META,
+          ANIME_SEASON_FIELD_ORDER,
+        )
+        for (const field of fields) paths.push(`${prefix}.${field}`)
+      }
+    }
+
+    if (season.removed) return
+    season.episodes.forEach((episode, index) => {
+      pushEpisode(episode, { animeId: null, seasonId: season.id }, index)
+    })
+  })
+
+  next.episodes.forEach((episode, index) => {
+    pushEpisode(episode, { animeId, seasonId: null }, index)
+  })
+
+  return [...new Set(paths)]
 }

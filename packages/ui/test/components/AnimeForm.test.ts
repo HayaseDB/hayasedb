@@ -1,8 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
-import { ref } from 'vue'
+import { nextTick, reactive, ref } from 'vue'
+import { ANIME_FIELD_META } from '@hayasedb/domain'
 import AnimeForm from '../../app/components/anime/AnimeForm.vue'
-import { buildAnimeFormState } from '../../app/utils/animeForm'
+import {
+  buildAnimeFormState,
+  expandAnimeTranslationPaths,
+} from '../../app/utils/animeForm'
+import { useFieldChanges } from '../../../nuxt/app/composables/useFieldChanges'
 import type { AnimeMediaController } from '../../app/utils/animeMedia'
 import { UUID } from '../contribution-fixtures'
 
@@ -115,5 +120,130 @@ describe('AnimeForm', () => {
       'Isekai (new)',
     ])
     expect(genreSelect(wrapper).props('createItem')).toBe(false)
+  })
+})
+
+describe('AnimeForm change highlighting', () => {
+  const savedAnime = {
+    id: UUID(10),
+    slug: 'cowboy-bebop',
+    format: 'TV',
+    status: 'FINISHED',
+    translations: [
+      {
+        locale: 'en',
+        title: 'Cowboy Bebop',
+        description: 'Bounty hunters.',
+        original: true,
+      },
+      { locale: 'ja', title: 'カウボーイビバップ', original: false },
+    ],
+    genres: [],
+    relations: [],
+  }
+
+  async function mountEdit(overrides: Record<string, unknown> = {}) {
+    const baseline = () =>
+      buildAnimeFormState(
+        savedAnime as Parameters<typeof buildAnimeFormState>[0],
+      )
+    const state = reactive(baseline())
+    const fields = useFieldChanges({
+      state,
+      baseline,
+      meta: ANIME_FIELD_META,
+      enabled: () => true,
+      expand: {
+        translations: (next, base) => expandAnimeTranslationPaths(next, base),
+      },
+    })
+    const wrapper = await mountSuspended(AnimeForm, {
+      props: {
+        state,
+        'onUpdate:state': () => {},
+        media,
+        genres,
+        isEdit: true,
+        isDirty: true,
+        saving: false,
+        changes: fields.changes.value,
+        relationRows: [],
+        onSubmit: vi.fn(),
+        onSearchAnime: async () => [],
+        ...overrides,
+      },
+    })
+    const sync = async () => {
+      await wrapper.setProps({ changes: fields.changes.value })
+      await nextTick()
+    }
+    return { wrapper, state, fields, sync }
+  }
+
+  const fieldAt = (
+    wrapper: Awaited<ReturnType<typeof mountEdit>>['wrapper'],
+    path: string,
+  ) => wrapper.find(`[data-change][data-path="${path}"]`)
+
+  it('does not highlight anything when the state matches the baseline', async () => {
+    const { wrapper } = await mountEdit()
+    expect(wrapper.findAll('[data-change="changed"]')).toHaveLength(0)
+  })
+
+  it('highlights the english title when it differs from the baseline', async () => {
+    const { wrapper, state, fields, sync } = await mountEdit()
+    expect(
+      fieldAt(wrapper, 'translations.en.title').attributes('data-change'),
+    ).toBe('unchanged')
+
+    const en = state.translations.find((t) => t.locale === 'en')!
+    en.title = 'Kauboi Bibappu'
+    await sync()
+
+    expect([...fields.changes.value.paths]).toContain('translations.en.title')
+    expect(
+      fieldAt(wrapper, 'translations.en.title').attributes('data-change'),
+    ).toBe('changed')
+    expect(fieldAt(wrapper, 'slug').attributes('data-change')).toBe('unchanged')
+  })
+
+  it('highlights a changed scalar field without touching its neighbours', async () => {
+    const { wrapper, state, sync } = await mountEdit()
+    state.slug = 'bebop'
+    await sync()
+    expect(fieldAt(wrapper, 'slug').attributes('data-change')).toBe('changed')
+    expect(
+      fieldAt(wrapper, 'translations.en.title').attributes('data-change'),
+    ).toBe('unchanged')
+  })
+
+  it('keeps translation paths locale-keyed after a locale is removed', async () => {
+    const { state, fields } = await mountEdit()
+    state.translations = state.translations.filter((t) => t.locale !== 'ja')
+    const en = state.translations.find((t) => t.locale === 'en')!
+    en.title = 'Kauboi Bibappu'
+    const paths = [...fields.changes.value.paths]
+    expect(paths).toContain('translations.en.title')
+    expect(paths.some((p) => p.startsWith('translations.ja.'))).toBe(false)
+  })
+
+  it('keeps paths a superset of the submitted top-level fields', async () => {
+    const { state, fields } = await mountEdit()
+    state.slug = 'bebop'
+    const en = state.translations.find((t) => t.locale === 'en')!
+    en.title = 'Kauboi Bibappu'
+    const { topLevel, paths } = fields.changes.value
+    for (const key of topLevel) expect(paths.has(key)).toBe(true)
+    expect([...topLevel].sort()).toEqual(['slug', 'translations'])
+  })
+
+  it('treats clearing a value back to empty as unchanged', async () => {
+    const { state, fields } = await mountEdit()
+    const en = state.translations.find((t) => t.locale === 'en')!
+    const original = en.title
+    en.title = 'Something else'
+    expect(fields.changes.value.isDirty).toBe(true)
+    en.title = original
+    expect(fields.changes.value.paths.has('translations.en.title')).toBe(false)
   })
 })

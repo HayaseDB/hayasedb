@@ -13,37 +13,15 @@ const props = defineProps<{
 const api = useApiClient()
 const actions = useAnimeActions()
 
-const state = reactive(buildAnimeFormState(props.anime))
-const {
-  changedFields,
-  isDirty: isFieldsDirty,
-  reset,
-} = useDirtyState(state, () => buildAnimeFormState(props.anime))
-
 const media = useStagedMedia(() => props.anime, api.anime)
 
-const structure = useAnimeStructureDraft(
-  computed(() => props.anime?.id ?? null),
-)
+const session = useAnimeFormSession({
+  anime: () => props.anime,
+  media,
+})
 
-const isDirty = computed(
-  () => isFieldsDirty.value || media.isDirty.value || structure.isDirty.value,
-)
-
-watch(
-  () => props.anime,
-  () => {
-    reset()
-    media.sync()
-    void structure.reload()
-  },
-)
-
-const savedState = computed(() => buildAnimeFormState(props.anime))
-
-const relationBaseline = computed(() => savedState.value.relationEdges)
-
-const translationBaseline = computed(() => savedState.value.translations)
+const { state, changes, changedFields, isDirty, relationRows, structure } =
+  session
 
 async function searchAnime(q: string) {
   const { items } = await api.anime.list({ q, limit: 10 })
@@ -56,7 +34,7 @@ async function submit(data: CreateAnimeInput) {
     changedFields: changedFields.value,
     relations: {
       edges: state.relationEdges,
-      baseline: relationBaseline.value,
+      baseline: session.relationBaseline.value,
     },
     commitMedia: (animeId) => media.commit(animeId),
     commitStructure: (animeId) => structure.applyDirect(animeId),
@@ -75,13 +53,12 @@ async function submit(data: CreateAnimeInput) {
     :genres="genres"
     :is-edit="anime !== null"
     :is-dirty="isDirty"
-    :changed-fields="changedFields"
+    :changes="changes"
+    :relation-rows="relationRows"
     :saving="actions.saving.value"
     :self-id="anime?.id ?? null"
     :on-submit="submit"
     :on-search-anime="searchAnime"
-    :relation-baseline="relationBaseline"
-    :translation-baseline="translationBaseline"
     :structure-loading="structure.loading.value"
   />
 </template>

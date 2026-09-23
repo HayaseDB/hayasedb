@@ -1,68 +1,21 @@
 <script setup lang="ts">
 import { refDebounced } from '@vueuse/core'
 import type { AnimeRelationViewKind } from '@hayasedb/domain'
-import type { AnimeRelationEdgeItem, AnimeRelationSearchResult } from '#imports'
+import type {
+  AnimeRelationEdgeItem,
+  AnimeRelationRow,
+  AnimeRelationSearchResult,
+} from '#imports'
 
 const model = defineModel<AnimeRelationEdgeItem[]>({ required: true })
 
 const props = defineProps<{
   selfId: string | null
   searchAnime: (query: string) => Promise<AnimeRelationSearchResult[]>
-  baseline?: AnimeRelationEdgeItem[]
+  rows: AnimeRelationRow[]
 }>()
 
-const baselineKeys = computed(
-  () => new Set((props.baseline ?? []).map(relationEdgeKey)),
-)
-
-type RelationRowState = 'unchanged' | 'added' | 'changed' | 'removed'
-
-interface RelationRow {
-  state: RelationRowState
-  edge: AnimeRelationEdgeItem
-  order: number
-}
-
-const rows = computed<RelationRow[]>(() => {
-  const baseline = props.baseline
-  if (baseline === undefined) {
-    return model.value.map((edge: AnimeRelationEdgeItem, index: number) => ({
-      state: 'unchanged',
-      edge,
-      order: index,
-    }))
-  }
-  const consumed = new Set<string>()
-  const list: RelationRow[] = []
-  baseline.forEach((base: AnimeRelationEdgeItem, index: number) => {
-    const exact = model.value.find(
-      (edge: AnimeRelationEdgeItem) =>
-        relationEdgeKey(edge) === relationEdgeKey(base),
-    )
-    if (exact) {
-      consumed.add(relationEdgeKey(exact))
-      list.push({ state: 'unchanged', edge: exact, order: index })
-      return
-    }
-    const reassigned = model.value.find(
-      (edge: AnimeRelationEdgeItem) =>
-        edge.animeId === base.animeId &&
-        !baselineKeys.value.has(relationEdgeKey(edge)) &&
-        !consumed.has(relationEdgeKey(edge)),
-    )
-    if (reassigned) {
-      consumed.add(relationEdgeKey(reassigned))
-      list.push({ state: 'changed', edge: reassigned, order: index })
-      return
-    }
-    list.push({ state: 'removed', edge: base, order: index })
-  })
-  model.value.forEach((edge: AnimeRelationEdgeItem, index: number) => {
-    if (consumed.has(relationEdgeKey(edge))) return
-    list.push({ state: 'added', edge, order: baseline.length + index })
-  })
-  return list.sort((a, b) => a.order - b.order)
-})
+const rows = computed(() => props.rows ?? [])
 
 function restore(edge: AnimeRelationEdgeItem) {
   if (
@@ -223,10 +176,7 @@ function setKind(edge: AnimeRelationEdgeItem, next: AnimeRelationViewKind) {
         :key="`${state}:${relationEdgeKey(edge)}`"
         :data-state="state"
         class="border-default flex min-h-12 flex-col items-stretch gap-2 rounded-md border p-2 sm:flex-row sm:items-center sm:gap-3"
-        :class="{
-          'ring-info ring-1': state === 'added' || state === 'changed',
-          'ring-error border-dashed ring-1': state === 'removed',
-        }"
+        :class="CHANGE_RING_CLASS[state]"
       >
         <template v-if="state !== 'removed'">
           <USelect

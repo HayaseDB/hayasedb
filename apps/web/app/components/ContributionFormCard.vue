@@ -82,27 +82,12 @@ function initialState(): AnimeFormState {
   return next
 }
 
-const relationBaseline = computed(() => baseline().relationEdges)
-
 async function searchAnime(q: string) {
   const { items } = await api.anime.list({ q, limit: 10 })
   return items
 }
 
-const state = reactive(initialState())
 const proposedGenres = ref<ProposedGenre[]>(prefillProposedGenres())
-
-function proposeGenre(name: string) {
-  const id = crypto.randomUUID()
-  proposedGenres.value = [...proposedGenres.value, { id, name }]
-  state.genreIds = [...state.genreIds, id]
-}
-
-const {
-  changedFields,
-  isDirty: isFieldsDirty,
-  reset,
-} = useDirtyState(state, baseline, initialState)
 
 const mediaPrefill = computed(() => {
   const payload = prefillPayload.value
@@ -114,6 +99,7 @@ const mediaPrefill = computed(() => {
 })
 
 const media = useContributionMedia(() => props.anime, mediaPrefill)
+
 const prefillStructureChanges = computed(() =>
   props.prefill?.changes.filter(
     (change) =>
@@ -122,21 +108,26 @@ const prefillStructureChanges = computed(() =>
   ),
 )
 
-const structure = useAnimeStructureDraft(
-  computed(() => props.anime?.id ?? null),
-  prefillStructureChanges,
-)
+const session = useAnimeFormSession({
+  anime: () => props.anime,
+  media,
+  initial: initialState,
+  structurePrefill: prefillStructureChanges,
+})
 
-const isDirty = computed(
-  () => isFieldsDirty.value || media.isDirty.value || structure.isDirty.value,
-)
+const { state, changes, changedFields, isDirty, relationRows, structure } =
+  session
+
+function proposeGenre(name: string) {
+  const id = crypto.randomUUID()
+  proposedGenres.value = [...proposedGenres.value, { id, name }]
+  state.genreIds = [...state.genreIds, id]
+}
 
 const summary = ref(props.prefill?.summary ?? '')
 
 watch([() => props.anime, () => props.prefill], () => {
-  reset()
-  media.sync()
-  void structure.reload()
+  session.reset()
   proposedGenres.value = prefillProposedGenres()
   summary.value = props.prefill?.summary ?? ''
 })
@@ -149,7 +140,7 @@ async function submit(data: CreateAnimeInput) {
       changedFields: changedFields.value,
       relations: {
         edges: state.relationEdges,
-        baseline: relationBaseline.value,
+        baseline: session.relationBaseline.value,
       },
       mediaDirty: media.isDirty.value,
       summary: summary.value,
@@ -174,13 +165,13 @@ async function submit(data: CreateAnimeInput) {
     :on-create-genre="proposeGenre"
     :is-edit="anime !== null"
     :is-dirty="isDirty"
-    :changed-fields="changedFields"
+    :changes="changes"
+    :relation-rows="relationRows"
     :saving="actions.saving.value"
     submit-label="Submit for review"
     :self-id="anime?.id ?? null"
     :on-submit="submit"
     :on-search-anime="searchAnime"
-    :relation-baseline="relationBaseline"
     :structure-loading="structure.loading.value"
     :structure-change-count="structure.changes.value.length"
     :structure-change-budget="MAX_CHANGES_PER_CHANGESET"
