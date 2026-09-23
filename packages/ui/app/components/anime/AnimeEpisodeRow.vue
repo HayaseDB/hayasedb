@@ -21,10 +21,10 @@ const title = computed(() => props.episode.title?.title ?? null)
 
 <template>
   <li
-    class="border-default flex items-start gap-3 border-b py-3 last:border-b-0"
+    class="border-default col-span-2 grid grid-cols-subgrid items-start gap-x-3 border-b py-3 last:border-b-0"
   >
     <span
-      class="bg-elevated text-toned mt-0.5 flex min-w-10 shrink-0 justify-center rounded px-2 py-1 text-xs font-medium tabular-nums"
+      class="bg-elevated text-toned mt-0.5 flex min-w-10 justify-center rounded px-2 py-1 text-xs font-medium whitespace-nowrap tabular-nums"
     >
       {{ marker }}
     </span>

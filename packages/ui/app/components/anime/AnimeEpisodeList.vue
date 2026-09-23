@@ -65,7 +65,10 @@ const seasonMeta = (season: AnimeSeasonItem) => {
       </template>
 
       <template #content="{ item }">
-        <ul v-if="seasonEpisodes(item.season.id).length" class="pb-2">
+        <ul
+          v-if="seasonEpisodes(item.season.id).length"
+          class="grid grid-cols-[auto_minmax(0,1fr)] pb-2"
+        >
           <AnimeEpisodeRow
             v-for="episode in seasonEpisodes(item.season.id)"
             :key="episode.id"
@@ -81,7 +84,7 @@ const seasonMeta = (season: AnimeSeasonItem) => {
     </UAccordion>
 
     <div v-if="!loading && hasEpisodes" :class="hasSeasons && 'mt-6'">
-      <ul>
+      <ul class="grid grid-cols-[auto_minmax(0,1fr)]">
         <AnimeEpisodeRow
           v-for="episode in episodes"
           :key="episode.id"
