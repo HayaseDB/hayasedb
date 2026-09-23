@@ -1,9 +1,7 @@
 import {
   ENTITY_FIELD_META,
   fieldOrderFor,
-  isoToFuzzy,
-  stableStringify,
-  unorderedStringify,
+  sameFieldValue,
   type AnimeFieldKey,
   type ChangeOp,
   type ChangesetStatus,
@@ -176,55 +174,6 @@ function partOf(value: unknown, by: string, part: string): unknown[] {
   )
 }
 
-function withoutKeys(item: unknown, keys?: readonly string[]): unknown {
-  if (!keys?.length || !item || typeof item !== 'object') return item
-  const rest: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(item as Record<string, unknown>)) {
-    if (!keys.includes(key)) rest[key] = value
-  }
-  return rest
-}
-
-function isEmptyValue(value: unknown): boolean {
-  if (value === null || value === undefined || value === '') return true
-  if (Array.isArray(value)) return value.length === 0
-  if (typeof value === 'object') return Object.keys(value).length === 0
-  return false
-}
-
-function identity(
-  value: unknown,
-  meta?: FieldMeta,
-  positional?: readonly string[],
-): string {
-  if (isEmptyValue(value)) return 'null'
-
-  if (meta?.as === 'fuzzydate' && typeof value === 'string') {
-    const parsed = isoToFuzzy(value)
-    if (Number.isFinite(parsed.year)) return stableStringify(parsed)
-  }
-
-  if (meta?.unordered) return unorderedStringify(value)
-
-  const isSingleton = !Array.isArray(value) || value.length <= 1
-  if (positional?.length && isSingleton) {
-    const stripped = Array.isArray(value)
-      ? value.map((item) => withoutKeys(item, positional))
-      : value
-    return stableStringify(stripped)
-  }
-  return stableStringify(value)
-}
-
-function sameValue(
-  a: unknown,
-  b: unknown,
-  meta?: FieldMeta,
-  positional?: readonly string[],
-): boolean {
-  return identity(a, meta, positional) === identity(b, meta, positional)
-}
-
 export function changesetAnimeChange(
   changes: ChangeDetail[],
 ): ChangeDetail | undefined {
@@ -281,10 +230,11 @@ export function buildDiffRows(change: ChangeDetail): ChangeDiffRow[] {
             after: isDelete ? oldPart : newPart,
             currentValue: currentPart,
             drifted:
-              tracked && !sameValue(oldPart, currentPart, meta, positional),
+              tracked &&
+              !sameFieldValue(oldPart, currentPart, meta, positional),
             changed: isDelete
               ? oldPart.length > 0
-              : !sameValue(oldPart, newPart, meta, positional),
+              : !sameFieldValue(oldPart, newPart, meta, positional),
           }
         })
       }
@@ -298,8 +248,8 @@ export function buildDiffRows(change: ChangeDetail): ChangeDiffRow[] {
           before: isDelete ? null : oldValue,
           after: isDelete ? oldValue : newValue,
           currentValue,
-          drifted: tracked && !sameValue(oldValue, currentValue, meta),
-          changed: isDelete ? true : !sameValue(oldValue, newValue, meta),
+          drifted: tracked && !sameFieldValue(oldValue, currentValue, meta),
+          changed: isDelete ? true : !sameFieldValue(oldValue, newValue, meta),
         },
       ]
     })

@@ -1,6 +1,7 @@
 export * from './anime'
 export * from './contribution'
 export * from './episode'
+export * from './field-compare'
 export * from './field-meta'
 export * from './fuzzy-date'
 export * from './localization'

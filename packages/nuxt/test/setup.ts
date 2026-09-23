@@ -1,5 +1,6 @@
 import { getRequestIP } from 'h3'
 import { beforeEach, vi } from 'vitest'
+import { computed, reactive, ref, toValue, watch } from 'vue'
 
 export const toast = { add: vi.fn() }
 
@@ -13,3 +14,8 @@ vi.stubGlobal('createError', (input: Record<string, unknown>) =>
 )
 vi.stubGlobal('abortNavigation', (error: unknown) => ({ aborted: error }))
 vi.stubGlobal('showError', vi.fn())
+vi.stubGlobal('ref', ref)
+vi.stubGlobal('computed', computed)
+vi.stubGlobal('reactive', reactive)
+vi.stubGlobal('toValue', toValue)
+vi.stubGlobal('watch', watch)

@@ -94,15 +94,40 @@ export function useMediaStaging(
     return [cover.value, banner.value, ...gallery.value]
   }
 
-  const isDirty = computed(() => {
+  const changedPaths = computed<ReadonlySet<string>>(() => {
     const start = initial()
-    return (
-      JSON.stringify(stagedFingerprint(staged())) !==
-      JSON.stringify(
-        stagedFingerprint([start.cover, start.banner, ...start.gallery]),
-      )
-    )
+    const paths = new Set<string>()
+
+    const fingerprint = (item: StagedMediaItem | null) =>
+      stagedFingerprint([item])[0]
+
+    if (fingerprint(cover.value) !== fingerprint(start.cover)) {
+      paths.add('media.COVER')
+    }
+    if (fingerprint(banner.value) !== fingerprint(start.banner)) {
+      paths.add('media.BANNER')
+    }
+
+    const nextGallery = stagedFingerprint(gallery.value)
+    const baseGallery = stagedFingerprint(start.gallery)
+    const baseSet = new Set(baseGallery)
+    const nextSet = new Set(nextGallery)
+
+    nextGallery.forEach((id, index) => {
+      if (!baseSet.has(id)) {
+        paths.add(`media.GALLERY.${id}`)
+      } else if (baseGallery[index] !== id) {
+        paths.add(`media.GALLERY.${id}`)
+      }
+    })
+    for (const id of baseGallery) {
+      if (!nextSet.has(id)) paths.add('media.GALLERY.$set')
+    }
+
+    return paths
   })
+
+  const isDirty = computed(() => changedPaths.value.size > 0)
 
   onScopeDispose(() => {
     for (const url of pendingUrls) URL.revokeObjectURL(url)
@@ -120,6 +145,7 @@ export function useMediaStaging(
     reorderGallery,
     sync,
     staged,
+    changedPaths,
     isDirty,
   }
 }

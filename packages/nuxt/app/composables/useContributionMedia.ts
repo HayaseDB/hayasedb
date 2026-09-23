@@ -101,6 +101,7 @@ export function useContributionMedia(
     cover: staging.cover,
     banner: staging.banner,
     gallery: staging.gallery,
+    changedPaths: staging.changedPaths,
     isDirty: staging.isDirty,
     setSingle: staging.setSingle,
     removeSingle: staging.removeSingle,

@@ -55,7 +55,7 @@ export function useStagedMedia(
   })
 
   const staging = useMediaStaging(initial)
-  const { cover, banner, gallery, isDirty } = staging
+  const { cover, banner, gallery, changedPaths, isDirty } = staging
 
   async function commitSingle(
     animeId: string,
@@ -137,6 +137,7 @@ export function useStagedMedia(
     cover,
     banner,
     gallery,
+    changedPaths,
     isDirty,
     setSingle: staging.setSingle,
     removeSingle: staging.removeSingle,
