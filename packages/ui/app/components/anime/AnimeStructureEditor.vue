@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import type { AnimeStructureState, EpisodeDraft, SeasonDraft } from '#imports'
+import { ANIME_SEASON_FIELD_ORDER } from '@hayasedb/domain'
+import type {
+  AnimeStructureState,
+  ChangeKind,
+  EpisodeDraft,
+  SeasonDraft,
+} from '#imports'
 
 const state = defineModel<AnimeStructureState>('state', { required: true })
 
@@ -82,6 +88,25 @@ const removedEpisodes = computed(() => [
   ),
 ])
 
+const scope = useChangeScope()
+
+const seasonKind = (season: SeasonDraft): ChangeKind => {
+  if (season.isNew) return 'added'
+  if (season.removed) return 'removed'
+  const at = `seasons.${season.id}`
+  const touched =
+    scope.kindOf(`${at}.$state`) !== 'unchanged' ||
+    ANIME_SEASON_FIELD_ORDER.some(
+      (field) => scope.kindOf(`${at}.${field}`) !== 'unchanged',
+    ) ||
+    season.translations.some(
+      (item) =>
+        scope.kindOf(`${at}.translations.${item.locale}.title`) !== 'unchanged',
+    ) ||
+    scope.kindOf(`${at}.translations.${TRANSLATION_SET_PATH}`) !== 'unchanged'
+  return touched ? 'changed' : 'unchanged'
+}
+
 const seasonLabel = (season: SeasonDraft) => {
   const kind = ANIME_SEASON_KIND_LABELS[season.kind]
   const title = preferredStructureTitle(season.translations)
@@ -162,21 +187,23 @@ const episodeLabel = (episode: EpisodeDraft) => {
       v-if="hasSeasons"
       v-model="expanded"
       type="multiple"
-      :items="visibleSeasons.map((season) => ({ value: season.id, season }))"
+      :items="
+        visibleSeasons.map((season) => ({
+          value: season.id,
+          season,
+          class: CHANGE_RING_CLASS[seasonKind(season)],
+        }))
+      "
       :ui="{ trigger: 'gap-3' }"
     >
       <template #default="{ item }">
-        <div class="flex min-w-0 flex-1 items-center gap-2 text-left">
+        <div
+          class="flex min-w-0 flex-1 items-center gap-2 text-left"
+          :data-change="seasonKind(item.season)"
+        >
           <span class="text-highlighted truncate text-sm font-medium">
             {{ seasonLabel(item.season) }}
           </span>
-          <UBadge
-            v-if="item.season.isNew"
-            label="New"
-            color="info"
-            variant="subtle"
-            size="sm"
-          />
           <UBadge
             :label="`${item.season.episodes.filter((e: EpisodeDraft) => !e.removed).length}`"
             color="neutral"

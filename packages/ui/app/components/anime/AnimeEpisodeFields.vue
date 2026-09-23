@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import type { LocalizationLocale } from '@hayasedb/domain'
+import {
+  ANIME_EPISODE_FIELD_ORDER,
+  type LocalizationLocale,
+} from '@hayasedb/domain'
 import type { ChangeKind, EpisodeDraft, EpisodeText } from '#imports'
 
 const props = withDefaults(
@@ -58,22 +61,14 @@ const switcherItems = computed(() =>
   })),
 )
 
-const EPISODE_FIELDS = [
-  'number',
-  'type',
-  'status',
-  'airDate',
-  'durationSeconds',
-  'position',
-  'translations',
-]
-
 const episodeKind = computed<ChangeKind>(() => {
   if (props.episode.isNew) return 'added'
   if (props.episode.removed) return 'removed'
   const touched =
     scope.kindOf('$state') !== 'unchanged' ||
-    EPISODE_FIELDS.some((field) => scope.kindOf(field) !== 'unchanged') ||
+    ANIME_EPISODE_FIELD_ORDER.some(
+      (field) => scope.kindOf(field) !== 'unchanged',
+    ) ||
     switcherItems.value.some((item) => item.changed)
   return touched ? 'changed' : 'unchanged'
 })
@@ -132,13 +127,6 @@ const durationMinutes = computed({
         {{ label }}
       </button>
 
-      <UBadge
-        v-if="episode.isNew"
-        label="New"
-        color="info"
-        variant="subtle"
-        size="sm"
-      />
       <UBadge
         v-if="episode.status !== 'RELEASED'"
         :label="ANIME_EPISODE_STATUS_LABELS[episode.status]"

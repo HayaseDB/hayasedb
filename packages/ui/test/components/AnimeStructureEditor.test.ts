@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
-import { ref } from 'vue'
+import { defineComponent, h, ref } from 'vue'
+import { provideChangeScope } from '#imports'
 import AnimeStructureEditor from '../../app/components/anime/AnimeStructureEditor.vue'
 import {
   emptyStructureState,
@@ -22,6 +23,21 @@ async function mount(initial: AnimeStructureState = emptyStructureState()) {
   const button = (label: string) =>
     wrapper.findAll('button').find((el) => el.text() === label)
   return { wrapper, state, button }
+}
+
+async function mountWithChanges(initial: AnimeStructureState, paths: string[]) {
+  const changes = {
+    topLevel: new Set<string>(),
+    paths: new Set(paths),
+    isDirty: paths.length > 0,
+  }
+  const parent = defineComponent({
+    setup() {
+      provideChangeScope({ changes })
+      return () => h(AnimeStructureEditor, { state: initial })
+    },
+  })
+  return await mountSuspended(parent)
 }
 
 const savedSeason = () => ({ ...newSeasonDraft(), isNew: false, baseRev: 1 })
@@ -103,5 +119,33 @@ describe('AnimeStructureEditor', () => {
 
     await wrapper.find('[aria-label="Restore episode"]').trigger('click')
     expect(state.value.episodes[0]?.removed).toBe(false)
+  })
+  it('rings an unsaved season instead of badging it', async () => {
+    const initial = emptyStructureState()
+    initial.seasons.push(newSeasonDraft())
+    const { wrapper } = await mount(initial)
+
+    expect(wrapper.find('[data-change="added"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('New')
+  })
+
+  it('rings a saved season whose field changed', async () => {
+    const initial = emptyStructureState()
+    const season = savedSeason()
+    initial.seasons.push(season)
+    const wrapper = await mountWithChanges(initial, [
+      `seasons.${season.id}.number`,
+    ])
+
+    expect(wrapper.find('[data-change="changed"]').exists()).toBe(true)
+  })
+
+  it('leaves an untouched saved season unringed', async () => {
+    const initial = emptyStructureState()
+    initial.seasons.push(savedSeason())
+    const wrapper = await mountWithChanges(initial, [])
+
+    expect(wrapper.find('[data-change="unchanged"]').exists()).toBe(true)
+    expect(wrapper.find('[data-change="changed"]').exists()).toBe(false)
   })
 })
