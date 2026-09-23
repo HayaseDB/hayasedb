@@ -1,27 +1,10 @@
 <script setup lang="ts">
-import {
-  ANIME_EPISODE_FIELD_ORDER,
-  type LocalizationLocale,
-} from '@hayasedb/domain'
-import type { ChangeKind, EpisodeDraft, EpisodeText } from '#imports'
+import type { LocalizationLocale } from '@hayasedb/domain'
+import type { EpisodeDraft, EpisodeText } from '#imports'
 
-const props = withDefaults(
-  defineProps<{
-    episode: EpisodeDraft
-    label: string
-    isFirst?: boolean
-    isLast?: boolean
-  }>(),
-  { isFirst: false, isLast: false },
-)
-
-const emit = defineEmits<{ moveUp: []; moveDown: []; remove: [] }>()
+const props = defineProps<{ episode: EpisodeDraft }>()
 
 const episode = computed(() => props.episode)
-
-const open = ref(episode.value.isNew)
-
-const panelId = useId()
 
 const translations = computed({
   get: () => episode.value.translations,
@@ -62,18 +45,6 @@ const switcherItems = computed(() =>
   })),
 )
 
-const episodeKind = computed<ChangeKind>(() => {
-  if (props.episode.isNew) return 'added'
-  if (props.episode.removed) return 'removed'
-  const touched =
-    scope.kindOf('$state') !== 'unchanged' ||
-    ANIME_EPISODE_FIELD_ORDER.some(
-      (field) => scope.kindOf(field) !== 'unchanged',
-    ) ||
-    switcherItems.value.some((item) => item.changed)
-  return touched ? 'changed' : 'unchanged'
-})
-
 function makeActiveOriginal() {
   episode.value.translations.forEach((item, index) => {
     item.original = index === activeIndex.value
@@ -99,188 +70,114 @@ const durationMinutes = computed({
 </script>
 
 <template>
-  <div
-    class="border-default rounded-md border"
-    :data-change="episodeKind"
-    :class="CHANGE_RING_CLASS[episodeKind]"
-  >
-    <div class="flex items-center gap-1 p-2">
-      <button
-        :id="`${panelId}-trigger`"
-        type="button"
-        class="flex min-w-0 flex-1 items-center gap-2 text-left"
-        :aria-expanded="open"
-        :aria-controls="panelId"
-        @click="open = !open"
-      >
-        <UIcon
-          name="i-lucide-chevron-right"
-          class="text-dimmed size-4 shrink-0 transition-transform"
-          :class="open && 'rotate-90'"
-          aria-hidden="true"
-        />
+  <div class="flex flex-col gap-4">
+    <div class="grid gap-3 sm:grid-cols-2">
+      <AppFormField path="number" label="Number">
+        <template #default="{ field }">
+          <UInput
+            :model-value="episode.number ?? ''"
+            placeholder="1"
+            inputmode="decimal"
+            class="w-full"
+            v-bind="field"
+            @update:model-value="
+              (value) => (episode.number = String(value) || null)
+            "
+          />
+        </template>
+      </AppFormField>
 
-        <span class="text-highlighted min-w-0 flex-1 truncate text-sm">
-          {{ label }}
-        </span>
-      </button>
+      <AppFormField path="type" label="Type" required>
+        <template #default="{ field }">
+          <USelect
+            v-model="episode.type"
+            :items="animeEpisodeTypeOptions"
+            value-key="value"
+            class="w-full"
+            v-bind="field"
+          />
+        </template>
+      </AppFormField>
 
-      <UBadge
-        v-if="episode.status !== 'RELEASED'"
-        :label="ANIME_EPISODE_STATUS_LABELS[episode.status]"
-        :color="ANIME_EPISODE_STATUS_COLORS[episode.status]"
-        variant="subtle"
-        size="sm"
-      />
+      <AppFormField path="status" label="Status" required>
+        <template #default="{ field }">
+          <USelect
+            v-model="episode.status"
+            :items="animeEpisodeStatusOptions"
+            value-key="value"
+            class="w-full"
+            v-bind="field"
+          />
+        </template>
+      </AppFormField>
 
-      <UButton
-        type="button"
-        icon="i-lucide-chevron-up"
-        color="neutral"
-        variant="ghost"
-        size="xs"
-        square
-        :disabled="isFirst"
-        aria-label="Move episode up"
-        @click="emit('moveUp')"
-      />
-      <UButton
-        type="button"
-        icon="i-lucide-chevron-down"
-        color="neutral"
-        variant="ghost"
-        size="xs"
-        square
-        :disabled="isLast"
-        aria-label="Move episode down"
-        @click="emit('moveDown')"
-      />
-      <UButton
-        type="button"
-        icon="i-lucide-trash-2"
-        color="error"
-        variant="ghost"
-        size="xs"
-        square
-        aria-label="Remove episode"
-        @click="emit('remove')"
-      />
+      <AppFormField path="airDate" label="Air date">
+        <template #default="{ field }">
+          <UInput
+            :model-value="episode.airDate ?? ''"
+            type="date"
+            class="w-full"
+            v-bind="field"
+            @update:model-value="
+              (value) => (episode.airDate = String(value) || null)
+            "
+          />
+        </template>
+      </AppFormField>
+
+      <AppFormField path="durationSeconds" label="Runtime (minutes)">
+        <template #default="{ field }">
+          <UInputNumber
+            v-model="durationMinutes"
+            :min="1"
+            placeholder="24"
+            class="w-full"
+            v-bind="field"
+          />
+        </template>
+      </AppFormField>
     </div>
-    <div
-      v-if="open"
-      :id="panelId"
-      role="region"
-      :aria-labelledby="`${panelId}-trigger`"
-      class="flex flex-col gap-3 px-2 pb-2"
-    >
-      <div class="grid gap-3 sm:grid-cols-2">
-        <AppFormField path="number" label="Number">
-          <template #default="{ field }">
-            <UInput
-              :model-value="episode.number ?? ''"
-              placeholder="1"
-              inputmode="decimal"
-              class="w-full"
-              v-bind="field"
-              @update:model-value="
-                (value) => (episode.number = String(value) || null)
-              "
-            />
-          </template>
-        </AppFormField>
 
-        <AppFormField path="type" label="Type" required>
-          <template #default="{ field }">
-            <USelect
-              v-model="episode.type"
-              :items="animeEpisodeTypeOptions"
-              value-key="value"
-              class="w-full"
-              v-bind="field"
-            />
-          </template>
-        </AppFormField>
+    <LocaleSwitcher
+      v-model:locale="localization.activeLocale.value"
+      :items="switcherItems"
+      :add-options="localization.remainingOptions.value"
+      :can-add="localization.canAdd.value"
+      :can-remove="localization.canRemove.value"
+      :changed="localeSetChanged"
+      show-original
+      :is-original="active?.original"
+      @add="localization.add"
+      @remove="removeActive"
+      @make-original="makeActiveOriginal"
+    />
 
-        <AppFormField path="status" label="Status" required>
-          <template #default="{ field }">
-            <USelect
-              v-model="episode.status"
-              :items="animeEpisodeStatusOptions"
-              value-key="value"
-              class="w-full"
-              v-bind="field"
-            />
-          </template>
-        </AppFormField>
+    <template v-if="active">
+      <AppFormField :path="translationPath('title')" label="Title">
+        <template #default="{ field }">
+          <UInput
+            v-model="active!.title"
+            placeholder="Episode title"
+            class="w-full"
+            v-bind="field"
+          />
+        </template>
+      </AppFormField>
 
-        <AppFormField path="airDate" label="Air date">
-          <template #default="{ field }">
-            <UInput
-              :model-value="episode.airDate ?? ''"
-              type="date"
-              class="w-full"
-              v-bind="field"
-              @update:model-value="
-                (value) => (episode.airDate = String(value) || null)
-              "
-            />
-          </template>
-        </AppFormField>
-
-        <AppFormField path="durationSeconds" label="Runtime (minutes)">
-          <template #default="{ field }">
-            <UInputNumber
-              v-model="durationMinutes"
-              :min="1"
-              placeholder="24"
-              class="w-full"
-              v-bind="field"
-            />
-          </template>
-        </AppFormField>
-      </div>
-
-      <LocaleSwitcher
-        v-model:locale="localization.activeLocale.value"
-        :items="switcherItems"
-        :add-options="localization.remainingOptions.value"
-        :can-add="localization.canAdd.value"
-        :can-remove="localization.canRemove.value"
-        :changed="localeSetChanged"
-        show-original
-        :is-original="active?.original"
-        @add="localization.add"
-        @remove="removeActive"
-        @make-original="makeActiveOriginal"
-      />
-
-      <template v-if="active">
-        <AppFormField :path="translationPath('title')" label="Title">
-          <template #default="{ field }">
-            <UInput
-              v-model="active!.title"
-              placeholder="Episode title"
-              class="w-full"
-              v-bind="field"
-            />
-          </template>
-        </AppFormField>
-
-        <AppFormField :path="translationPath('overview')" label="Overview">
-          <template #default="{ field }">
-            <UTextarea
-              :model-value="active!.overview ?? ''"
-              :rows="3"
-              placeholder="Short plot description…"
-              class="w-full"
-              v-bind="field"
-              @update:model-value="
-                (value) => (active!.overview = String(value) || null)
-              "
-            />
-          </template>
-        </AppFormField>
-      </template>
-    </div>
+      <AppFormField :path="translationPath('overview')" label="Overview">
+        <template #default="{ field }">
+          <UTextarea
+            :model-value="active!.overview ?? ''"
+            :rows="3"
+            placeholder="Short plot description…"
+            class="w-full"
+            v-bind="field"
+            @update:model-value="
+              (value) => (active!.overview = String(value) || null)
+            "
+          />
+        </template>
+      </AppFormField>
+    </template>
   </div>
 </template>

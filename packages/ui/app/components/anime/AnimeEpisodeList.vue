@@ -9,6 +9,7 @@ const props = defineProps<{
 }>()
 
 const hasSeasons = computed(() => props.seasons.length > 0)
+const hasEpisodes = computed(() => props.episodes.length > 0)
 
 const open = ref<string[]>([])
 watch(
@@ -79,14 +80,21 @@ const seasonMeta = (season: AnimeSeasonItem) => {
       </template>
     </UAccordion>
 
-    <ul v-else-if="episodes.length">
-      <AnimeEpisodeRow
-        v-for="episode in episodes"
-        :key="episode.id"
-        :episode="episode"
-      />
-    </ul>
+    <div v-if="!loading && hasEpisodes" :class="hasSeasons && 'mt-6'">
+      <ul>
+        <AnimeEpisodeRow
+          v-for="episode in episodes"
+          :key="episode.id"
+          :episode="episode"
+        />
+      </ul>
+    </div>
 
-    <p v-else class="text-muted text-sm">No episodes listed yet.</p>
+    <p
+      v-if="!loading && !hasSeasons && !hasEpisodes"
+      class="text-muted text-sm"
+    >
+      No episodes listed yet.
+    </p>
   </section>
 </template>

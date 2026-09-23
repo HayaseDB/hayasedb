@@ -17,7 +17,7 @@ async function mount(episode: EpisodeDraft, paths: string[] = []) {
   const parent = defineComponent({
     setup() {
       provideChangeScope({ changes })
-      return () => h(AnimeEpisodeFields, { episode, label: 'Episode 1' })
+      return () => h(AnimeEpisodeFields, { episode })
     },
   })
   return await mountSuspended(parent)
@@ -30,42 +30,15 @@ const savedEpisode = (): EpisodeDraft => ({
 })
 
 describe('AnimeEpisodeFields', () => {
-  it('rings an unsaved episode instead of badging it', async () => {
-    const wrapper = await mount(newEpisodeDraft())
-
-    expect(wrapper.find('[data-change="added"]').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('New')
-  })
-
-  it('rings a saved episode whose field changed', async () => {
+  it('highlights a changed field through the provided scope', async () => {
     const episode = savedEpisode()
     const wrapper = await mount(episode, [
       `episodes.${episode.id}.durationSeconds`,
     ])
 
-    expect(wrapper.find('[data-change="changed"]').exists()).toBe(true)
-  })
-
-  it('leaves an untouched saved episode unringed', async () => {
-    const wrapper = await mount(savedEpisode())
-
-    expect(wrapper.find('[data-change="unchanged"]').exists()).toBe(true)
-    expect(wrapper.find('[data-change="changed"]').exists()).toBe(false)
-  })
-
-  it('exposes one labelled disclosure trigger', async () => {
-    const wrapper = await mount(savedEpisode())
-
-    const triggers = wrapper.findAll('[aria-expanded]')
-
-    expect(triggers).toHaveLength(1)
-    expect(triggers[0]!.text()).toContain('Episode 1')
-    expect(triggers[0]!.attributes('aria-expanded')).toBe('false')
-
-    await triggers[0]!.trigger('click')
-
-    expect(triggers[0]!.attributes('aria-expanded')).toBe('true')
-    expect(triggers[0]!.attributes('aria-controls')).toBeTruthy()
+    expect(
+      wrapper.find('[data-path="durationSeconds"]').attributes('data-change'),
+    ).toBe('changed')
   })
 
   it('does not mark optional fields', async () => {

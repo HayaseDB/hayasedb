@@ -52,15 +52,29 @@ describe('AnimeStructureEditor', () => {
     expect(state.value.seasons).toHaveLength(1)
   })
 
-  it('offers seasons or direct episodes, never both', async () => {
+  it('offers seasons and standalone episodes together', async () => {
     const withSeason = emptyStructureState()
     withSeason.seasons.push(newSeasonDraft())
     const { wrapper, button } = await mount(withSeason)
 
     expect(wrapper.find('[data-testid="add-direct-episode"]').exists()).toBe(
-      false,
+      true,
     )
     expect(button('Add season')).toBeDefined()
+  })
+
+  it('renders seasons and standalone episodes side by side', async () => {
+    const mixed = emptyStructureState()
+    const season = savedSeason()
+    season.episodes.push(savedEpisode())
+    mixed.seasons.push(season)
+    mixed.episodes.push(savedEpisode())
+    const { wrapper } = await mount(mixed)
+
+    expect(wrapper.findAll('[data-change]').length).toBe(3)
+    expect(wrapper.find('[data-testid="add-direct-episode"]').exists()).toBe(
+      true,
+    )
   })
 
   it('drops an unsaved season outright', async () => {
