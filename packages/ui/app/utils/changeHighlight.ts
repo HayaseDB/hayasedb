@@ -16,10 +16,3 @@ export const CHANGE_FIELD_COLOR: Record<
   added: 'info',
   removed: 'error',
 }
-
-export const CHANGE_LABEL: Record<ChangeKind, string | undefined> = {
-  unchanged: undefined,
-  changed: 'Changed',
-  added: 'New',
-  removed: 'Removed',
-}

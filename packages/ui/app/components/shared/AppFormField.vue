@@ -37,21 +37,11 @@ const field = computed(() => {
     :name="name"
     :required="required"
     :description="description"
+    :hint="hint"
     :class="props.class"
     :data-change="kind"
     :data-path="path"
   >
-    <template v-if="CHANGE_LABEL[kind] || hint" #hint>
-      <UBadge
-        v-if="CHANGE_LABEL[kind]"
-        :label="CHANGE_LABEL[kind]"
-        :color="CHANGE_FIELD_COLOR[kind]"
-        variant="subtle"
-        size="sm"
-      />
-      <span v-else class="text-muted text-xs">{{ hint }}</span>
-    </template>
-
     <slot :field="field" :kind="kind" />
   </UFormField>
 </template>
