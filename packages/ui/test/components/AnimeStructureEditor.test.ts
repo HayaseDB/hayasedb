@@ -55,9 +55,11 @@ describe('AnimeStructureEditor', () => {
   it('offers seasons or direct episodes, never both', async () => {
     const withSeason = emptyStructureState()
     withSeason.seasons.push(newSeasonDraft())
-    const { button } = await mount(withSeason)
+    const { wrapper, button } = await mount(withSeason)
 
-    expect(button('Add episode')).toBeUndefined()
+    expect(wrapper.find('[data-testid="add-direct-episode"]').exists()).toBe(
+      false,
+    )
     expect(button('Add season')).toBeDefined()
   })
 
@@ -138,6 +140,52 @@ describe('AnimeStructureEditor', () => {
     ])
 
     expect(wrapper.find('[data-change="changed"]').exists()).toBe(true)
+  })
+
+  it('reorders around a tombstoned season', async () => {
+    const initial = emptyStructureState()
+    const first = savedSeason()
+    const middle = savedSeason()
+    const last = savedSeason()
+    initial.seasons.push(first, middle, last)
+    const { wrapper, state } = await mount(initial)
+
+    const remove = wrapper.findAll('[aria-label="Remove season"]')
+    await remove[1]!.trigger('click')
+
+    const down = wrapper.findAll('[aria-label="Move season down"]')
+    await down[0]!.trigger('click')
+
+    const visible = state.value.seasons.filter((season) => !season.removed)
+    expect(visible.map((season) => season.id)).toEqual([last.id, first.id])
+    expect(state.value.seasons).toHaveLength(3)
+    expect(
+      state.value.seasons.find((season) => season.id === middle.id)?.removed,
+    ).toBe(true)
+  })
+
+  it('summarises a season by its episode count', async () => {
+    const empty = emptyStructureState()
+    empty.seasons.push(savedSeason())
+    const { wrapper } = await mount(empty)
+
+    expect(wrapper.text()).toContain('No episodes yet')
+
+    const filled = emptyStructureState()
+    const season = savedSeason()
+    season.episodes.push(savedEpisode(), savedEpisode())
+    filled.seasons.push(season)
+    const second = await mount(filled)
+
+    expect(second.wrapper.text()).toContain('2 episodes')
+  })
+
+  it('leaves the section heading to the page card', async () => {
+    const initial = emptyStructureState()
+    initial.seasons.push(savedSeason())
+    const { wrapper } = await mount(initial)
+
+    expect(wrapper.text()).not.toContain('Episodes & seasons')
   })
 
   it('leaves an untouched saved season unringed', async () => {

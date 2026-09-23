@@ -57,7 +57,7 @@ function removeActive() {
 </script>
 
 <template>
-  <div class="border-default flex flex-col gap-3 rounded-lg border p-3">
+  <div class="flex flex-col gap-3">
     <div class="grid gap-3 sm:grid-cols-2">
       <AppFormField path="kind" label="Kind" required>
         <template #default="{ field }">
@@ -71,7 +71,7 @@ function removeActive() {
         </template>
       </AppFormField>
 
-      <AppFormField path="number" label="Number" hint="Optional">
+      <AppFormField path="number" label="Number">
         <template #default="{ field }">
           <UInput
             :model-value="season.number ?? ''"
@@ -101,7 +101,7 @@ function removeActive() {
       @make-original="makeActiveOriginal"
     />
 
-    <AppFormField v-if="active" :path="titlePath" label="Title" hint="Optional">
+    <AppFormField v-if="active" :path="titlePath" label="Title">
       <template #default="{ field }">
         <UInput
           v-model="active!.title"

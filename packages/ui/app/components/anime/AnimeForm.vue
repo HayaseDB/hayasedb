@@ -564,7 +564,11 @@ const isDesktop = useBreakpoints(breakpointsTailwind).greaterOrEqual('lg')
       </template>
 
       <template v-if="structure" #episodes>
-        <UPageCard title="Episodes & seasons" variant="subtle">
+        <UPageCard
+          title="Episodes & seasons"
+          description="An anime holds either seasons or standalone episodes, never both."
+          variant="subtle"
+        >
           <AnimeStructureEditor
             v-model:state="structure"
             :loading="structureLoading"

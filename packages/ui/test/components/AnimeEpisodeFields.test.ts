@@ -52,4 +52,26 @@ describe('AnimeEpisodeFields', () => {
     expect(wrapper.find('[data-change="unchanged"]').exists()).toBe(true)
     expect(wrapper.find('[data-change="changed"]').exists()).toBe(false)
   })
+
+  it('exposes one labelled disclosure trigger', async () => {
+    const wrapper = await mount(savedEpisode())
+
+    const triggers = wrapper.findAll('[aria-expanded]')
+
+    expect(triggers).toHaveLength(1)
+    expect(triggers[0]!.text()).toContain('Episode 1')
+    expect(triggers[0]!.attributes('aria-expanded')).toBe('false')
+
+    await triggers[0]!.trigger('click')
+
+    expect(triggers[0]!.attributes('aria-expanded')).toBe('true')
+    expect(triggers[0]!.attributes('aria-controls')).toBeTruthy()
+  })
+
+  it('does not mark optional fields', async () => {
+    const wrapper = await mount(newEpisodeDraft())
+
+    expect(wrapper.text()).toContain('Runtime (minutes)')
+    expect(wrapper.text()).not.toContain('Optional')
+  })
 })

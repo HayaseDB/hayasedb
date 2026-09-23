@@ -71,11 +71,27 @@ function restoreEpisode(episode: EpisodeDraft) {
   episode.removed = false
 }
 
-function move<T>(list: T[], index: number, delta: number) {
-  const target = index + delta
-  if (target < 0 || target >= list.length) return
-  const [moved] = list.splice(index, 1)
-  list.splice(target, 0, moved!)
+function moveVisible<T extends { removed: boolean }>(
+  list: T[],
+  item: T,
+  delta: number,
+) {
+  const visible = list.filter((entry) => !entry.removed)
+  const from = visible.indexOf(item)
+  const target = visible[from + delta]
+  if (from < 0 || !target) return
+  const toIndex = list.indexOf(target)
+  list.splice(list.indexOf(item), 1)
+  list.splice(toIndex, 0, item)
+}
+
+const visibleSeasonEpisodes = (season: SeasonDraft) =>
+  season.episodes.filter((episode) => !episode.removed)
+
+const seasonMeta = (season: SeasonDraft) => {
+  const count = visibleSeasonEpisodes(season).length
+  if (count === 0) return 'No episodes yet'
+  return `${count} ${count === 1 ? 'episode' : 'episodes'}`
 }
 
 const removedSeasons = computed(() =>
@@ -125,35 +141,28 @@ const episodeLabel = (episode: EpisodeDraft) => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex flex-wrap items-start justify-between gap-2">
-      <div>
-        <p class="text-highlighted text-sm font-medium">Episodes & seasons</p>
-        <p class="text-muted text-xs">
-          An anime holds either seasons or standalone episodes, never both.
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
-        <UButton
-          v-if="canAddSeason"
-          type="button"
-          label="Add season"
-          icon="i-lucide-layers"
-          color="neutral"
-          variant="soft"
-          size="sm"
-          @click="addSeason()"
-        />
-        <UButton
-          v-if="canAddEpisode"
-          type="button"
-          label="Add episode"
-          icon="i-lucide-plus"
-          color="neutral"
-          variant="soft"
-          size="sm"
-          @click="addEpisode()"
-        />
-      </div>
+    <div class="flex items-center justify-end gap-2">
+      <UButton
+        v-if="canAddSeason"
+        type="button"
+        label="Add season"
+        icon="i-lucide-layers"
+        color="neutral"
+        variant="soft"
+        size="sm"
+        @click="addSeason()"
+      />
+      <UButton
+        v-if="canAddEpisode"
+        type="button"
+        data-testid="add-direct-episode"
+        label="Add episode"
+        icon="i-lucide-plus"
+        color="neutral"
+        variant="soft"
+        size="sm"
+        @click="addEpisode()"
+      />
     </div>
 
     <UAlert
@@ -198,18 +207,13 @@ const episodeLabel = (episode: EpisodeDraft) => {
     >
       <template #default="{ item }">
         <div
-          class="flex min-w-0 flex-1 items-center gap-2 text-left"
+          class="flex min-w-0 flex-1 flex-col items-start text-left"
           :data-change="seasonKind(item.season)"
         >
           <span class="text-highlighted truncate text-sm font-medium">
             {{ seasonLabel(item.season) }}
           </span>
-          <UBadge
-            :label="`${item.season.episodes.filter((e: EpisodeDraft) => !e.removed).length}`"
-            color="neutral"
-            variant="subtle"
-            size="sm"
-          />
+          <span class="text-muted text-xs">{{ seasonMeta(item.season) }}</span>
         </div>
       </template>
 
@@ -224,7 +228,7 @@ const episodeLabel = (episode: EpisodeDraft) => {
             square
             :disabled="visibleSeasons.indexOf(item.season) === 0"
             aria-label="Move season up"
-            @click="move(state.seasons, state.seasons.indexOf(item.season), -1)"
+            @click="moveVisible(state.seasons, item.season, -1)"
           />
           <UButton
             type="button"
@@ -237,7 +241,7 @@ const episodeLabel = (episode: EpisodeDraft) => {
               visibleSeasons.indexOf(item.season) === visibleSeasons.length - 1
             "
             aria-label="Move season down"
-            @click="move(state.seasons, state.seasons.indexOf(item.season), 1)"
+            @click="moveVisible(state.seasons, item.season, 1)"
           />
           <UButton
             type="button"
@@ -256,37 +260,27 @@ const episodeLabel = (episode: EpisodeDraft) => {
         <div class="flex flex-col gap-3 pb-3">
           <AnimeSeasonFields :season="item.season" />
 
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-2">
             <AnimeEpisodeFields
-              v-for="(episode, index) in item.season.episodes.filter(
-                (e: EpisodeDraft) => !e.removed,
-              )"
+              v-for="(episode, index) in visibleSeasonEpisodes(item.season)"
               :key="episode.id"
               :episode="episode"
               :label="episodeLabel(episode)"
               :is-first="index === 0"
-              :is-last="
-                index ===
-                item.season.episodes.filter((e: EpisodeDraft) => !e.removed)
-                  .length -
-                  1
-              "
-              @move-up="
-                move(
-                  item.season.episodes,
-                  item.season.episodes.indexOf(episode),
-                  -1,
-                )
-              "
-              @move-down="
-                move(
-                  item.season.episodes,
-                  item.season.episodes.indexOf(episode),
-                  1,
-                )
-              "
+              :is-last="index === visibleSeasonEpisodes(item.season).length - 1"
+              @move-up="moveVisible(item.season.episodes, episode, -1)"
+              @move-down="moveVisible(item.season.episodes, episode, 1)"
               @remove="removeEpisode(episode, item.season)"
             />
+
+            <p
+              v-if="!visibleSeasonEpisodes(item.season).length"
+              class="text-muted text-sm"
+            >
+              No episodes in this
+              {{ ANIME_SEASON_KIND_LABELS[item.season.kind].toLowerCase() }}
+              yet.
+            </p>
 
             <UButton
               type="button"
@@ -303,7 +297,7 @@ const episodeLabel = (episode: EpisodeDraft) => {
       </template>
     </UAccordion>
 
-    <div v-if="hasEpisodes" class="flex flex-col gap-1">
+    <div v-if="hasEpisodes" class="flex flex-col gap-2">
       <AnimeEpisodeFields
         v-for="(episode, index) in visibleEpisodes"
         :key="episode.id"
@@ -311,9 +305,8 @@ const episodeLabel = (episode: EpisodeDraft) => {
         :label="episodeLabel(episode)"
         :is-first="index === 0"
         :is-last="index === visibleEpisodes.length - 1"
-        bordered
-        @move-up="move(state.episodes, state.episodes.indexOf(episode), -1)"
-        @move-down="move(state.episodes, state.episodes.indexOf(episode), 1)"
+        @move-up="moveVisible(state.episodes, episode, -1)"
+        @move-down="moveVisible(state.episodes, episode, 1)"
         @remove="removeEpisode(episode)"
       />
     </div>

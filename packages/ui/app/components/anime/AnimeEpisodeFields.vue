@@ -11,9 +11,8 @@ const props = withDefaults(
     label: string
     isFirst?: boolean
     isLast?: boolean
-    bordered?: boolean
   }>(),
-  { isFirst: false, isLast: false, bordered: false },
+  { isFirst: false, isLast: false },
 )
 
 const emit = defineEmits<{ moveUp: []; moveDown: []; remove: [] }>()
@@ -21,6 +20,8 @@ const emit = defineEmits<{ moveUp: []; moveDown: []; remove: [] }>()
 const episode = computed(() => props.episode)
 
 const open = ref(episode.value.isNew)
+
+const panelId = useId()
 
 const translations = computed({
   get: () => episode.value.translations,
@@ -99,32 +100,29 @@ const durationMinutes = computed({
 
 <template>
   <div
-    class="rounded-lg"
+    class="border-default rounded-md border"
     :data-change="episodeKind"
-    :class="[
-      bordered ? 'border-default border' : 'bg-elevated/40',
-      CHANGE_RING_CLASS[episodeKind],
-    ]"
+    :class="CHANGE_RING_CLASS[episodeKind]"
   >
-    <div class="flex items-center gap-1 px-2 py-1.5">
-      <UButton
-        type="button"
-        :icon="open ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-        color="neutral"
-        variant="ghost"
-        size="xs"
-        square
-        :aria-expanded="open"
-        :aria-label="open ? 'Collapse episode' : 'Expand episode'"
-        @click="open = !open"
-      />
-
+    <div class="flex items-center gap-1 p-2">
       <button
+        :id="`${panelId}-trigger`"
         type="button"
-        class="text-highlighted min-w-0 flex-1 truncate text-left text-sm"
+        class="flex min-w-0 flex-1 items-center gap-2 text-left"
+        :aria-expanded="open"
+        :aria-controls="panelId"
         @click="open = !open"
       >
-        {{ label }}
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="text-dimmed size-4 shrink-0 transition-transform"
+          :class="open && 'rotate-90'"
+          aria-hidden="true"
+        />
+
+        <span class="text-highlighted min-w-0 flex-1 truncate text-sm">
+          {{ label }}
+        </span>
       </button>
 
       <UBadge
@@ -168,10 +166,15 @@ const durationMinutes = computed({
         @click="emit('remove')"
       />
     </div>
-
-    <div v-if="open" class="flex flex-col gap-3 px-3 pb-3">
+    <div
+      v-if="open"
+      :id="panelId"
+      role="region"
+      :aria-labelledby="`${panelId}-trigger`"
+      class="flex flex-col gap-3 px-2 pb-2"
+    >
       <div class="grid gap-3 sm:grid-cols-2">
-        <AppFormField path="number" label="Number" hint="Optional">
+        <AppFormField path="number" label="Number">
           <template #default="{ field }">
             <UInput
               :model-value="episode.number ?? ''"
@@ -210,7 +213,7 @@ const durationMinutes = computed({
           </template>
         </AppFormField>
 
-        <AppFormField path="airDate" label="Air date" hint="Optional">
+        <AppFormField path="airDate" label="Air date">
           <template #default="{ field }">
             <UInput
               :model-value="episode.airDate ?? ''"
@@ -224,11 +227,7 @@ const durationMinutes = computed({
           </template>
         </AppFormField>
 
-        <AppFormField
-          path="durationSeconds"
-          label="Runtime"
-          hint="Minutes, optional"
-        >
+        <AppFormField path="durationSeconds" label="Runtime (minutes)">
           <template #default="{ field }">
             <UInputNumber
               v-model="durationMinutes"
@@ -256,11 +255,7 @@ const durationMinutes = computed({
       />
 
       <template v-if="active">
-        <AppFormField
-          :path="translationPath('title')"
-          label="Title"
-          hint="Optional"
-        >
+        <AppFormField :path="translationPath('title')" label="Title">
           <template #default="{ field }">
             <UInput
               v-model="active!.title"
@@ -271,11 +266,7 @@ const durationMinutes = computed({
           </template>
         </AppFormField>
 
-        <AppFormField
-          :path="translationPath('overview')"
-          label="Overview"
-          hint="Optional"
-        >
+        <AppFormField :path="translationPath('overview')" label="Overview">
           <template #default="{ field }">
             <UTextarea
               :model-value="active!.overview ?? ''"
