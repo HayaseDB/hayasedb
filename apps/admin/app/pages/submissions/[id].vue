@@ -226,7 +226,9 @@ function isLocked(action: ModerationAction) {
           </ChangesetMetaPanel>
         </aside>
 
-        <div class="flex min-w-0 flex-col gap-6">
+        <div
+          class="flex min-w-0 flex-col gap-6 [--change-sticky-top:-1rem] sm:[--change-sticky-top:-1.5rem]"
+        >
           <UAlert
             v-if="conflicted.length"
             color="error"

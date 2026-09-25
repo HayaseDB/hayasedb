@@ -156,7 +156,10 @@ useSeoMeta({ title: () => `Contribution – ${detail.value.summary}` })
         </ChangesetMetaPanel>
       </aside>
 
-      <div class="flex min-w-0 flex-col gap-6">
+      <div
+        class="flex min-w-0 flex-col gap-6"
+        style="--change-sticky-top: var(--ui-header-height)"
+      >
         <ChangeGroupCard
           v-for="group in changeGroups"
           :key="group.key"

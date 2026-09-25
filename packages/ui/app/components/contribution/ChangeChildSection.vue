@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useResizeObserver } from '@vueuse/core'
-
 const props = defineProps<{
   child: ChangeGroupChild
   offset?: string
@@ -23,46 +21,33 @@ const contextKind = computed(
 
 const icon = computed(() => ENTITY_KIND_ICONS[contextKind.value])
 
-const card = useTemplateRef<{ $el: HTMLElement }>('card')
-const headerHeight = ref(0)
-
-const headerEl = computed(
-  () =>
-    (card.value?.$el?.querySelector('[data-slot="header"]') as HTMLElement) ??
-    null,
-)
-
-useResizeObserver(headerEl, () => {
-  headerHeight.value = headerEl.value?.offsetHeight ?? 0
-})
-
 const depth = computed(() => props.depth ?? 1)
 
 const top = computed(() => props.offset ?? '0px')
 
 const stickyZ = computed(() => String(Math.max(20 - depth.value, 1)))
 
-const childOffset = computed(
-  () => `calc(${top.value} + ${Math.round(headerHeight.value)}px)`,
-)
+const childOffset = computed(() => `calc(${top.value} + 2.75rem)`)
 </script>
 
 <template>
   <UCard
     :id="child.change ? `change-${child.change.id}` : undefined"
-    ref="card"
     variant="subtle"
     :ui="{
-      root: 'overflow-visible',
+      root: 'overflow-visible ring-0 border-0 relative [clip-path:inset(0_round_var(--radius-lg,0.5rem))] after:pointer-events-none after:absolute after:inset-0 after:z-30 after:rounded-lg after:border after:border-default after:content-[\'\']',
       header:
-        'p-3 sm:px-4 sticky top-(--change-sticky-top) z-(--change-sticky-z) bg-elevated rounded-t-lg',
+        'h-11 flex items-center p-3 sm:px-4 sticky top-(--change-sticky-own) z-(--change-sticky-z) bg-elevated',
       body: 'p-3 sm:p-4',
     }"
-    :style="{ '--change-sticky-top': top, '--change-sticky-z': stickyZ }"
-    :class="child.change?.conflicted && 'ring-error/30 ring-1'"
+    :style="{
+      '--change-sticky-own': top,
+      '--change-sticky-z': stickyZ,
+    }"
+    :class="child.change?.conflicted && 'after:border-error/30'"
   >
     <template #header>
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex w-full min-w-0 items-center gap-2">
         <UIcon :name="icon" class="text-dimmed size-4 shrink-0" />
         <UBadge
           v-if="child.change"

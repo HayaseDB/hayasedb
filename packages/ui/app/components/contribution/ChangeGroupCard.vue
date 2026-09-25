@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ChangeDetail } from '@hayasedb/contract'
-import { useResizeObserver } from '@vueuse/core'
 
 const props = defineProps<{ group: ChangeGroup }>()
 
@@ -20,24 +19,8 @@ const icon = computed(() =>
     : ENTITY_KIND_ICONS.anime,
 )
 
-const card = useTemplateRef<{ $el: HTMLElement }>('card')
-const root = computed(() => card.value?.$el ?? null)
-const stickyTop = useStickyOffset(root)
-
-const headerHeight = ref(0)
-
-const headerEl = computed(
-  () =>
-    (card.value?.$el?.querySelector('[data-slot="header"]') as HTMLElement) ??
-    null,
-)
-
-useResizeObserver(headerEl, () => {
-  headerHeight.value = headerEl.value?.offsetHeight ?? 0
-})
-
 const childOffset = computed(
-  () => `calc(${stickyTop.value} + ${Math.round(headerHeight.value)}px)`,
+  () => 'calc(var(--change-sticky-top, 0px) + 3.5rem)',
 )
 
 const animeRows = computed(() =>
@@ -48,17 +31,16 @@ const animeRows = computed(() =>
 <template>
   <UCard
     :id="group.anime ? `change-${group.anime.id}` : undefined"
-    ref="card"
     variant="subtle"
     :ui="{
-      root: 'overflow-visible',
-      header: 'sticky top-(--change-sticky-top) z-20 bg-elevated rounded-t-lg',
+      root: 'overflow-visible ring-0 border-0 relative [clip-path:inset(0_round_var(--radius-lg,0.5rem))] after:pointer-events-none after:absolute after:inset-0 after:z-30 after:rounded-lg after:border after:border-default after:content-[\'\']',
+      header:
+        'h-14 flex items-center sticky top-[var(--change-sticky-top,0px)] z-20 bg-elevated',
     }"
-    :class="conflicted && 'ring-error/30 ring-1'"
-    :style="{ '--change-sticky-top': stickyTop }"
+    :class="conflicted && 'after:border-error/30'"
   >
     <template #header>
-      <div class="flex w-full flex-wrap items-center gap-2">
+      <div class="flex w-full min-w-0 items-center gap-2">
         <UIcon :name="icon" class="text-dimmed size-4 shrink-0" />
         <UBadge
           v-if="group.anime"
