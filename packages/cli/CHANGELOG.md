@@ -1,5 +1,16 @@
 # @hayasedb/cli
 
+## 0.13.1
+
+### Patch Changes
+
+- Updated dependencies [51bb264]
+- Updated dependencies [572c027]
+  - @hayasedb/contract@0.13.1
+  - @hayasedb/domain@0.13.1
+  - @hayasedb/auth@0.13.1
+  - @hayasedb/db@0.13.1
+
 ## 0.13.0
 
 ### Minor Changes
