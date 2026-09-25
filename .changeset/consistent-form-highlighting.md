@@ -8,4 +8,26 @@
 '@hayasedb/nuxt': patch
 ---
 
-Highlight every edited field consistently in the anime forms, fixing translation fields such as the English title never highlighting on the public contribution page, and add the per-field cues that season, episode and image edits were missing. Rebuild the seasons and episodes manager around scannable summary rows that show their own change state and open a slideover for editing, and make the season and episode slideovers highlight changed fields like every other form field even though they render outside the form. Validate the season and episode slideovers against their own schema so a bad runtime or number reports its error inline instead of silently failing on submit, keep every summary row at a fixed height so a row no longer jumps as its text changes, drop the noisy "N changed" counters in favour of the shared ring, and stop repeating the episode type in the number chip beside its badge. Let an anime hold seasons and standalone episodes at the same time, ranking them in one shared order per anime so a standalone episode can sit between two seasons, and replace the rule that rejected mixed structures with one that rejects two children sharing a position. Drop the footer from the contribution pages so the form is the last thing on the page. Group an anime contribution review around the anime it belongs to instead of listing every season and episode as its own card, nesting each episode under the season that owns it, and always show the anime's current fields as context even when the anime itself was not edited. Hide the parent links of a season or episode from its diff because the nesting already states them, title each card by its entity type alone so the name stays in the fields below it, and stop writing an episode or season number as "3.000". Replace the empty-season placeholder and its button with an add card shaped like the rows around it, and stop opening the editor straight after adding a season or episode. Nest an episode under a season that the changeset only touches through its episodes, so the season still appears with its current fields. Give each card its entity icon and keep its header pinned while its fields scroll, stacking the anime, season and episode headers so the level you are reading stays visible, and let each page declare where a header pins so it lands directly below the navbar on the public page and at the top of the panel in admin. Give the stacked headers fixed heights so each one pins flush against the one above it with no gap, and square off the header background so the card's own rounded corners cut it at the top and bottom while its border still draws over it.
+Rework the anime structure editor and the contribution review.
+
+**Field highlighting**
+
+- Highlight every edited field by the same rules, including translation fields such as the English title on the public contribution page.
+- Add the per-field cues that season, episode and image edits were missing, and highlight fields in the season and episode slideovers even though they render outside the form.
+
+**Seasons and episodes**
+
+- Rebuild the manager around scannable summary rows that show their own change state and open a slideover for editing.
+- Let an anime hold seasons and standalone episodes at once, ranked in one shared order, and reject two children sharing a position instead of rejecting mixed structures.
+- Validate each slideover against its own schema so a bad runtime or number reports inline instead of failing silently on submit.
+- Keep rows at a fixed height, drop the "N changed" counters in favour of the shared ring, and stop repeating the episode type in the number chip.
+- Replace the empty-season placeholder and its button with an add card shaped like the rows around it, and stop opening the editor right after adding.
+
+**Contribution review**
+
+- Group each review around its anime instead of one card per entity, nest episodes under the season that owns them, and always show the anime's current fields as context.
+- Nest an episode under a season the changeset only touches through its episodes, so the season still appears with its current fields.
+- Hide the parent links of a season or episode from its diff, title each card by its entity type alone so the name stays in the fields below, and stop writing a number as "3.000".
+- Give each card its entity icon and pin its header while the fields scroll, stacking the anime, season and episode headers at fixed heights so each sits flush under the one above.
+- Square off the header background so the card's rounded corners cut it, with the border drawn over it, and let each page declare where headers pin: below the navbar on the public page, at the top of the panel in admin.
+- Drop the footer from the contribution pages so the form is the last thing on the page.
