@@ -1,5 +1,11 @@
 # @hayasedb/e2e
 
+## 0.13.1
+
+### Patch Changes
+
+- 607036d: Update the anime end-to-end seed and form selectors to the localized translations schema
+
 ## 0.13.0
 
 ## 0.12.0

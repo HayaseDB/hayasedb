@@ -1,5 +1,13 @@
 # @hayasedb/db
 
+## 0.13.1
+
+### Patch Changes
+
+- Updated dependencies [51bb264]
+- Updated dependencies [572c027]
+  - @hayasedb/domain@0.13.1
+
 ## 0.13.0
 
 ### Minor Changes
